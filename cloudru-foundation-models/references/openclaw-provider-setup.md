@@ -10,7 +10,7 @@ Interactive path:
 2. Choose **Custom Provider**.
 3. Set compatibility to **OpenAI-compatible**.
 4. Set base URL to `https://foundation-models.api.cloud.ru/v1`.
-5. Set the model ID to a live Cloud.ru model ID from `/v1/models`, for example `GigaChat/GigaChat-2-Max`.
+5. Set the model ID to a live Cloud.ru model ID from `/v1/models`, for example `openai/gpt-oss-120b`.
 6. Paste the API key.
 
 Non-interactive example:
@@ -20,7 +20,7 @@ export CUSTOM_API_KEY="$CLOUD_RU_FOUNDATION_MODELS_API_KEY"
 openclaw onboard --non-interactive \
   --auth-choice custom-api-key \
   --custom-base-url "https://foundation-models.api.cloud.ru/v1" \
-  --custom-model-id "GigaChat/GigaChat-2-Max" \
+  --custom-model-id "openai/gpt-oss-120b" \
   --custom-api-key "$CUSTOM_API_KEY" \
   --custom-compatibility openai
 ```
@@ -37,7 +37,7 @@ Example `openclaw.json` fragment:
   "agents": {
     "defaults": {
       "model": {
-        "primary": "cloudru-foundation/GigaChat/GigaChat-2-Max"
+        "primary": "cloudru-foundation/openai/gpt-oss-120b"
       }
     }
   },
@@ -50,12 +50,8 @@ Example `openclaw.json` fragment:
         "api": "openai-completions",
         "models": [
           {
-            "id": "GigaChat/GigaChat-2-Max",
-            "name": "GigaChat 2 Max"
-          },
-          {
-            "id": "ai-sage/GigaChat3-10B-A1.8B",
-            "name": "GigaChat3-10B-A1.8B"
+            "id": "openai/gpt-oss-120b",
+            "name": "gpt-oss-120b"
           }
         ]
       }
