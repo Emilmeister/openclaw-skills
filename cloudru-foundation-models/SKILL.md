@@ -1,95 +1,44 @@
 ---
 name: cloudru-foundation-models
-description: Connect OpenClaw and other OpenAI-compatible clients to Cloud.ru Evolution Foundation Models. Use when you need to bootstrap Cloud.ru Foundation Models access through the Cloud.ru console, create a service account and API key, list available models from https://foundation-models.api.cloud.ru/v1/models, or generate OpenClaw custom-provider config for Cloud.ru.
+description: Work with Cloud.ru Evolution Foundation Models via the OpenAI-compatible API. Use when the user wants to call Cloud.ru models, list available models, generate cURL or Python examples, or configure OpenClaw to use Cloud.ru as a custom model provider.
 homepage: https://cloud.ru/docs/foundation-models/ug/index
-metadata: { "openclaw": { "emoji": "☁️", "requires": { "anyBins": ["python3", "python"] }, "primaryEnv": "CLOUD_RU_FOUNDATION_MODELS_API_KEY" } }
+metadata: {"openclaw":{"emoji":"☁️","requires":{"env":["CLOUD_RU_FOUNDATION_MODELS_API_KEY"]},"primaryEnv":"CLOUD_RU_FOUNDATION_MODELS_API_KEY"}}
 ---
 
 # Cloud.ru Foundation Models
 
 ## What this skill does
 
-Use this skill to:
-1. bootstrap a Cloud.ru Foundation Models API key from the Cloud.ru web console;
-2. create the required Cloud.ru service account and API key;
-3. fetch the live model catalog from `https://foundation-models.api.cloud.ru/v1/models`;
-4. produce OpenAI-compatible cURL or Python examples;
-5. produce an OpenClaw custom-provider snippet or onboarding command.
+Helps the user work with the Cloud.ru Foundation Models API:
+1. list available models from `https://foundation-models.api.cloud.ru/v1/models`;
+2. produce cURL and Python examples for chat completions;
+3. configure OpenClaw to use Cloud.ru as a custom model provider.
 
-## Prefer browser-assisted onboarding
+## When to use
 
-When browser control is available, prefer the browser tool or the equivalent `openclaw browser ...` commands.
+- The user wants to call Cloud.ru Foundation Models via API or code.
+- The user asks how to list Cloud.ru models.
+- The user wants to set up OpenClaw with Cloud.ru as a provider.
+- The user mentions Cloud.ru Foundation Models, GigaChat, or similar model names.
 
-If browser control is unavailable, ask the user for one of these:
-- an already-created Cloud.ru Foundation Models API key; or
-- the current Cloud.ru project URL, plus the Cloud.ru console bearer token retrieved from the browser.
+## Prerequisites
 
-## Browser-assisted onboarding flow
+The user must have `CLOUD_RU_FOUNDATION_MODELS_API_KEY` set. If the key is missing, direct the user to the `cloudru-account-setup` skill first.
 
-1. Open the Cloud.ru login page:
-   ```bash
-   openclaw browser open https://console.cloud.ru/static-page/login-destination
-   ```
-2. Ask the user to log in and open the target project in the Cloud.ru console.
-3. Capture the current browser state as JSON and extract the current project URL:
-   ```bash
-   openclaw browser evaluate --fn 'window.location.href'
-   ```
-4. Extract `project_id` from the URL.
-   - The user-supplied flow also refers to `secret_id`.
-   - The service-account API needs `customerId`.
-   - Treat `secret_id` as an alias for `customerId` when it is present in the URL.
-   - If `customerId` cannot be inferred, ask the user for it explicitly and pass `--customer-id` to the script.
-5. Extract the Cloud.ru browser token:
-   ```bash
-   openclaw browser evaluate --fn 'JSON.parse(localStorage["oidc.user:https://id.cloud.ru/auth/system/:e95a1db5-a61c-425b-ae62-26d3a7e224f7"])["access_token"]'
-   ```
-6. If the hard-coded storage key is absent, inspect local storage and find the key that starts with `oidc.user:https://id.cloud.ru/auth/system/`, then parse `access_token` from that JSON value.
-7. Run the bundled bootstrap script:
-   ```bash
-   python3 {baseDir}/scripts/cloudru_foundation_models_bootstrap.py \
-     --project-url '<project-url>' \
-     --token '<cloudru-browser-token>'
-   ```
-   Add `--customer-id '<customer-id>'` if the URL does not expose it.
-8. Read the JSON result. It contains:
-   - the created service account response;
-   - the created API key response, including the generated secret;
-   - the live model list;
-   - an OpenClaw provider snippet and onboarding command.
+## How to use
 
-## Manual or no-browser flow
+1. Read `{baseDir}/references/api-usage.md` for cURL and Python examples.
+2. Read `{baseDir}/references/openclaw-provider-setup.md` when the user wants OpenClaw configured to use Cloud.ru as a model provider.
+3. Prefer fetching the live model catalog from `/v1/models` instead of hard-coding model IDs.
+4. Model IDs can contain `/` — keep the full ID unchanged.
 
-If the user already has the required values, skip the browser steps and run:
+## What to return
 
-```bash
-python3 {baseDir}/scripts/cloudru_foundation_models_bootstrap.py \
-  --project-url '<project-url>' \
-  --project-id '<project-id>' \
-  --customer-id '<customer-id>' \
-  --token '<cloudru-browser-token>'
-```
+- cURL or Python examples tailored to the user's request.
+- OpenClaw provider config snippet or `openclaw onboard` command when asked.
+- Current model IDs from the live catalog when relevant.
 
-If the user already has `CLOUD_RU_FOUNDATION_MODELS_API_KEY`, skip the bootstrap flow and use the references below to generate examples or OpenClaw config.
+## Limitations
 
-## Safe handling
-
-- Treat the returned API key as a secret.
-- Show it only when the user explicitly needs it.
-- Prefer moving it immediately into an env var or OpenClaw secret ref.
-- Do not paste the raw key into config files unless the user asked for plaintext.
-
-## What to return after a successful run
-
-1. the created service account ID;
-2. the created API key ID;
-3. the Foundation Models API key secret, if the user asked to see it;
-4. the current model IDs;
-5. one minimal cURL example;
-6. one minimal OpenAI SDK example;
-7. one OpenClaw custom-provider snippet or `openclaw onboard` command.
-
-## References
-
-- Read `references/api-usage.md` for cURL and Python examples.
-- Read `references/openclaw-provider-setup.md` when the user wants OpenClaw configured to use Cloud.ru as a model provider.
+- Do not log or expose API keys in responses.
+- Do not execute API calls with untrusted user input without validation.

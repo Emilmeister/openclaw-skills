@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Bootstrap Cloud.ru Evolution Foundation Models access.
+"""Bootstrap Cloud.ru service account and Foundation Models API key.
 
 Creates a service account, creates an API key for Foundation Models,
-fetches the live model catalog, and prints a JSON summary that also includes
-an OpenClaw custom-provider snippet.
+and prints a JSON summary with the credentials.
 
 This script intentionally uses only the Python standard library.
 """
@@ -17,7 +16,7 @@ import sys
 import ssl
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, unquote, urlparse
 from urllib.request import Request, urlopen
@@ -28,8 +27,6 @@ SERVICE_ACCOUNT_URL = "https://console.cloud.ru/u-api/bff-console/v2/service-acc
 API_KEY_URL_TEMPLATE = (
     "https://console.cloud.ru/u-api/bff-console/v1/service-accounts/{service_account_id}/api_keys"
 )
-MODELS_URL = "https://foundation-models.api.cloud.ru/v1/models"
-DEFAULT_PROVIDER_ID = "cloudru-foundation"
 UUID_RE = re.compile(
     r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
 )
@@ -51,8 +48,7 @@ class BootstrapError(RuntimeError):
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Create a Cloud.ru service account and Foundation Models API key, "
-            "then fetch the live model catalog and print an OpenClaw config snippet."
+            "Create a Cloud.ru service account and Foundation Models API key."
         )
     )
     parser.add_argument(
@@ -126,19 +122,9 @@ def parse_args() -> argparse.Namespace:
         help="API key validity in days. Cloud.ru docs say the maximum is one year.",
     )
     parser.add_argument(
-        "--provider-id",
-        default=DEFAULT_PROVIDER_ID,
-        help="Provider ID to use in the generated OpenClaw config snippet.",
-    )
-    parser.add_argument(
-        "--skip-models",
-        action="store_true",
-        help="Skip the final /v1/models request.",
-    )
-    parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Do not call Cloud.ru APIs. Only parse inputs and render payloads and config snippets.",
+        help="Do not call Cloud.ru APIs. Only parse inputs and render payloads.",
     )
     return parser.parse_args()
 
@@ -305,19 +291,19 @@ def request_json(
         raise BootstrapError(f"{method} {url} failed: {exc}") from exc
 
 
-def service_account_payload(args: argparse.Namespace, context: ProjectContext) -> Dict[str, Any]:
-    if not context.project_id:
+def service_account_payload(args: argparse.Namespace, ctx: ProjectContext) -> Dict[str, Any]:
+    if not ctx.project_id:
         raise BootstrapError("Missing project_id. Pass --project-id or provide a parseable --project-url.")
-    if not context.customer_id:
+    if not ctx.customer_id:
         raise BootstrapError(
             "Missing customerId. Pass --customer-id or --secret-id, or provide a project URL that exposes it."
         )
     return {
         "name": args.service_account_name,
         "description": args.service_account_description,
-        "customerId": context.customer_id,
+        "customerId": ctx.customer_id,
         "serviceRoles": [],
-        "projectId": context.project_id,
+        "projectId": ctx.project_id,
         "projectRole": args.project_role,
         "artifactRoles": [],
         "artifactRegistries": [],
@@ -358,101 +344,23 @@ def create_api_key(token: str, service_account_id: str, payload: Dict[str, Any])
     return request_json(url, method="POST", bearer_token=token, json_body=payload)
 
 
-def list_models(api_key: str) -> Dict[str, Any]:
-    return request_json(MODELS_URL, method="GET", bearer_token=api_key)
-
-
-def summarize_models(models_response: Optional[Dict[str, Any]]) -> Dict[str, Any]:
-    if not models_response:
-        return {"count": 0, "ids": [], "objects": []}
-    data = models_response.get("data") or []
-    ids: List[str] = []
-    objects: List[Dict[str, Any]] = []
-    for item in data:
-        model_id = item.get("id")
-        if model_id:
-            ids.append(model_id)
-        objects.append(
-            {
-                "id": model_id,
-                "owned_by": item.get("owned_by"),
-                "context_length": item.get("context_length"),
-                "function_calling": item.get("function_calling", False),
-                "reasoning": item.get("reasoning", False),
-                "structure_output": item.get("structure_output", False),
-                "type": ((item.get("metadata") or {}).get("type")),
-            }
-        )
-    return {"count": len(ids), "ids": ids, "objects": objects}
-
-
-def render_openclaw_config(provider_id: str, model_ids: List[str]) -> Dict[str, Any]:
-    starter_models = model_ids[:3] if model_ids else ["GigaChat/GigaChat-2-Max"]
-    provider_models = [
-        {"id": model_id, "name": model_id.split("/")[-1] if "/" in model_id else model_id}
-        for model_id in starter_models
-    ]
-    primary_model = starter_models[0]
-    config = {
-        "env": {
-            "CLOUD_RU_FOUNDATION_MODELS_API_KEY": "<set-me>",
-        },
-        "agents": {
-            "defaults": {
-                "model": {
-                    "primary": f"{provider_id}/{primary_model}",
-                }
-            }
-        },
-        "models": {
-            "mode": "merge",
-            "providers": {
-                provider_id: {
-                    "baseUrl": "https://foundation-models.api.cloud.ru/v1",
-                    "apiKey": "${CLOUD_RU_FOUNDATION_MODELS_API_KEY}",
-                    "api": "openai-completions",
-                    "models": provider_models,
-                }
-            },
-        },
-    }
-    onboard_command = (
-        "export CUSTOM_API_KEY=\"$CLOUD_RU_FOUNDATION_MODELS_API_KEY\"\n"
-        "openclaw onboard --non-interactive \\\n"
-        "  --auth-choice custom-api-key \\\n"
-        "  --custom-base-url \"https://foundation-models.api.cloud.ru/v1\" \\\n"
-        f"  --custom-model-id \"{primary_model}\" \\\n"
-        "  --custom-api-key \"$CUSTOM_API_KEY\" \\\n"
-        "  --custom-compatibility openai"
-    )
-    return {
-        "provider_id": provider_id,
-        "primary_model": f"{provider_id}/{primary_model}",
-        "config_json": config,
-        "onboard_command": onboard_command,
-    }
-
-
 def build_result(
     args: argparse.Namespace,
-    context: ProjectContext,
+    ctx: ProjectContext,
     sa_payload: Dict[str, Any],
     key_payload: Dict[str, Any],
     service_account: Optional[Dict[str, Any]],
     api_key: Optional[Dict[str, Any]],
-    models_response: Optional[Dict[str, Any]],
 ) -> Dict[str, Any]:
-    notes = list(context.notes)
+    notes = list(ctx.notes)
     if args.days_valid > 365:
         notes.append("days-valid is greater than 365; Cloud.ru documentation says one year is the maximum.")
-    model_summary = summarize_models(models_response)
-    provider = render_openclaw_config(args.provider_id, model_summary["ids"])
-    result: Dict[str, Any] = {
+    return {
         "project": {
-            "project_url": context.project_url,
-            "project_id": context.project_id,
-            "customer_id": context.customer_id,
-            "customer_id_source": context.customer_id_source,
+            "project_url": ctx.project_url,
+            "project_id": ctx.project_id,
+            "customer_id": ctx.customer_id,
+            "customer_id_source": ctx.customer_id_source,
         },
         "inputs": {
             "service_account_payload": sa_payload,
@@ -460,35 +368,24 @@ def build_result(
         },
         "service_account": service_account,
         "api_key": api_key,
-        "models": model_summary,
-        "openclaw": provider,
         "notes": notes,
     }
-    return result
 
 
 def main() -> int:
     args = parse_args()
     try:
-        context = parse_project_context(
+        ctx = parse_project_context(
             project_url=args.project_url,
             explicit_project_id=args.project_id,
             explicit_customer_id=args.customer_id,
             explicit_secret_id=args.secret_id,
         )
-        sa_payload = service_account_payload(args, context)
+        sa_payload = service_account_payload(args, ctx)
         key_payload = api_key_payload(args)
 
         if args.dry_run:
-            result = build_result(
-                args,
-                context,
-                sa_payload,
-                key_payload,
-                service_account=None,
-                api_key=None,
-                models_response=None,
-            )
+            result = build_result(args, ctx, sa_payload, key_payload, None, None)
             print(json.dumps(result, ensure_ascii=False, indent=2))
             return 0
 
@@ -511,23 +408,7 @@ def main() -> int:
                 f"Cloud.ru API key response does not contain a secret: {json.dumps(api_key, ensure_ascii=False)}"
             )
 
-        models_response = None
-        if not args.skip_models:
-            try:
-                models_response = list_models(api_secret)
-            except BootstrapError as exc:
-                # Keep the main bootstrap result and surface the model-list error as a note.
-                context.notes.append(f"Model listing failed after key creation: {exc}")
-
-        result = build_result(
-            args,
-            context,
-            sa_payload,
-            key_payload,
-            service_account=service_account,
-            api_key=api_key,
-            models_response=models_response,
-        )
+        result = build_result(args, ctx, sa_payload, key_payload, service_account, api_key)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
     except BootstrapError as exc:
