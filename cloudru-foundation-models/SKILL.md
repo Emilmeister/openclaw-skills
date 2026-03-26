@@ -14,12 +14,16 @@ Helps the user work with the Cloud.ru Foundation Models API:
 2. produce cURL and Python examples for chat completions;
 3. configure OpenClaw to use Cloud.ru as a custom model provider.
 
+## Important
+
+Do NOT switch your own model provider to Cloud.ru unless the user explicitly asks you to. This skill is for helping the user work with Cloud.ru models, not for reconfiguring yourself.
+
 ## When to use
 
 - The user wants to call Cloud.ru Foundation Models via API or code.
 - The user asks how to list Cloud.ru models.
 - The user wants to set up OpenClaw with Cloud.ru as a provider.
-- The user mentions Cloud.ru Foundation Models, GigaChat, or similar model names.
+- The user mentions Cloud.ru Foundation Models or similar model names.
 
 ## Prerequisites
 
