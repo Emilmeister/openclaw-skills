@@ -1,6 +1,6 @@
 ---
 name: cloudru-ml-inference
-description: Manage Cloud.ru ML Inference model runs — create, list, update, delete, suspend, resume, call inference endpoints, check quotas. Full CRUD and inference via the inference-clients Python SDK.
+description: Manage Cloud.ru ML Inference model runs — browse the predefined model catalog, deploy models with one command, manage lifecycle, and call inference endpoints. Full CRUD and inference via the inference-clients Python SDK.
 homepage: https://cloud.ru/docs/ml-platform/mlspace/concepts/inference/about-inference.html
 metadata: {"openclaw":{"emoji":"🤖","requires":{"bins":["python3"],"env":["CP_CONSOLE_KEY_ID","CP_CONSOLE_SECRET","PROJECT_ID"]}}}
 ---
@@ -10,9 +10,10 @@ metadata: {"openclaw":{"emoji":"🤖","requires":{"bins":["python3"],"env":["CP_
 ## What this skill does
 
 Manages ML model deployments (Model Runs) on Cloud.ru ML Inference service. Supports:
+- Predefined model catalog (browse, search, deploy with exact configs — no guessing)
 - Full CRUD on model runs (create, list, get details, update, delete)
 - Lifecycle operations (suspend, resume)
-- Inference calls to running models (text generation, embeddings, rerank, image generation)
+- Inference calls to running models (text generation, embeddings, rerank)
 - Quota and runtime template queries
 - Health checks (ping) for deployed models
 
@@ -21,10 +22,10 @@ Manages ML model deployments (Model Runs) on Cloud.ru ML Inference service. Supp
 Use this skill when the user:
 - wants to deploy or manage ML models on Cloud.ru ML Inference
 - asks about Model RUN or Docker RUN on Cloud.ru
+- wants to see what models are available in the Cloud.ru catalog
 - needs to create, list, update, delete, suspend, or resume inference endpoints
-- wants to call a deployed model for text generation, embeddings, reranking, or image generation
+- wants to call a deployed model for text generation, embeddings, or reranking
 - asks about GPU quotas or available frameworks on Cloud.ru ML Inference
-- mentions `inference-clients`, `ModelRunUsersApiClient`, or `CallModelApi`
 
 ## Prerequisites
 
@@ -56,7 +57,24 @@ pip install pydantic-settings
 2. Read `{baseDir}/references/examples.md` for ready-to-use Python code examples.
 3. Use `{baseDir}/scripts/ml_inference.py` as the main script — it supports all operations via CLI subcommands.
 
-### Script usage
+### Deploying models (recommended flow)
+
+Always prefer deploying from the predefined catalog — it uses exact, tested configurations:
+
+```bash
+# 1. Browse the catalog
+python {baseDir}/scripts/ml_inference.py catalog
+
+# 2. See detailed configs for a model
+python {baseDir}/scripts/ml_inference.py catalog-detail <model_card_id>
+
+# 3. Deploy it
+python {baseDir}/scripts/ml_inference.py deploy <model_card_id> --name "my-model"
+```
+
+The `deploy` command fetches the exact GPU type, memory, framework version, serving options, and scaling from the catalog — nothing to guess or configure manually.
+
+### Managing model runs
 
 ```bash
 # List all model runs
@@ -65,12 +83,6 @@ python {baseDir}/scripts/ml_inference.py list
 # Get model run details
 python {baseDir}/scripts/ml_inference.py get <model_run_id>
 
-# Create a model run (vLLM example)
-python {baseDir}/scripts/ml_inference.py create --name "my-llm" \
-    --framework VLLM --resource GPU_A100 --task TEXT_2_TEXT_GENERATION \
-    --source-type huggingface --repo "meta-llama/Llama-2-7b-chat-hf" \
-    --gpu-count 1
-
 # Delete a model run
 python {baseDir}/scripts/ml_inference.py delete <model_run_id>
 
@@ -78,26 +90,51 @@ python {baseDir}/scripts/ml_inference.py delete <model_run_id>
 python {baseDir}/scripts/ml_inference.py suspend <model_run_id>
 python {baseDir}/scripts/ml_inference.py resume <model_run_id>
 
-# Call inference (OpenAI-compatible chat)
-python {baseDir}/scripts/ml_inference.py call <model_run_id> \
-    --prompt "Why is the sky blue?"
-
-# Call embeddings
-python {baseDir}/scripts/ml_inference.py embed <model_run_id> \
-    --texts "Hello world" "Another text"
-
-# Check quotas
-python {baseDir}/scripts/ml_inference.py quotas
-
-# List available framework versions
-python {baseDir}/scripts/ml_inference.py frameworks
-
-# Ping / health check
-python {baseDir}/scripts/ml_inference.py ping <model_run_id>
-
 # Get event history
 python {baseDir}/scripts/ml_inference.py history <model_run_id>
 ```
+
+### Calling deployed models
+
+```bash
+# Chat (OpenAI-compatible)
+python {baseDir}/scripts/ml_inference.py call <model_run_id> \
+    --prompt "Why is the sky blue?"
+
+# Embeddings
+python {baseDir}/scripts/ml_inference.py embed <model_run_id> \
+    --texts "Hello world" "Another text"
+
+# Rerank
+python {baseDir}/scripts/ml_inference.py rerank <model_run_id> \
+    --query "machine learning" --documents "ML is AI" "Weather is nice"
+
+# Health check
+python {baseDir}/scripts/ml_inference.py ping <model_run_id>
+```
+
+### Infrastructure queries
+
+```bash
+# GPU/CPU quota usage
+python {baseDir}/scripts/ml_inference.py quotas
+
+# Available framework versions
+python {baseDir}/scripts/ml_inference.py frameworks
+```
+
+### Advanced: custom model deployment
+
+For models not in the catalog, use `create` with manual parameters:
+```bash
+python {baseDir}/scripts/ml_inference.py create --name "my-llm" \
+    --framework VLLM --resource GPU_A100 --task GENERATE \
+    --source-type huggingface --repo "org/model" \
+    --gpu-count 1 --gpu-memory 20 \
+    --vllm-args '[{"key":"dtype","value":"bfloat16","parameterType":"PARAMETER_TYPE_ARG_KV_QUOTED"}]'
+```
+
+Note: the Cloud.ru API is strict about payload format. Prefer `deploy` from the catalog when possible.
 
 ### Building custom Python code
 
@@ -107,7 +144,7 @@ When the user needs custom code beyond what the script provides, use the pattern
 
 - Results of operations in readable format (JSON or summary)
 - Python code snippets when the user wants to integrate into their own code
-- Guidance on choosing frameworks, GPU types, and model sources
+- Model catalog browsing results with prices and specs
 
 ## Limitations
 
