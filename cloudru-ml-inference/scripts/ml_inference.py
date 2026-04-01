@@ -138,12 +138,8 @@ def check_response(res, action: str):
 
 def cmd_list(args):
     bff, _, _, project_id = build_clients()
-    params = {}
-    if args.limit:
-        params["limit"] = args.limit
-    if args.offset:
-        params["offset"] = args.offset
-    res = bff.v1.get_list_model_run(project_id=project_id, params=params or None)
+    params = {"limit": args.limit or 100, "offset": args.offset or 0}
+    res = bff.v1.get_list_model_run(project_id=project_id, params=params)
     check_response(res, "listing model runs")
     data = res.model()
     print(f"Total: {data.total}")
