@@ -1,6 +1,6 @@
 ---
 name: cloudru-account-setup
-description: Create a Cloud.ru service account and API key for Foundation Models. Use when the user needs to register a service account, obtain an API key via the Cloud.ru console, or bootstrap Cloud.ru API access from scratch.
+description: Create a Cloud.ru service account, Foundation Models API key, and IAM access key (CP_CONSOLE_KEY_ID/CP_CONSOLE_SECRET). Use when the user needs to register a service account, obtain API credentials via the Cloud.ru console, or bootstrap Cloud.ru API access from scratch.
 homepage: https://cloud.ru/docs/foundation-models/ug/index
 metadata: {"openclaw":{"emoji":"🔑","requires":{"anyBins":["python3","python"]}}}
 ---
@@ -9,12 +9,17 @@ metadata: {"openclaw":{"emoji":"🔑","requires":{"anyBins":["python3","python"]
 
 ## What this skill does
 
-Creates a Cloud.ru service account and Foundation Models API key. After a successful run the user will have `CLOUD_RU_FOUNDATION_MODELS_API_KEY` ready to use.
+Creates a Cloud.ru service account and the credentials needed for Cloud.ru services:
+1. **Foundation Models API key** (`CLOUD_RU_FOUNDATION_MODELS_API_KEY`) — for the Foundation Models API.
+2. **IAM access key** (`CP_CONSOLE_KEY_ID` + `CP_CONSOLE_SECRET`) — for IAM token-based authentication used by ML Inference and other Cloud.ru services.
+
+After a successful run the user will have all credentials ready to use.
 
 ## When to use
 
 - The user wants to set up Cloud.ru API access from scratch.
 - The user needs a new service account or API key for Cloud.ru Foundation Models.
+- The user needs `CP_CONSOLE_KEY_ID` and `CP_CONSOLE_SECRET` for ML Inference or other IAM-authenticated services.
 - The user mentions Cloud.ru onboarding, registration, or bootstrap.
 
 ## Prefer browser-assisted onboarding
@@ -69,16 +74,47 @@ python3 {baseDir}/scripts/cloudru_account_bootstrap.py \
   --token '<cloudru-browser-token>'
 ```
 
+## Access key creation (CP_CONSOLE_KEY_ID / CP_CONSOLE_SECRET)
+
+The bootstrap script also creates an **access key** for IAM authentication. This is a separate credential from the Foundation Models API key.
+
+The access key is created via:
+```
+POST /u-api/bff-console/v1/service-accounts/{service_account_id}/access_keys
+Body: {"description": "<description>", "ttl": <days>}
+```
+
+The response contains:
+- `key_id` — use as `CP_CONSOLE_KEY_ID`
+- `secret` — use as `CP_CONSOLE_SECRET`
+- `expired_at` — expiration timestamp
+
+These credentials are used for IAM token-based authentication (`IAM_Auth` from `http-client-auth`), which is required by ML Inference and other Cloud.ru services that authenticate via `https://iam.api.cloud.ru/`.
+
+To skip access key creation (e.g. if the user only needs Foundation Models), pass `--skip-access-key`.
+
+To customize the access key, use:
+- `--access-key-description` (default: `ml-inference-access-key`)
+- `--access-key-ttl` (default: 30 days)
+
 ## Safe handling
 
-- Treat the returned API key as a secret.
-- Show it only when the user explicitly needs it.
-- Prefer moving it immediately into an env var or OpenClaw secret ref.
-- Do not paste the raw key into config files unless the user asked for plaintext.
+- Treat the returned API key and access key as secrets.
+- Show them only when the user explicitly needs them.
+- Prefer moving them immediately into env vars or OpenClaw secret refs.
+- Do not paste raw keys into config files unless the user asked for plaintext.
 
 ## What to return after a successful run
 
 1. The created service account ID.
-2. The created API key ID.
-3. The Foundation Models API key secret, if the user asked to see it.
-4. Next step: tell the user they can now use the key with Cloud.ru Foundation Models API.
+2. The Foundation Models API key ID and secret (for `CLOUD_RU_FOUNDATION_MODELS_API_KEY`).
+3. The IAM access key credentials (for `CP_CONSOLE_KEY_ID` and `CP_CONSOLE_SECRET`).
+4. The project ID (for `PROJECT_ID`).
+5. A summary of which env vars to set:
+   ```
+   export CLOUD_RU_FOUNDATION_MODELS_API_KEY=<api_key_secret>
+   export CP_CONSOLE_KEY_ID=<access_key_key_id>
+   export CP_CONSOLE_SECRET=<access_key_secret>
+   export PROJECT_ID=<project_id>
+   ```
+6. Next step: tell the user they can now use Cloud.ru Foundation Models and ML Inference.

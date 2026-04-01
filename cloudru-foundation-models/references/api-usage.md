@@ -43,7 +43,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="ai-sage/GigaChat3-10B-A1.8B",
+    model="openai/gpt-oss-120b",
     messages=[
         {"role": "user", "content": "How do I write cleaner Python?"}
     ],
@@ -55,5 +55,5 @@ print(response.choices[0].message.content)
 ## Notes
 
 - Model IDs can contain `/`. Keep the full model ID unchanged when you call the API.
-- When you wire the model into OpenClaw via a custom provider, the full model ref becomes `provider/<model-id>`, for example `cloudru-foundation/GigaChat/GigaChat-2-Max`.
+- When you wire the model into OpenClaw via a custom provider, the full model ref becomes `provider/<model-id>`, for example `cloudru-foundation/openai/gpt-oss-120b`.
 - The public Cloud.ru product page currently advertises text models, embedding and reranker models, Whisper, and OCR models. Still prefer querying `/models` at runtime because the catalog can change.
