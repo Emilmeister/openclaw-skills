@@ -1,0 +1,6895 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Model Run Users Api",
+    "version": "1.0"
+  },
+  "tags": [
+    {
+      "name": "ContainerInferenceService"
+    },
+    {
+      "name": "ModelAnalyzer"
+    },
+    {
+      "name": "ModelrunHandler"
+    },
+    {
+      "name": "ModelrunCommons"
+    },
+    {
+      "name": "ModelrunModelVault"
+    },
+    {
+      "name": "ModelrunQuotasHandler"
+    },
+    {
+      "name": "ModelrunUsageStatsService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/modelruns/dynamical_serving_options/{runtimeTemplateId}": {
+      "get": {
+        "operationId": "ModelrunCommons_GetServingOptions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/contractsGetServingOptionsResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "runtimeTemplateId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ModelrunCommons"
+        ]
+      }
+    },
+    "/modelruns/framework_types": {
+      "get": {
+        "operationId": "ModelrunCommons_GetFrameworkTypes",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/contractsEnumResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "ModelrunCommons"
+        ]
+      }
+    },
+    "/modelruns/history_event_types": {
+      "get": {
+        "operationId": "ModelrunCommons_GetHistoryEventTypes",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/contractsEnumResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "ModelrunCommons"
+        ]
+      }
+    },
+    "/modelruns/instance_types": {
+      "get": {
+        "operationId": "ModelrunCommons_GetInstanceType",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/contractsGetInstanceTypesResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "ModelrunCommons"
+        ]
+      }
+    },
+    "/modelruns/resource_types": {
+      "get": {
+        "operationId": "ModelrunCommons_GetResourceTypes",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/contractsEnumResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "ModelrunCommons"
+        ]
+      }
+    },
+    "/modelruns/serving_options/{frameworkType}": {
+      "get": {
+        "operationId": "ModelrunCommons_ListServingOptions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/contractsListServingOptionsResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "frameworkType",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "enum": [
+              "FrameworkType_NONE",
+              "FrameworkType_TRANSFORMERS",
+              "FrameworkType_TEXT_GENERATION_INFERENCE",
+              "FrameworkType_DIFFUSERS",
+              "FrameworkType_OLLAMA",
+              "FrameworkType_VLLM",
+              "FrameworkType_SGLANG",
+              "FrameworkType_CONTAINER",
+              "FrameworkType_COMFY_UI",
+              "FrameworkType_TIMM"
+            ]
+          }
+        ],
+        "tags": [
+          "ModelrunCommons"
+        ]
+      }
+    },
+    "/modelruns/statuses": {
+      "get": {
+        "operationId": "ModelrunCommons_GetModelrunStatuses",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/contractsEnumResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "ModelrunCommons"
+        ]
+      }
+    },
+    "/modelruns/task_types": {
+      "get": {
+        "operationId": "ModelrunCommons_GetTaskTypes",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/contractsEnumResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "ModelrunCommons"
+        ]
+      }
+    },
+    "/predefined-models": {
+      "get": {
+        "operationId": "ModelrunModelVault_SearchModelCard",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1SearchModelCardResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filterFields.taskType",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "ModelTaskType_NONE",
+                "ModelTaskType_AUDIO_CLASSIFICATION",
+                "ModelTaskType_AUTOMATIC_SPEECH_RECOGNITION",
+                "ModelTaskType_FEATURE_EXTRACTION",
+                "ModelTaskType_TEXT_CLASSIFICATION",
+                "ModelTaskType_TOKEN_CLASSIFICATION",
+                "ModelTaskType_QUESTION_ANSWERING",
+                "ModelTaskType_TABLE_QUESTION_ANSWERING",
+                "ModelTaskType_VISUAL_QUESTION_ANSWERING",
+                "ModelTaskType_FILL_MASK",
+                "ModelTaskType_SUMMARIZATION",
+                "ModelTaskType_TRANSLATION",
+                "ModelTaskType_TEXT_2_TEXT_GENERATION",
+                "ModelTaskType_TEXT_GENERATION",
+                "ModelTaskType_ZERO_SHOT_CLASSIFICATION",
+                "ModelTaskType_ZERO_SHOT_IMAGE_CLASSIFICATION",
+                "ModelTaskType_CONVERSATIONAL",
+                "ModelTaskType_IMAGE_CLASSIFICATION",
+                "ModelTaskType_IMAGE_SEGMENTATION",
+                "ModelTaskType_OBJECT_DETECTION",
+                "ModelTaskType_TEXT_2_IMAGE_GENERATION",
+                "ModelTaskType_INPAINTING_GENERATION",
+                "ModelTaskType_IMAGE_TO_IMAGE_GENERATION",
+                "ModelTaskType_GENERATE",
+                "ModelTaskType_EMBEDDING",
+                "ModelTaskType_EMBED",
+                "ModelTaskType_CLASSIFY",
+                "ModelTaskType_SCORE",
+                "ModelTaskType_REWARD",
+                "ModelTaskType_CONTAINER"
+              ]
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "filterFields.vendor",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "required": [
+                "false"
+              ]
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "filterFields.allowedGpu",
+            "description": " - ResourceType_GPU_V100_PCIE: reserved from 6 to 20",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "ResourceType_NONE",
+                "ResourceType_CPU",
+                "ResourceType_GPU_V100",
+                "ResourceType_GPU_A100",
+                "ResourceType_GPU_H100",
+                "ResourceType_DISK",
+                "ResourceType_GPU_V100_PCIE",
+                "ResourceType_GPU_A100_PCIE",
+                "ResourceType_GPU_H100_PCIE",
+                "ResourceType_GPU_V100_NVLINK",
+                "ResourceType_GPU_A100_NVLINK",
+                "ResourceType_GPU_H100_NVLINK"
+              ]
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "filterFields.tags",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "required": [
+                "false"
+              ]
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "filterFields.gpuCountRange.from",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "filterFields.gpuCountRange.to",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "filterFields.paramsBn.from",
+            "in": "query",
+            "required": false,
+            "type": "number",
+            "format": "double"
+          },
+          {
+            "name": "filterFields.paramsBn.to",
+            "in": "query",
+            "required": false,
+            "type": "number",
+            "format": "double"
+          },
+          {
+            "name": "filterFields.gpuMemoryAllocRange.from",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "filterFields.gpuMemoryAllocRange.to",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "filterFields.priceRange.from",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filterFields.priceRange.to",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filterFields.contextK.from",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "filterFields.contextK.to",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "SORT_TYPE_NONE",
+              "SORT_TYPE_POPULARITY_DESC",
+              "SORT_TYPE_POPULARITY_ASC",
+              "SORT_TYPE_PRICE_DESC",
+              "SORT_TYPE_PRICE_ASC",
+              "SORT_TYPE_CONTEXT_DESC",
+              "SORT_TYPE_CONTEXT_ASC",
+              "SORT_TYPE_PARAMS_BN_DESC",
+              "SORT_TYPE_PARAMS_BN_ASC"
+            ],
+            "default": "SORT_TYPE_NONE"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "ModelrunModelVault"
+        ]
+      }
+    },
+    "/predefined-models/tags": {
+      "get": {
+        "operationId": "ModelrunModelVault_ListTags",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListTagsResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "ModelrunModelVault"
+        ]
+      }
+    },
+    "/predefined-models/task-types": {
+      "get": {
+        "operationId": "ModelrunModelVault_ListTaskTypes",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListTaskTypesResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "ModelrunModelVault"
+        ]
+      }
+    },
+    "/predefined-models/vendors": {
+      "get": {
+        "operationId": "ModelrunModelVault_ListVendors",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListVendorsResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "ModelrunModelVault"
+        ]
+      }
+    },
+    "/predefined-models/{id}": {
+      "get": {
+        "operationId": "ModelrunModelVault_GetModelCard",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetModelCardResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          }
+        ],
+        "tags": [
+          "ModelrunModelVault"
+        ]
+      }
+    },
+    "/stats/requests/all": {
+      "get": {
+        "summary": "Get all requests with pagination",
+        "description": "Retrieves detailed request history with pagination support",
+        "operationId": "ModelrunUsageStatsService_GetAllRequests",
+        "responses": {
+          "200": {
+            "description": "Successful response with paginated request data",
+            "schema": {
+              "$ref": ".cloudru.evo.inference.foundation_models.usage_stats.v1.service.contracts.GetAllRequestsResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "startDate",
+            "description": "Start date for the request logs period (UTC)",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "endDate",
+            "description": "End date for the request logs period (UTC)",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "pagination.limit",
+            "description": "Maximum number of items to return (1-100)",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "pagination.offset",
+            "description": "Number of items to skip",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "withServiceAccountId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "projectId",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "resourceId",
+            "description": "ID of the resource",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uuid"
+          }
+        ],
+        "tags": [
+          "Requests"
+        ]
+      }
+    },
+    "/stats/requests/charts": {
+      "get": {
+        "summary": "Get request statistics",
+        "description": "Retrieves request statistics for a specified time period with configurable bar frequency",
+        "operationId": "ModelrunUsageStatsService_GetChartRequestStats",
+        "responses": {
+          "200": {
+            "description": "Successful response with request statistics",
+            "schema": {
+              "$ref": ".cloudru.evo.inference.foundation_models.usage_stats.v1.service.contracts.GetRequestsStatsResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "startDate",
+            "description": "Start date for the statistics period (UTC)",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "endDate",
+            "description": "End date for the statistics period (UTC)",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "barDuration",
+            "description": "Duration of each time bar in seconds (e.g., '3600s' for 1 hour)",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "barsCount",
+            "description": "Number of bars to divide the time period into",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "projectId",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "resourceId",
+            "description": "ID of the resource",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uuid"
+          }
+        ],
+        "tags": [
+          "Requests"
+        ]
+      }
+    },
+    "/stats/requests/per-service-account": {
+      "get": {
+        "summary": "Get request statistics model",
+        "description": "Retrieves request statistics per service account for a specified time period",
+        "operationId": "ModelrunUsageStatsService_GetAggregatedRequestStats",
+        "responses": {
+          "200": {
+            "description": "Successful response with request statistics model",
+            "schema": {
+              "$ref": ".cloudru.evo.inference.foundation_models.usage_stats.v1.service.contracts.GetRequestsStatsModelResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "startDate",
+            "description": "Start date for the statistics period (UTC)",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "endDate",
+            "description": "End date for the statistics period (UTC)",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "projectId",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "resourceId",
+            "description": "ID of the resource",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "periodDuration",
+            "description": "Duration of each aggregation period in seconds (e.g., '3600s' for 1 hour)",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "periodsCount",
+            "description": "Number of periods to divide the time period into",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "Requests"
+        ]
+      }
+    },
+    "/stats/tokens/charts": {
+      "get": {
+        "summary": "Get token usage statistics",
+        "description": "Retrieves token usage statistics for a specified time period with configurable bar frequency",
+        "operationId": "ModelrunUsageStatsService_GetChartTokenStats",
+        "responses": {
+          "200": {
+            "description": "Successful response with token statistics",
+            "schema": {
+              "$ref": ".cloudru.evo.inference.foundation_models.usage_stats.v1.service.contracts.GetTokensStatsResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "startDate",
+            "description": "Start date for the statistics period (UTC)",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "endDate",
+            "description": "End date for the statistics period (UTC)",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "barDuration",
+            "description": "Duration of each time bar in seconds (e.g., '3600s' for 1 hour)",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "barsCount",
+            "description": "Number of bars to divide the time period into",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "projectId",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "resourceId",
+            "description": "ID of the resource",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "tokensType",
+            "description": "Tokens type to count in statistic. Available values: REQUEST, RESPONSE, REQUEST_RESPONSE",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "TOKEN_TYPE_NONE",
+              "REQUEST",
+              "RESPONSE",
+              "REQUEST_RESPONSE"
+            ],
+            "default": "TOKEN_TYPE_NONE"
+          }
+        ],
+        "tags": [
+          "Tokens"
+        ]
+      }
+    },
+    "/stats/tokens/per-service-account": {
+      "get": {
+        "summary": "Активность -\u003e Статистика использования моделей -\u003e Виджет при открытии на весь экран",
+        "operationId": "ModelrunUsageStatsService_GetAggregatedTokenStats",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetAggregatedTokenStatsResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "startDate",
+            "description": "Start date for the statistics period (UTC)",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "endDate",
+            "description": "End date for the statistics period (UTC)",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "projectId",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "resourceId",
+            "description": "ID of the resource",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "periodDuration",
+            "description": "Duration of each aggregation period in seconds (e.g., '3600s' for 1 hour)",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "periodsCount",
+            "description": "Number of periods to divide the time period into",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "tokensType",
+            "description": "Tokens type to count in statistic. Available values: REQUEST, RESPONSE, REQUEST_RESPONSE",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "TOKEN_TYPE_NONE",
+              "REQUEST",
+              "RESPONSE",
+              "REQUEST_RESPONSE"
+            ],
+            "default": "TOKEN_TYPE_NONE"
+          }
+        ],
+        "tags": [
+          "ModelrunUsageStatsService"
+        ]
+      }
+    },
+    "/{projectId}/containers": {
+      "get": {
+        "operationId": "ContainerInferenceService_Search",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/contractsSearchContainerResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "pagination.limit",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.offset",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.ordering",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "pagination.filterFields",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "pagination.search",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ContainerInferenceService"
+        ]
+      },
+      "post": {
+        "operationId": "ContainerInferenceService_Create",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/contractsCreateContainerResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/serviceContainerInferenceServiceCreateBody"
+            }
+          }
+        ],
+        "tags": [
+          "ContainerInferenceService"
+        ]
+      }
+    },
+    "/{projectId}/containers/{id}": {
+      "get": {
+        "operationId": "ContainerInferenceService_Detail",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/contractsGetContainerResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          }
+        ],
+        "tags": [
+          "ContainerInferenceService"
+        ]
+      },
+      "delete": {
+        "operationId": "ContainerInferenceService_Delete",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/contractsDeleteContainerResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          }
+        ],
+        "tags": [
+          "ContainerInferenceService"
+        ]
+      },
+      "put": {
+        "operationId": "ContainerInferenceService_Update",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/contractsUpdateContainerResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/serviceContainerInferenceServiceUpdateBody"
+            }
+          }
+        ],
+        "tags": [
+          "ContainerInferenceService"
+        ]
+      }
+    },
+    "/{projectId}/containers/{id}/history": {
+      "get": {
+        "operationId": "ContainerInferenceService_History",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/servicecontractsGetHistoryResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          }
+        ],
+        "tags": [
+          "ContainerInferenceService"
+        ]
+      }
+    },
+    "/{projectId}/containers/{id}/resume": {
+      "patch": {
+        "operationId": "ContainerInferenceService_Resume",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/contractsResumeContainerResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/serviceContainerInferenceServiceResumeBody"
+            }
+          }
+        ],
+        "tags": [
+          "ContainerInferenceService"
+        ]
+      }
+    },
+    "/{projectId}/containers/{id}/suspend": {
+      "patch": {
+        "operationId": "ContainerInferenceService_Suspend",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/contractsSuspendContainerResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/serviceContainerInferenceServiceSuspendBody"
+            }
+          }
+        ],
+        "tags": [
+          "ContainerInferenceService"
+        ]
+      }
+    },
+    "/{projectId}/ml_inference_project_info/is_virgin_project": {
+      "get": {
+        "operationId": "ModelrunCommons_IsVirginProject",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/contractsIsVirginProjectResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          }
+        ],
+        "tags": [
+          "ModelrunCommons"
+        ]
+      }
+    },
+    "/{projectId}/modelruns": {
+      "get": {
+        "operationId": "ModelrunHandler_Search",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1SearchModelRunResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "description": "cloud_ru.pagination.v1.PaginationRequest pagination = 1;",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "pagination.limit",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.offset",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.ordering",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "pagination.filterFields",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "pagination.search",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "description": " - MODEL_RUN_STATUS_NONE: Техническое значение\n - MODEL_RUN_STATUS_RESOURCE_ALLOCATION: Ожидание ресурсов\n - MODEL_RUN_STATUS_PULLING: Запуск модели\n - MODEL_RUN_STATUS_RUNNING: Запущено\n - MODEL_RUN_STATUS_ON_SUSPENSION: Останавливается\n - MODEL_RUN_STATUS_SUSPENDED: Остановлен\n - MODEL_RUN_STATUS_ON_DELETION: Удаляется\n - MODEL_RUN_STATUS_DELETED: Удален\n - MODEL_RUN_STATUS_FAILED: Ошибка\n - MODEL_RUN_STATUS_COOLED: Приостановлен\n - MODEL_RUN_STATUS_RUNTIME_INITIALIZING: Modelrun запускается",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "MODEL_RUN_STATUS_NONE",
+                "MODEL_RUN_STATUS_RESOURCE_ALLOCATION",
+                "MODEL_RUN_STATUS_PULLING",
+                "MODEL_RUN_STATUS_RUNNING",
+                "MODEL_RUN_STATUS_ON_SUSPENSION",
+                "MODEL_RUN_STATUS_SUSPENDED",
+                "MODEL_RUN_STATUS_ON_DELETION",
+                "MODEL_RUN_STATUS_DELETED",
+                "MODEL_RUN_STATUS_FAILED",
+                "MODEL_RUN_STATUS_COOLED",
+                "MODEL_RUN_STATUS_RUNTIME_INITIALIZING"
+              ]
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "modelTaskType",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "ModelTaskType_NONE",
+              "ModelTaskType_AUDIO_CLASSIFICATION",
+              "ModelTaskType_AUTOMATIC_SPEECH_RECOGNITION",
+              "ModelTaskType_FEATURE_EXTRACTION",
+              "ModelTaskType_TEXT_CLASSIFICATION",
+              "ModelTaskType_TOKEN_CLASSIFICATION",
+              "ModelTaskType_QUESTION_ANSWERING",
+              "ModelTaskType_TABLE_QUESTION_ANSWERING",
+              "ModelTaskType_VISUAL_QUESTION_ANSWERING",
+              "ModelTaskType_FILL_MASK",
+              "ModelTaskType_SUMMARIZATION",
+              "ModelTaskType_TRANSLATION",
+              "ModelTaskType_TEXT_2_TEXT_GENERATION",
+              "ModelTaskType_TEXT_GENERATION",
+              "ModelTaskType_ZERO_SHOT_CLASSIFICATION",
+              "ModelTaskType_ZERO_SHOT_IMAGE_CLASSIFICATION",
+              "ModelTaskType_CONVERSATIONAL",
+              "ModelTaskType_IMAGE_CLASSIFICATION",
+              "ModelTaskType_IMAGE_SEGMENTATION",
+              "ModelTaskType_OBJECT_DETECTION",
+              "ModelTaskType_TEXT_2_IMAGE_GENERATION",
+              "ModelTaskType_INPAINTING_GENERATION",
+              "ModelTaskType_IMAGE_TO_IMAGE_GENERATION",
+              "ModelTaskType_GENERATE",
+              "ModelTaskType_EMBEDDING",
+              "ModelTaskType_EMBED",
+              "ModelTaskType_CLASSIFY",
+              "ModelTaskType_SCORE",
+              "ModelTaskType_REWARD",
+              "ModelTaskType_CONTAINER"
+            ],
+            "default": "ModelTaskType_NONE"
+          }
+        ],
+        "tags": [
+          "ModelrunHandler"
+        ]
+      },
+      "post": {
+        "operationId": "ModelrunHandler_Create",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateModelRunResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ModelrunHandlerCreateBody"
+            }
+          }
+        ],
+        "tags": [
+          "ModelrunHandler"
+        ]
+      }
+    },
+    "/{projectId}/modelruns/analyze": {
+      "post": {
+        "operationId": "ModelAnalyzer_AnalyzeModel",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AnalyzeModelResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ModelAnalyzerAnalyzeModelBody"
+            }
+          }
+        ],
+        "tags": [
+          "ModelAnalyzer"
+        ]
+      }
+    },
+    "/{projectId}/modelruns/analyze_lora": {
+      "post": {
+        "operationId": "ModelAnalyzer_AnalyzeLora",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AnalyzeLoraResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ModelAnalyzerAnalyzeLoraBody"
+            }
+          }
+        ],
+        "tags": [
+          "ModelAnalyzer"
+        ]
+      }
+    },
+    "/{projectId}/modelruns/bulk_analyze_lora": {
+      "post": {
+        "operationId": "ModelAnalyzer_BulkAnalyzeLora",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1BulkAnalyzeLoraResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ModelAnalyzerBulkAnalyzeLoraBody"
+            }
+          }
+        ],
+        "tags": [
+          "ModelAnalyzer"
+        ]
+      }
+    },
+    "/{projectId}/modelruns/bulk_versions": {
+      "post": {
+        "operationId": "ModelAnalyzer_BulkGetModelVersions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1BulkGetRepositoryInfoResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ModelAnalyzerBulkGetModelVersionsBody"
+            }
+          }
+        ],
+        "tags": [
+          "ModelAnalyzer"
+        ]
+      }
+    },
+    "/{projectId}/modelruns/list_files": {
+      "post": {
+        "operationId": "ModelAnalyzer_ListFiles",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListFilesResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ModelAnalyzerListFilesBody"
+            }
+          }
+        ],
+        "tags": [
+          "ModelAnalyzer"
+        ]
+      }
+    },
+    "/{projectId}/modelruns/versions": {
+      "post": {
+        "operationId": "ModelAnalyzer_GetModelVersions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetRepositoryInfoResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ModelAnalyzerGetModelVersionsBody"
+            }
+          }
+        ],
+        "tags": [
+          "ModelAnalyzer"
+        ]
+      }
+    },
+    "/{projectId}/modelruns/{modelRunId}": {
+      "get": {
+        "operationId": "ModelrunHandler_Detail",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetModelRunResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "modelRunId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          }
+        ],
+        "tags": [
+          "ModelrunHandler"
+        ]
+      },
+      "delete": {
+        "operationId": "ModelrunHandler_Delete",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteModelRunResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "modelRunId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          }
+        ],
+        "tags": [
+          "ModelrunHandler"
+        ]
+      },
+      "put": {
+        "operationId": "ModelrunHandler_Update",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpdateModelRunResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "modelRunId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ModelrunHandlerUpdateBody"
+            }
+          }
+        ],
+        "tags": [
+          "ModelrunHandler"
+        ]
+      }
+    },
+    "/{projectId}/modelruns/{modelRunId}/history": {
+      "get": {
+        "operationId": "ModelrunHandler_History",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/users_apiv1GetHistoryResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "modelRunId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          }
+        ],
+        "tags": [
+          "ModelrunHandler"
+        ]
+      }
+    },
+    "/{projectId}/modelruns/{modelRunId}/resume": {
+      "patch": {
+        "operationId": "ModelrunHandler_Resume",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ResumeModelRunResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "modelRunId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ModelrunHandlerResumeBody"
+            }
+          }
+        ],
+        "tags": [
+          "ModelrunHandler"
+        ]
+      }
+    },
+    "/{projectId}/modelruns/{modelRunId}/suspend": {
+      "patch": {
+        "operationId": "ModelrunHandler_Suspend",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1SuspendModelRunResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "modelRunId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ModelrunHandlerSuspendBody"
+            }
+          }
+        ],
+        "tags": [
+          "ModelrunHandler"
+        ]
+      }
+    },
+    "/{projectId}/quotas": {
+      "get": {
+        "operationId": "ModelrunQuotasHandler_ListQuotas",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListQuotasResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          }
+        ],
+        "tags": [
+          "ModelrunQuotasHandler"
+        ]
+      }
+    },
+    "/{projectId}/quotas/{resourceType}": {
+      "get": {
+        "operationId": "ModelrunQuotasHandler_GetQuota",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1QuotaResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "resourceType",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "enum": [
+              "ResourceType_NONE",
+              "ResourceType_CPU",
+              "ResourceType_GPU_V100",
+              "ResourceType_GPU_A100",
+              "ResourceType_GPU_H100",
+              "ResourceType_DISK",
+              "ResourceType_GPU_V100_PCIE",
+              "ResourceType_GPU_A100_PCIE",
+              "ResourceType_GPU_H100_PCIE",
+              "ResourceType_GPU_V100_NVLINK",
+              "ResourceType_GPU_A100_NVLINK",
+              "ResourceType_GPU_H100_NVLINK"
+            ]
+          }
+        ],
+        "tags": [
+          "ModelrunQuotasHandler"
+        ]
+      }
+    },
+    "/{projectId}/runtime_templates": {
+      "get": {
+        "operationId": "ModelrunHandler_ListRuntimeTemplate",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1SearchRuntimeTemplateResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "frameworkType",
+            "description": " - FrameworkType_NONE: Техническое значение\n - FrameworkType_TRANSFORMERS: Трансформеры\n - FrameworkType_TEXT_GENERATION_INFERENCE: Генерация текста\n - FrameworkType_DIFFUSERS: Диффузеры\n - FrameworkType_OLLAMA: Оллама\n - FrameworkType_VLLM: Vllm\n - FrameworkType_SGLANG: Sglang\n - FrameworkType_CONTAINER: Container\n - FrameworkType_COMFY_UI: Comfy-UI\n - FrameworkType_TIMM: Генерация текста",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "FrameworkType_NONE",
+              "FrameworkType_TRANSFORMERS",
+              "FrameworkType_TEXT_GENERATION_INFERENCE",
+              "FrameworkType_DIFFUSERS",
+              "FrameworkType_OLLAMA",
+              "FrameworkType_VLLM",
+              "FrameworkType_SGLANG",
+              "FrameworkType_CONTAINER",
+              "FrameworkType_COMFY_UI",
+              "FrameworkType_TIMM"
+            ],
+            "default": "FrameworkType_NONE"
+          },
+          {
+            "name": "isActive",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "ModelrunHandler"
+        ]
+      }
+    },
+    "/{projectId}/runtime_templates/{id}": {
+      "get": {
+        "operationId": "ModelrunHandler_GetRuntimeTemplate",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetRuntimeTemplateResponse"
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Необходима авторизация",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          }
+        ],
+        "tags": [
+          "ModelrunHandler"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "ModelAnalyzerAnalyzeLoraBody": {
+      "type": "object",
+      "properties": {
+        "modelSource": {
+          "$ref": "#/definitions/users_apiv1ModelSource"
+        }
+      }
+    },
+    "ModelAnalyzerAnalyzeModelBody": {
+      "type": "object",
+      "properties": {
+        "modelSource": {
+          "$ref": "#/definitions/users_apiv1ModelSource"
+        },
+        "frameworkType": {
+          "$ref": "#/definitions/users_apiv1FrameworkType"
+        }
+      }
+    },
+    "ModelAnalyzerBulkAnalyzeLoraBody": {
+      "type": "object",
+      "properties": {
+        "requests": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1AnalyzeLoraRequestKey"
+          }
+        }
+      }
+    },
+    "ModelAnalyzerBulkGetModelVersionsBody": {
+      "type": "object",
+      "properties": {
+        "requests": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1GetRepositoryInfoRequestKey"
+          }
+        }
+      }
+    },
+    "ModelAnalyzerGetModelVersionsBody": {
+      "type": "object",
+      "properties": {
+        "modelSource": {
+          "$ref": "#/definitions/users_apiv1ModelSource"
+        }
+      }
+    },
+    "ModelAnalyzerListFilesBody": {
+      "type": "object",
+      "properties": {
+        "modelSource": {
+          "$ref": "#/definitions/users_apiv1ModelSource"
+        },
+        "frameworkType": {
+          "$ref": "#/definitions/users_apiv1FrameworkType"
+        }
+      }
+    },
+    "commonAutoUpdateOptions": {
+      "type": "object",
+      "properties": {
+        "imageSource": {
+          "$ref": "#/definitions/commonAutoUpdateOptionsImageSource"
+        }
+      }
+    },
+    "commonAutoUpdateOptionsImageSource": {
+      "type": "object",
+      "properties": {
+        "tag": {
+          "type": "string"
+        }
+      }
+    },
+    "commonContainerDetails": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "projectId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/users_apiv1ModelRunStatus"
+        },
+        "statusReason": {
+          "type": "string",
+          "format": "object"
+        },
+        "imageUri": {
+          "type": "string"
+        },
+        "scaling": {
+          "$ref": "#/definitions/users_apiv1Scaling"
+        },
+        "containerOptions": {
+          "$ref": "#/definitions/v1commonContainerOptions"
+        },
+        "instanceType": {
+          "$ref": "#/definitions/commonInstanceTypeDetails"
+        },
+        "options": {
+          "$ref": "#/definitions/v1commonModelRunOptions"
+        },
+        "instanceConfigurationType": {
+          "$ref": "#/definitions/v1container_inferencecommonInstanceConfigurationType"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "publicUrl": {
+          "type": "string"
+        },
+        "updatedBy": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "additionalPorts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/container_inferencecommonPort"
+          }
+        }
+      }
+    },
+    "commonHttpProbeCommand": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "headers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "port": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "commonInstanceTypeDetails": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string"
+        },
+        "gpuGbMemory": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "gpuCount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "resourceType": {
+          "$ref": "#/definitions/users_apiv1ResourceType"
+        },
+        "instanceConfigurationType": {
+          "$ref": "#/definitions/v1container_inferencecommonInstanceConfigurationType"
+        }
+      }
+    },
+    "commonLivenessProbe": {
+      "type": "object",
+      "properties": {
+        "initialDelaySeconds": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "periodSeconds": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "successThreshold": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "failureThreshold": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "terminationGracePeriodSeconds": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "command": {
+          "$ref": "#/definitions/commonProbeCommand"
+        }
+      }
+    },
+    "commonParameterType": {
+      "type": "string",
+      "enum": [
+        "PARAMETER_TYPE_NONE",
+        "PARAMETER_TYPE_ARG_KV",
+        "PARAMETER_TYPE_ARG_FLAG",
+        "PARAMETER_TYPE_ENV"
+      ],
+      "default": "PARAMETER_TYPE_NONE"
+    },
+    "commonProbeCommand": {
+      "type": "object",
+      "properties": {
+        "httpGet": {
+          "$ref": "#/definitions/commonHttpProbeCommand"
+        },
+        "exec": {
+          "$ref": "#/definitions/commonShellProbeCommand",
+          "title": "TcpProbeCommand  tcp_socket = 2;\n   GrpcProbeCommand  grpc = 3;"
+        }
+      }
+    },
+    "commonReadinessProbe": {
+      "type": "object",
+      "properties": {
+        "initialDelaySeconds": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "periodSeconds": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "successThreshold": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "failureThreshold": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "terminationGracePeriodSeconds": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "command": {
+          "$ref": "#/definitions/commonProbeCommand"
+        }
+      }
+    },
+    "commonShellProbeCommand": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string"
+        }
+      }
+    },
+    "commonVersionType": {
+      "type": "string",
+      "enum": [
+        "VERSION_TYPE_NONE",
+        "VERSION_TYPE_RC",
+        "VERSION_TYPE_STABLE"
+      ],
+      "default": "VERSION_TYPE_NONE"
+    },
+    "container_inferencecommonHistoryEvent": {
+      "type": "object",
+      "properties": {
+        "before": {
+          "$ref": "#/definitions/commonContainerDetails"
+        },
+        "after": {
+          "$ref": "#/definitions/commonContainerDetails"
+        },
+        "authorId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "version": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "eventType": {
+          "$ref": "#/definitions/v1HistoryEventType"
+        }
+      }
+    },
+    "container_inferencecommonPort": {
+      "type": "object",
+      "properties": {
+        "number": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "isServerless": {
+          "type": "boolean"
+        },
+        "publicUrl": {
+          "type": "string"
+        }
+      }
+    },
+    "contractsCreateContainerResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "contractsDeleteContainerResponse": {
+      "type": "object"
+    },
+    "contractsEnumResponse": {
+      "type": "object",
+      "properties": {
+        "enumValues": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "contractsGetContainerResponse": {
+      "type": "object",
+      "properties": {
+        "container": {
+          "$ref": "#/definitions/commonContainerDetails"
+        }
+      }
+    },
+    "contractsGetInstanceTypesResponse": {
+      "type": "object",
+      "properties": {
+        "instanceTypes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/commonInstanceTypeDetails"
+          }
+        }
+      }
+    },
+    "contractsGetServingOptionsResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/serviceParameter"
+          }
+        },
+        "version": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "frameworkType": {
+          "$ref": "#/definitions/modelrunframework_registryv1commonFrameworkType"
+        },
+        "modelTasks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/users_apiv1ModelTaskType"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "versionType": {
+          "$ref": "#/definitions/commonVersionType"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "contractsIsVirginProjectResponse": {
+      "type": "object",
+      "properties": {
+        "isVirginModelRun": {
+          "type": "boolean"
+        },
+        "isVirginContainerInference": {
+          "type": "boolean"
+        }
+      }
+    },
+    "contractsListServingOptionsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/contractsServingOptionResponse"
+          }
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/servicecontractsOption"
+          }
+        }
+      }
+    },
+    "contractsResumeContainerResponse": {
+      "type": "object"
+    },
+    "contractsSearchContainerResponse": {
+      "type": "object",
+      "properties": {
+        "containers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/commonContainerDetails"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "contractsServingOptionResponse": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/v1FieldType"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/users_apiv1Tag"
+          }
+        },
+        "default": {
+          "$ref": "#/definitions/protobufAny"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/servicecontractsOption"
+          }
+        }
+      }
+    },
+    "contractsSuspendContainerResponse": {
+      "type": "object"
+    },
+    "contractsUpdateContainerResponse": {
+      "type": "object"
+    },
+    "modelrunframework_registryv1commonFrameworkType": {
+      "type": "string",
+      "enum": [
+        "FRAMEWORK_TYPE_NONE",
+        "FRAMEWORK_TYPE_VLLM",
+        "FRAMEWORK_TYPE_SGLANG",
+        "FRAMEWORK_TYPE_OLLAMA",
+        "FRAMEWORK_TYPE_DIFFUSERS",
+        "FRAMEWORK_TYPE_TRANSFORMERS",
+        "FRAMEWORK_TYPE_TGI"
+      ],
+      "default": "FRAMEWORK_TYPE_NONE"
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string",
+          "description": "A URL/resource name that uniquely identifies the type of the serialized\nprotocol buffer message. This string must contain at least\none \"/\" character. The last segment of the URL's path must represent\nthe fully qualified name of the type (as in\n`path/google.protobuf.Duration`). The name should be in a canonical form\n(e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they\nexpect it to use in the context of Any. However, for URLs which use the\nscheme `http`, `https`, or no scheme, one can optionally set up a type\nserver that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed.\n* An HTTP GET on the URL must yield a [google.protobuf.Type][]\n  value in binary format, or produce an error.\n* Applications are allowed to cache lookup results based on the\n  URL, or have them precompiled into a binary to avoid any\n  lookup. Therefore, binary compatibility needs to be preserved\n  on changes to types. (Use versioned type names to manage\n  breaking changes.)\n\nNote: this functionality is not currently available in the official\nprotobuf release, and it is not used for type URLs beginning with\ntype.googleapis.com. As of May 2023, there are no widely used type server\nimplementations and no plans to implement one.\n\nSchemes other than `http`, `https` (or the empty scheme) might be\nused with implementation specific semantics."
+        }
+      },
+      "additionalProperties": {},
+      "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(\u0026foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n    // or ...\n    if (any.isSameTypeAs(Foo.getDefaultInstance())) {\n      foo = any.unpack(Foo.getDefaultInstance());\n    }\n\n Example 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\n Example 4: Pack and unpack a message in Go\n\n     foo := \u0026pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := \u0026pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\nJSON\n====\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": \u003cstring\u003e,\n      \"lastName\": \u003cstring\u003e\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
+    },
+    "protobufNullValue": {
+      "type": "string",
+      "enum": [
+        "NULL_VALUE"
+      ],
+      "default": "NULL_VALUE",
+      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\nThe JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "serviceContainerInferenceServiceCreateBody": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "imageUri": {
+          "type": "string"
+        },
+        "scaling": {
+          "$ref": "#/definitions/users_apiv1Scaling"
+        },
+        "containerOptions": {
+          "$ref": "#/definitions/v1commonContainerOptions"
+        },
+        "instanceTypeId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "options": {
+          "$ref": "#/definitions/v1commonModelRunOptions"
+        },
+        "instanceConfigurationType": {
+          "$ref": "#/definitions/v1container_inferencecommonInstanceConfigurationType"
+        }
+      }
+    },
+    "serviceContainerInferenceServiceResumeBody": {
+      "type": "object"
+    },
+    "serviceContainerInferenceServiceSuspendBody": {
+      "type": "object"
+    },
+    "serviceContainerInferenceServiceUpdateBody": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "imageUri": {
+          "type": "string"
+        },
+        "scaling": {
+          "$ref": "#/definitions/users_apiv1Scaling"
+        },
+        "containerOptions": {
+          "$ref": "#/definitions/v1commonContainerOptions"
+        },
+        "instanceTypeId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "options": {
+          "$ref": "#/definitions/v1commonModelRunOptions"
+        },
+        "instanceConfigurationType": {
+          "$ref": "#/definitions/v1container_inferencecommonInstanceConfigurationType"
+        }
+      }
+    },
+    "serviceFieldTypeBool": {
+      "type": "object"
+    },
+    "serviceFieldTypeNumber": {
+      "type": "object"
+    },
+    "serviceFieldTypeSegment": {
+      "type": "object",
+      "properties": {
+        "default": {
+          "$ref": "#/definitions/v1serviceOption"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1serviceOption"
+          }
+        }
+      }
+    },
+    "serviceFieldTypeSelect": {
+      "type": "object",
+      "properties": {
+        "default": {
+          "$ref": "#/definitions/v1serviceOption"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1serviceOption"
+          }
+        }
+      }
+    },
+    "serviceFieldTypeStepper": {
+      "type": "object",
+      "properties": {
+        "min": {
+          "type": "number",
+          "format": "float"
+        },
+        "max": {
+          "type": "number",
+          "format": "float"
+        },
+        "step": {
+          "type": "number",
+          "format": "float"
+        }
+      }
+    },
+    "serviceFieldTypeText": {
+      "type": "object"
+    },
+    "serviceParameter": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "type": {
+          "$ref": "#/definitions/commonParameterType"
+        },
+        "fieldTypeBool": {
+          "$ref": "#/definitions/serviceFieldTypeBool"
+        },
+        "fieldTypeSelect": {
+          "$ref": "#/definitions/serviceFieldTypeSelect"
+        },
+        "fieldTypeStepper": {
+          "$ref": "#/definitions/serviceFieldTypeStepper"
+        },
+        "fieldTypeText": {
+          "$ref": "#/definitions/serviceFieldTypeText"
+        },
+        "fieldTypeSegment": {
+          "$ref": "#/definitions/serviceFieldTypeSegment"
+        },
+        "fieldTypeNumber": {
+          "$ref": "#/definitions/serviceFieldTypeNumber"
+        }
+      }
+    },
+    "servicecontractsGetHistoryResponse": {
+      "type": "object",
+      "properties": {
+        "history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/container_inferencecommonHistoryEvent"
+          }
+        }
+      }
+    },
+    "servicecontractsOption": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "users_apiv1Authentication": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/users_apiv1AuthenticationType"
+        },
+        "serviceAccountId": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "users_apiv1AuthenticationType": {
+      "type": "string",
+      "enum": [
+        "AUTHENTICATION_TYPE_NONE",
+        "AUTHENTICATION_TYPE_TOKEN_BASED",
+        "AUTHENTICATION_TYPE_KEY_BASED"
+      ],
+      "default": "AUTHENTICATION_TYPE_NONE"
+    },
+    "users_apiv1ChatTemplateContentFormat": {
+      "type": "string",
+      "enum": [
+        "ChatTemplateContentFormat_NONE",
+        "ChatTemplateContentFormat_STRING",
+        "ChatTemplateContentFormat_OPENAI"
+      ],
+      "default": "ChatTemplateContentFormat_NONE"
+    },
+    "users_apiv1ConcurrencyType": {
+      "type": "object",
+      "properties": {
+        "soft": {
+          "type": "integer",
+          "format": "int32",
+          "minimum": 1
+        },
+        "hard": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "users_apiv1ContainerOptions": {
+      "type": "object",
+      "properties": {
+        "exposedPorts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/users_apiv1Port"
+          }
+        },
+        "entrypoint": {
+          "type": "string",
+          "default": "python3 -m vllm.entrypoints.openai.api_server"
+        },
+        "envOptions": {
+          "$ref": "#/definitions/users_apiv1EnvironmentOptions"
+        }
+      }
+    },
+    "users_apiv1ContainerPublicUrlCORS": {
+      "type": "object",
+      "properties": {
+        "allowOrigins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "allow_origins - это поле строки, которое указывает origins (источники), которым разрешено выполнять запросы к URL публичного контейнера."
+        },
+        "allowMethods": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "allow_methods - это поле строки, которое указывает методы HTTP, которые разрешены для выполнения запросов к URL публичного контейнера."
+        },
+        "allowHeaders": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "allow_headers - поле строки, которое указывает заголовки, которые разрешено отправлять вместе с запросами к URL публичного контейнера."
+        },
+        "exposeHeaders": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "expose_headers - это поле строки, которое указывает заголовки, которые разрешено раскрывать клиенту при выполнении запросов к URL публичного контейнера."
+        },
+        "allowCredential": {
+          "type": "boolean",
+          "description": "allow_credential - это логическое поле, которое указывает, разрешено ли использование аутентификационных данных (cookies, HTTP Authentication) при выполнении запросов к URL публичного контейнера."
+        }
+      },
+      "title": "ContainerPublicUrlCORS - это структура, которая определяет параметры CORS (Cross-Origin Resource Sharing)\nдля URL публичного контейнера"
+    },
+    "users_apiv1DiffusersOptions": {
+      "type": "object",
+      "properties": {
+        "loraAdapters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/users_apiv1ModelSource"
+          },
+          "title": "Lora adapters"
+        }
+      }
+    },
+    "users_apiv1DistributedExecutorBackend": {
+      "type": "string",
+      "enum": [
+        "DistributedExecutorBackend_NONE",
+        "DistributedExecutorBackend_RAY",
+        "DistributedExecutorBackend_MP",
+        "DistributedExecutorBackend_UNI",
+        "DistributedExecutorBackend_EXTERNAL_LAUNCHER"
+      ],
+      "default": "DistributedExecutorBackend_NONE"
+    },
+    "users_apiv1EnvSecret": {
+      "type": "object",
+      "properties": {
+        "secret": {
+          "type": "string"
+        },
+        "secretLocator": {
+          "$ref": "#/definitions/users_apiv1SecretManagerLocator"
+        }
+      }
+    },
+    "users_apiv1EnvironmentOptions": {
+      "type": "object",
+      "properties": {
+        "rawEnvs": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "secretEnvs": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/users_apiv1EnvSecret"
+          }
+        }
+      }
+    },
+    "users_apiv1FrameworkType": {
+      "type": "string",
+      "enum": [
+        "FrameworkType_NONE",
+        "FrameworkType_TRANSFORMERS",
+        "FrameworkType_TEXT_GENERATION_INFERENCE",
+        "FrameworkType_DIFFUSERS",
+        "FrameworkType_OLLAMA",
+        "FrameworkType_VLLM",
+        "FrameworkType_SGLANG",
+        "FrameworkType_CONTAINER",
+        "FrameworkType_COMFY_UI",
+        "FrameworkType_TIMM"
+      ],
+      "default": "FrameworkType_NONE",
+      "description": "- FrameworkType_NONE: Техническое значение\n - FrameworkType_TRANSFORMERS: Трансформеры\n - FrameworkType_TEXT_GENERATION_INFERENCE: Генерация текста\n - FrameworkType_DIFFUSERS: Диффузеры\n - FrameworkType_OLLAMA: Оллама\n - FrameworkType_VLLM: Vllm\n - FrameworkType_SGLANG: Sglang\n - FrameworkType_CONTAINER: Container\n - FrameworkType_COMFY_UI: Comfy-UI\n - FrameworkType_TIMM: Генерация текста",
+      "title": "Тип фреймворка"
+    },
+    "users_apiv1GetHistoryResponse": {
+      "type": "object",
+      "properties": {
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/users_apiv1HistoryEvent"
+          }
+        }
+      }
+    },
+    "users_apiv1GuidedDecodingBackend": {
+      "type": "string",
+      "enum": [
+        "GuidedDecodingBackend_NONE",
+        "GuidedDecodingBackend_OUTLINES",
+        "GuidedDecodingBackend_LM_FORMAT_ENFORCER",
+        "GuidedDecodingBackend_XGRAMMAR"
+      ],
+      "default": "GuidedDecodingBackend_NONE"
+    },
+    "users_apiv1HistoryEvent": {
+      "type": "object",
+      "properties": {
+        "before": {
+          "$ref": "#/definitions/users_apiv1ModelRun"
+        },
+        "after": {
+          "$ref": "#/definitions/users_apiv1ModelRun"
+        },
+        "authorId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "version": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "eventType": {
+          "$ref": "#/definitions/v1HistoryEventType"
+        }
+      }
+    },
+    "users_apiv1HuggingFaceRepository": {
+      "type": "object",
+      "properties": {
+        "repo": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "filePaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "users_apiv1ModelDtype": {
+      "type": "string",
+      "enum": [
+        "ModelDtype_NONE",
+        "ModelDtype_FLOAT16",
+        "ModelDtype_BFLOAT16",
+        "ModelDtype_HALF",
+        "ModelDtype_FLOAT",
+        "ModelDtype_FLOAT32"
+      ],
+      "default": "ModelDtype_NONE",
+      "title": "- ModelDtype_HALF: vLLM based dtypes"
+    },
+    "users_apiv1ModelKvCache": {
+      "type": "string",
+      "enum": [
+        "ModelKvCache_NONE",
+        "ModelKvCache_FP8_E4M3FN",
+        "ModelKvCache_FP8_E5M2",
+        "ModelKvCache_FP8"
+      ],
+      "default": "ModelKvCache_NONE"
+    },
+    "users_apiv1ModelQuantize": {
+      "type": "string",
+      "enum": [
+        "ModelQuantize_NONE",
+        "ModelQuantize_AWQ",
+        "ModelQuantize_COMPRESSED_TENSORS",
+        "ModelQuantize_EETQ",
+        "ModelQuantize_EXL2",
+        "ModelQuantize_GPTQ",
+        "ModelQuantize_MARLIN",
+        "ModelQuantize_BITSANDBYTES",
+        "ModelQuantize_BITSANDBYTES_NF4",
+        "ModelQuantize_BITSANDBYTES_FP4",
+        "ModelQuantize_FP8",
+        "ModelQuantize_AQLM",
+        "ModelQuantize_DEEPSPEED_FP",
+        "ModelQuantize_TPU_INT8",
+        "ModelQuantize_FBGEMM_FP8",
+        "ModelQuantize_MODELOPT",
+        "ModelQuantize_GGUF",
+        "ModelQuantize_GPTQ_MARLIN_24",
+        "ModelQuantize_GPTQ_MARLIN",
+        "ModelQuantize_AWQ_MARLIN",
+        "ModelQuantize_QQQ",
+        "ModelQuantize_HQQ",
+        "ModelQuantize_EXPERTS_INT8",
+        "ModelQuantize_NEURON_QUANT",
+        "ModelQuantize_IPEX",
+        "ModelQuantize_QUARK",
+        "ModelQuantize_MOE_WNA16",
+        "ModelQuantize_MXFP4"
+      ],
+      "default": "ModelQuantize_NONE",
+      "title": "- ModelQuantize_AQLM: vLLM Options"
+    },
+    "users_apiv1ModelRun": {
+      "type": "object",
+      "properties": {
+        "modelRunId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "projectId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "runtimeTemplateId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/users_apiv1ModelRunStatus"
+        },
+        "statusReason": {
+          "type": "string"
+        },
+        "modelSource": {
+          "$ref": "#/definitions/users_apiv1ModelSource"
+        },
+        "modelTaskType": {
+          "$ref": "#/definitions/users_apiv1ModelTaskType"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "options": {
+          "$ref": "#/definitions/users_apiv1ModelRunOptions"
+        },
+        "resourceType": {
+          "$ref": "#/definitions/users_apiv1ResourceType"
+        },
+        "frameworkType": {
+          "$ref": "#/definitions/users_apiv1FrameworkType"
+        },
+        "servingOptions": {
+          "$ref": "#/definitions/users_apiv1ServingOptions"
+        },
+        "instanceType": {
+          "type": "string"
+        },
+        "gpuCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "gpuGbMemory": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "scaling": {
+          "$ref": "#/definitions/users_apiv1Scaling"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "publicUrl": {
+          "type": "string",
+          "title": "из IAM"
+        },
+        "updatedBy": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "users_apiv1ModelRunOptions": {
+      "type": "object",
+      "properties": {
+        "isEnabledAuth": {
+          "type": "boolean",
+          "description": "включена ли авторизация."
+        },
+        "auth": {
+          "$ref": "#/definitions/users_apiv1Authentication"
+        },
+        "isEnabledLogging": {
+          "type": "boolean",
+          "description": "Включено ли логирование создаваемого объекта."
+        },
+        "logGroupId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Идентификатор группы логовваемого объекта (может быть пустым)."
+        },
+        "isEnabledPublicUrlCors": {
+          "type": "boolean",
+          "description": "Разрешен ли CORS для публичного URL создаваемого объекта (логический тип)."
+        },
+        "publicUrlCors": {
+          "$ref": "#/definitions/users_apiv1ContainerPublicUrlCORS",
+          "description": "Параметры CORS для публичного URL создаемого объекта (может быть пустым)."
+        },
+        "containerOptions": {
+          "$ref": "#/definitions/users_apiv1ContainerOptions"
+        }
+      }
+    },
+    "users_apiv1ModelRunStatus": {
+      "type": "string",
+      "enum": [
+        "MODEL_RUN_STATUS_NONE",
+        "MODEL_RUN_STATUS_RESOURCE_ALLOCATION",
+        "MODEL_RUN_STATUS_PULLING",
+        "MODEL_RUN_STATUS_RUNNING",
+        "MODEL_RUN_STATUS_ON_SUSPENSION",
+        "MODEL_RUN_STATUS_SUSPENDED",
+        "MODEL_RUN_STATUS_ON_DELETION",
+        "MODEL_RUN_STATUS_DELETED",
+        "MODEL_RUN_STATUS_FAILED",
+        "MODEL_RUN_STATUS_COOLED",
+        "MODEL_RUN_STATUS_RUNTIME_INITIALIZING"
+      ],
+      "default": "MODEL_RUN_STATUS_NONE",
+      "description": "- MODEL_RUN_STATUS_NONE: Техническое значение\n - MODEL_RUN_STATUS_RESOURCE_ALLOCATION: Ожидание ресурсов\n - MODEL_RUN_STATUS_PULLING: Запуск модели\n - MODEL_RUN_STATUS_RUNNING: Запущено\n - MODEL_RUN_STATUS_ON_SUSPENSION: Останавливается\n - MODEL_RUN_STATUS_SUSPENDED: Остановлен\n - MODEL_RUN_STATUS_ON_DELETION: Удаляется\n - MODEL_RUN_STATUS_DELETED: Удален\n - MODEL_RUN_STATUS_FAILED: Ошибка\n - MODEL_RUN_STATUS_COOLED: Приостановлен\n - MODEL_RUN_STATUS_RUNTIME_INITIALIZING: Modelrun запускается",
+      "title": "Modelrun"
+    },
+    "users_apiv1ModelSource": {
+      "type": "object",
+      "properties": {
+        "huggingFaceRepository": {
+          "$ref": "#/definitions/users_apiv1HuggingFaceRepository"
+        },
+        "s3Repository": {
+          "$ref": "#/definitions/users_apiv1S3Repository"
+        },
+        "dockerImage": {
+          "$ref": "#/definitions/v1DockerImage"
+        },
+        "ollama": {
+          "$ref": "#/definitions/users_apiv1OllamaRegistryRepository"
+        },
+        "modelRegistry": {
+          "$ref": "#/definitions/v1ModelRegistryRepository"
+        },
+        "comfy": {
+          "$ref": "#/definitions/v1ComfyRepository"
+        },
+        "modelScope": {
+          "$ref": "#/definitions/v1ModelScopeRepository"
+        },
+        "secret": {
+          "type": "string"
+        },
+        "secretLocator": {
+          "$ref": "#/definitions/users_apiv1SecretManagerLocator"
+        },
+        "repoSize": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "users_apiv1ModelTaskType": {
+      "type": "string",
+      "enum": [
+        "ModelTaskType_NONE",
+        "ModelTaskType_AUDIO_CLASSIFICATION",
+        "ModelTaskType_AUTOMATIC_SPEECH_RECOGNITION",
+        "ModelTaskType_FEATURE_EXTRACTION",
+        "ModelTaskType_TEXT_CLASSIFICATION",
+        "ModelTaskType_TOKEN_CLASSIFICATION",
+        "ModelTaskType_QUESTION_ANSWERING",
+        "ModelTaskType_TABLE_QUESTION_ANSWERING",
+        "ModelTaskType_VISUAL_QUESTION_ANSWERING",
+        "ModelTaskType_FILL_MASK",
+        "ModelTaskType_SUMMARIZATION",
+        "ModelTaskType_TRANSLATION",
+        "ModelTaskType_TEXT_2_TEXT_GENERATION",
+        "ModelTaskType_TEXT_GENERATION",
+        "ModelTaskType_ZERO_SHOT_CLASSIFICATION",
+        "ModelTaskType_ZERO_SHOT_IMAGE_CLASSIFICATION",
+        "ModelTaskType_CONVERSATIONAL",
+        "ModelTaskType_IMAGE_CLASSIFICATION",
+        "ModelTaskType_IMAGE_SEGMENTATION",
+        "ModelTaskType_OBJECT_DETECTION",
+        "ModelTaskType_TEXT_2_IMAGE_GENERATION",
+        "ModelTaskType_INPAINTING_GENERATION",
+        "ModelTaskType_IMAGE_TO_IMAGE_GENERATION",
+        "ModelTaskType_GENERATE",
+        "ModelTaskType_EMBEDDING",
+        "ModelTaskType_EMBED",
+        "ModelTaskType_CLASSIFY",
+        "ModelTaskType_SCORE",
+        "ModelTaskType_REWARD",
+        "ModelTaskType_CONTAINER"
+      ],
+      "default": "ModelTaskType_NONE",
+      "title": "Задача модели"
+    },
+    "users_apiv1OllamaOptions": {
+      "type": "object"
+    },
+    "users_apiv1OllamaRegistryRepository": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "repo": {
+          "type": "string"
+        }
+      }
+    },
+    "users_apiv1Port": {
+      "type": "object",
+      "properties": {
+        "port": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "protocol": {
+          "$ref": "#/definitions/v1PortProtocol",
+          "minimum": 1
+        }
+      }
+    },
+    "users_apiv1PreemptionMode": {
+      "type": "string",
+      "enum": [
+        "PreemptionMode_NONE",
+        "PreemptionMode_RECOMPUTE",
+        "PreemptionMode_SWAP"
+      ],
+      "default": "PreemptionMode_NONE"
+    },
+    "users_apiv1RPSType": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "integer",
+          "format": "int32",
+          "minimum": 1
+        }
+      }
+    },
+    "users_apiv1ReasoningParser": {
+      "type": "string",
+      "enum": [
+        "ReasoningParser_NONE",
+        "ReasoningParser_DEEPSEEK_R1"
+      ],
+      "default": "ReasoningParser_NONE"
+    },
+    "users_apiv1ResourceType": {
+      "type": "string",
+      "enum": [
+        "ResourceType_NONE",
+        "ResourceType_CPU",
+        "ResourceType_GPU_V100",
+        "ResourceType_GPU_A100",
+        "ResourceType_GPU_H100",
+        "ResourceType_DISK",
+        "ResourceType_GPU_V100_PCIE",
+        "ResourceType_GPU_A100_PCIE",
+        "ResourceType_GPU_H100_PCIE",
+        "ResourceType_GPU_V100_NVLINK",
+        "ResourceType_GPU_A100_NVLINK",
+        "ResourceType_GPU_H100_NVLINK"
+      ],
+      "default": "ResourceType_NONE",
+      "description": "- ResourceType_GPU_V100_PCIE: reserved from 6 to 20",
+      "title": "Тип ресурса"
+    },
+    "users_apiv1S3Repository": {
+      "type": "object",
+      "properties": {
+        "pathToModel": {
+          "type": "string"
+        }
+      }
+    },
+    "users_apiv1Scaling": {
+      "type": "object",
+      "properties": {
+        "minScale": {
+          "type": "integer",
+          "format": "int32",
+          "maximum": 20
+        },
+        "maxScale": {
+          "type": "integer",
+          "format": "int32",
+          "maximum": 20,
+          "minimum": 1
+        },
+        "scalingRules": {
+          "$ref": "#/definitions/users_apiv1ScalingRules"
+        },
+        "keepAliveDuration": {
+          "$ref": "#/definitions/v1KeepAliveDuration"
+        }
+      }
+    },
+    "users_apiv1ScalingRules": {
+      "type": "object",
+      "properties": {
+        "concurrencyType": {
+          "$ref": "#/definitions/users_apiv1ConcurrencyType"
+        },
+        "rpsType": {
+          "$ref": "#/definitions/users_apiv1RPSType"
+        },
+        "queueLength": {
+          "$ref": "#/definitions/v1QueueLength"
+        }
+      }
+    },
+    "users_apiv1SchedulingPolicy": {
+      "type": "string",
+      "enum": [
+        "SchedulingPolicy_NONE",
+        "SchedulingPolicy_FCFS",
+        "SchedulingPolicy_PRIORITY"
+      ],
+      "default": "SchedulingPolicy_NONE"
+    },
+    "users_apiv1SecretManagerLocator": {
+      "type": "object",
+      "properties": {
+        "secretId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int32",
+          "minimum": 1
+        }
+      }
+    },
+    "users_apiv1ServingOptions": {
+      "type": "object",
+      "properties": {
+        "transformersOptions": {
+          "$ref": "#/definitions/users_apiv1TransformersOptions"
+        },
+        "textGenerationInferenceOptions": {
+          "$ref": "#/definitions/users_apiv1TextGenerationInferenceOptions"
+        },
+        "ollamaOptions": {
+          "$ref": "#/definitions/users_apiv1OllamaOptions"
+        },
+        "diffusersOptions": {
+          "$ref": "#/definitions/users_apiv1DiffusersOptions"
+        },
+        "vllmOptions": {
+          "$ref": "#/definitions/users_apiv1VllmOptions"
+        },
+        "vllmOptionsDynamical": {
+          "$ref": "#/definitions/v1DynamicalOptions"
+        },
+        "dynamicalOptions": {
+          "$ref": "#/definitions/v1DynamicalOptions"
+        },
+        "comfyOptions": {
+          "$ref": "#/definitions/v1ComfyOptions"
+        }
+      }
+    },
+    "users_apiv1SpecDecodingAcceptanceMethod": {
+      "type": "string",
+      "enum": [
+        "SpecDecodingAcceptanceMethod_NONE",
+        "SpecDecodingAcceptanceMethod_REJECTION_SAMPLER",
+        "SpecDecodingAcceptanceMethod_TYPICAL_ACCEPTANCE_SAMPLER"
+      ],
+      "default": "SpecDecodingAcceptanceMethod_NONE"
+    },
+    "users_apiv1Tag": {
+      "type": "string",
+      "enum": [
+        "Tag_LLM",
+        "Tag_KV_CACHE",
+        "Tag_PARALLEL",
+        "Tag_ROPE",
+        "Tag_LORA",
+        "Tag_SPECULATIVE",
+        "Tag_NGRAM",
+        "Tag_SAMPLER_POSTERIOR",
+        "Tag_PARSER",
+        "Tag_TOKENIZER",
+        "Tag_SYSTEM",
+        "Tag_OPENAI"
+      ],
+      "default": "Tag_LLM"
+    },
+    "users_apiv1TextGenerationInferenceOptions": {
+      "type": "object",
+      "properties": {
+        "quantize": {
+          "$ref": "#/definitions/users_apiv1ModelQuantize",
+          "title": "Data types"
+        },
+        "dtype": {
+          "$ref": "#/definitions/users_apiv1ModelDtype"
+        },
+        "kvCache": {
+          "$ref": "#/definitions/users_apiv1ModelKvCache",
+          "title": "Cache"
+        },
+        "loraAdapters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/users_apiv1ModelSource"
+          },
+          "title": "Lora adapters"
+        },
+        "maxInputTokens": {
+          "type": "string",
+          "format": "uint64",
+          "title": "Tokens"
+        },
+        "maxInputLength": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "maxTotalTokens": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "maxWaitingTokens": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "users_apiv1TokenizerMode": {
+      "type": "string",
+      "enum": [
+        "TokenizerMode_NONE",
+        "TokenizerMode_SLOW",
+        "TokenizerMode_MISTRAL"
+      ],
+      "default": "TokenizerMode_NONE"
+    },
+    "users_apiv1ToolCallParser": {
+      "type": "string",
+      "enum": [
+        "ToolCallParser_NONE",
+        "ToolCallParser_GRANITE_20B_FC",
+        "ToolCallParser_GRANITE",
+        "ToolCallParser_HERMES",
+        "ToolCallParser_INTERNLM",
+        "ToolCallParser_JAMBA",
+        "ToolCallParser_LLAMA3_JSON",
+        "ToolCallParser_MISTRAL",
+        "ToolCallParser_PYTHONIC"
+      ],
+      "default": "ToolCallParser_NONE",
+      "title": "- ToolCallParser_GRANITE_20B_FC: vLLM based parsers"
+    },
+    "users_apiv1TransformersOptions": {
+      "type": "object"
+    },
+    "users_apiv1VllmOptions": {
+      "type": "object",
+      "properties": {
+        "blockSize": {
+          "type": "string",
+          "format": "int64",
+          "title": "----------------- SYSTEM SETTINGS -----------------"
+        },
+        "enforceEager": {
+          "type": "boolean"
+        },
+        "maxSeqLenToCapture": {
+          "type": "string",
+          "format": "int64"
+        },
+        "disableAsyncOutputProc": {
+          "type": "boolean"
+        },
+        "disableCustomAllReduce": {
+          "type": "boolean"
+        },
+        "maxParallelLoadingWorkers": {
+          "type": "string",
+          "format": "int64"
+        },
+        "preemptionMode": {
+          "$ref": "#/definitions/users_apiv1PreemptionMode",
+          "title": "----------------- LLM SETTINGS -----------------"
+        },
+        "executorBackend": {
+          "$ref": "#/definitions/users_apiv1DistributedExecutorBackend"
+        },
+        "calculateKvScales": {
+          "type": "boolean"
+        },
+        "kvCacheDtype": {
+          "$ref": "#/definitions/users_apiv1ModelKvCache"
+        },
+        "modelDtype": {
+          "$ref": "#/definitions/users_apiv1ModelDtype"
+        },
+        "modelQuantize": {
+          "$ref": "#/definitions/users_apiv1ModelQuantize"
+        },
+        "enableReasoning": {
+          "type": "boolean"
+        },
+        "reasoningParser": {
+          "$ref": "#/definitions/users_apiv1ReasoningParser"
+        },
+        "enableAutoToolChoice": {
+          "type": "boolean"
+        },
+        "toolCallParser": {
+          "$ref": "#/definitions/users_apiv1ToolCallParser"
+        },
+        "toolParserPlugin": {
+          "type": "string"
+        },
+        "enableChunkedPrefill": {
+          "type": "boolean"
+        },
+        "enablePrefixCaching": {
+          "type": "boolean"
+        },
+        "loraModules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/users_apiv1ModelSource"
+          }
+        },
+        "maxLoras": {
+          "type": "string",
+          "format": "int64"
+        },
+        "maxLoraRank": {
+          "type": "string",
+          "format": "int64"
+        },
+        "fullySharedLoras": {
+          "type": "boolean"
+        },
+        "loraExtraVocabSize": {
+          "type": "string",
+          "format": "int64"
+        },
+        "longLoraScalingFactors": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "loraDtype": {
+          "$ref": "#/definitions/users_apiv1ModelDtype"
+        },
+        "maxCpuLoras": {
+          "type": "string",
+          "format": "int64"
+        },
+        "guidedDecodingBackend": {
+          "$ref": "#/definitions/users_apiv1GuidedDecodingBackend"
+        },
+        "ngramPromptLookupMax": {
+          "type": "string",
+          "format": "int64"
+        },
+        "ngramPromptLookupMin": {
+          "type": "string",
+          "format": "int64"
+        },
+        "maxModelLen": {
+          "type": "string",
+          "format": "int64"
+        },
+        "maxNumBatchedTokens": {
+          "type": "string",
+          "format": "int64"
+        },
+        "maxNumSeqs": {
+          "type": "string",
+          "format": "int64"
+        },
+        "maxLogprobs": {
+          "type": "string",
+          "format": "int64"
+        },
+        "ropeScaling": {
+          "type": "string"
+        },
+        "ropeTheta": {
+          "type": "number",
+          "format": "double"
+        },
+        "speculativeModel": {
+          "type": "string"
+        },
+        "speculativeModelQuantization": {
+          "$ref": "#/definitions/users_apiv1ModelQuantize"
+        },
+        "speculativeDraftTensorParallelSize": {
+          "type": "string",
+          "format": "int64"
+        },
+        "numSpeculativeTokens": {
+          "type": "string",
+          "format": "int64"
+        },
+        "speculativeDisableMqaScorer": {
+          "type": "boolean"
+        },
+        "speculativeMaxModelLen": {
+          "type": "string",
+          "format": "int64"
+        },
+        "speculativeDisableByBatchSize": {
+          "type": "string",
+          "format": "int64"
+        },
+        "trustRemoteCode": {
+          "type": "boolean"
+        },
+        "skipTokenizerInit": {
+          "type": "boolean",
+          "title": "----------------- TOKENIZER SETTINGS -----------------"
+        },
+        "tokenizer": {
+          "type": "string"
+        },
+        "tokenizerRevision": {
+          "type": "string"
+        },
+        "tokenizerMode": {
+          "$ref": "#/definitions/users_apiv1TokenizerMode"
+        },
+        "tokenizerPoolSize": {
+          "type": "string",
+          "format": "int64"
+        },
+        "tokenizerPoolType": {
+          "type": "string"
+        },
+        "tokenizerPoolExtraConfig": {
+          "type": "string"
+        },
+        "chatTemplate": {
+          "type": "string",
+          "description": "chat_template is the template for chat."
+        },
+        "chatTemplateContentFormat": {
+          "$ref": "#/definitions/users_apiv1ChatTemplateContentFormat"
+        },
+        "responseRole": {
+          "type": "string"
+        },
+        "pipelineParallelSize": {
+          "type": "string",
+          "format": "int64",
+          "title": "----------------- PARALLELISM SETTINGS -----------------"
+        },
+        "tensorParallelSize": {
+          "type": "string",
+          "format": "int64"
+        },
+        "numLookaheadSlots": {
+          "type": "string",
+          "format": "int64"
+        },
+        "numGpuBlocksOverride": {
+          "type": "string",
+          "format": "int64"
+        },
+        "disableMmPreprocessorCache": {
+          "type": "boolean"
+        },
+        "limitMmPerPrompt": {
+          "type": "string"
+        },
+        "mmProcessorKwargs": {
+          "type": "string"
+        },
+        "schedulingPolicy": {
+          "$ref": "#/definitions/users_apiv1SchedulingPolicy",
+          "title": "----------------- SCHEDULER SETTINGS -----------------"
+        },
+        "numSchedulerSteps": {
+          "type": "string",
+          "format": "int64"
+        },
+        "multiStepStreamOutput": {
+          "type": "boolean"
+        },
+        "schedulerDelayFactor": {
+          "type": "number",
+          "format": "double"
+        },
+        "specDecodingAcceptanceMethod": {
+          "$ref": "#/definitions/users_apiv1SpecDecodingAcceptanceMethod"
+        },
+        "typicalAcceptanceSamplerPosteriorThreshold": {
+          "type": "number",
+          "format": "double"
+        },
+        "typicalAcceptanceSamplerPosteriorAlpha": {
+          "type": "number",
+          "format": "double"
+        },
+        "seed": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "v1AnalyzeLoraRequestKey": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "modelSource": {
+          "$ref": "#/definitions/users_apiv1ModelSource"
+        }
+      }
+    },
+    "v1AnalyzeLoraResponse": {
+      "type": "object",
+      "properties": {
+        "gpuMbMemory": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "repoSize": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "versionHash": {
+          "type": "string"
+        },
+        "finalSizesDtypes": {
+          "$ref": "#/definitions/v1BaseSize"
+        },
+        "modelSizesDtypes": {
+          "$ref": "#/definitions/v1BaseSize"
+        }
+      }
+    },
+    "v1AnalyzeLoraResponseKey": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "gpuMbMemory": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "error": {
+          "type": "string"
+        },
+        "repoSize": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "versionHash": {
+          "type": "string"
+        },
+        "finalSizesDtypes": {
+          "$ref": "#/definitions/v1BaseSize"
+        },
+        "modelSizesDtypes": {
+          "$ref": "#/definitions/v1BaseSize"
+        }
+      }
+    },
+    "v1AnalyzeModelResponse": {
+      "type": "object",
+      "properties": {
+        "gpuGbMemory": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "modelTaskType": {
+          "$ref": "#/definitions/users_apiv1ModelTaskType"
+        },
+        "isSupportedKvCache": {
+          "type": "boolean"
+        },
+        "quantize": {
+          "$ref": "#/definitions/users_apiv1ModelQuantize"
+        },
+        "repoSize": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "versionHash": {
+          "type": "string"
+        },
+        "finalSizesDtypes": {
+          "$ref": "#/definitions/v1BaseSize"
+        },
+        "modelSizesDtypes": {
+          "$ref": "#/definitions/v1BaseSize"
+        },
+        "kvCacheDtypes": {
+          "$ref": "#/definitions/v1BaseSize"
+        },
+        "activationDtypes": {
+          "$ref": "#/definitions/v1BaseSize"
+        }
+      }
+    },
+    "v1BaseSize": {
+      "type": "object",
+      "properties": {
+        "default": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "fp32": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "fp16": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "fp8": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1BulkAnalyzeLoraResponse": {
+      "type": "object",
+      "properties": {
+        "responses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1AnalyzeLoraResponseKey"
+          }
+        }
+      }
+    },
+    "v1BulkGetRepositoryInfoResponse": {
+      "type": "object",
+      "properties": {
+        "responses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1GetRepositoryInfoResponseKey"
+          }
+        }
+      }
+    },
+    "v1ComfyOptions": {
+      "type": "object",
+      "properties": {
+        "workflow": {
+          "$ref": "#/definitions/v1ComfyWorkflow"
+        },
+        "anchors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Обьединяем map[jsonpath(openai)]jsonpath(comfy)"
+        },
+        "s3Options": {
+          "$ref": "#/definitions/v1S3Options"
+        }
+      }
+    },
+    "v1ComfyRepository": {
+      "type": "object",
+      "properties": {
+        "huggingFaceRepositories": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/users_apiv1HuggingFaceRepository"
+          },
+          "title": "add model registry"
+        }
+      }
+    },
+    "v1ComfyWorkflow": {
+      "type": "object",
+      "properties": {
+        "clientId": {
+          "type": "string"
+        },
+        "prompt": {
+          "type": "string"
+        }
+      },
+      "title": "Структура промпта для Comfy"
+    },
+    "v1CreateModelRunResponse": {
+      "type": "object",
+      "properties": {
+        "modelRunId": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "v1DeleteModelRunResponse": {
+      "type": "object"
+    },
+    "v1DockerImage": {
+      "type": "object",
+      "properties": {
+        "imageUri": {
+          "type": "string"
+        }
+      }
+    },
+    "v1DynamicalOption": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "value": {},
+        "parameterType": {
+          "$ref": "#/definitions/commonParameterType"
+        }
+      }
+    },
+    "v1DynamicalOptions": {
+      "type": "object",
+      "properties": {
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1DynamicalOption"
+          }
+        },
+        "loraModules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/users_apiv1ModelSource"
+          }
+        }
+      }
+    },
+    "v1ExtendedModelCard": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "price": {
+          "type": "string",
+          "title": "minimal price"
+        },
+        "taskType": {
+          "$ref": "#/definitions/users_apiv1ModelTaskType"
+        },
+        "modelSource": {
+          "$ref": "#/definitions/users_apiv1ModelSource"
+        },
+        "dockerImageUrl": {
+          "type": "string"
+        },
+        "vendorName": {
+          "type": "string"
+        },
+        "licenseName": {
+          "type": "string"
+        },
+        "licenseUrl": {
+          "type": "string"
+        },
+        "paramsBn": {
+          "type": "number",
+          "format": "double"
+        },
+        "contextK": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "imageUrl": {
+          "type": "string"
+        },
+        "downloadsCount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "suggestions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "inferenceType": {
+          "$ref": "#/definitions/v1InferenceType"
+        }
+      }
+    },
+    "v1FieldType": {
+      "type": "string",
+      "enum": [
+        "FieldType_NONE",
+        "FieldType_SELECT",
+        "FieldType_BOOL",
+        "FieldType_STEPPER",
+        "FieldType_TEXT",
+        "FieldType_SEGMENT",
+        "FieldType_NUMBER"
+      ],
+      "default": "FieldType_NONE"
+    },
+    "v1Filters": {
+      "type": "object",
+      "properties": {
+        "taskType": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/users_apiv1ModelTaskType",
+            "required": [
+              "false"
+            ]
+          }
+        },
+        "vendor": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "required": [
+              "false"
+            ]
+          }
+        },
+        "allowedGpu": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/users_apiv1ResourceType",
+            "required": [
+              "false"
+            ]
+          }
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "required": [
+              "false"
+            ]
+          }
+        },
+        "gpuCountRange": {
+          "$ref": "#/definitions/v1RangeInt"
+        },
+        "paramsBn": {
+          "$ref": "#/definitions/v1RangeDouble"
+        },
+        "gpuMemoryAllocRange": {
+          "$ref": "#/definitions/v1RangeInt"
+        },
+        "priceRange": {
+          "$ref": "#/definitions/v1RangeFloat"
+        },
+        "contextK": {
+          "$ref": "#/definitions/v1RangeInt"
+        }
+      },
+      "required": [
+        "false"
+      ]
+    },
+    "v1GetAggregatedRequestStatsResponse": {
+      "type": "object",
+      "properties": {
+        "serviceAccountAggregatedStats": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ServiceAccountAggregatedStats"
+          },
+          "description": "Summary of request statistics across different service accounts"
+        }
+      },
+      "description": "Returns aggregated statistics of service account request usage for the specified time range.",
+      "title": "Get Aggregated Request Stats Response"
+    },
+    "v1GetAggregatedTokenStatsResponse": {
+      "type": "object",
+      "properties": {
+        "serviceAccountAggregatedStats": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ServiceAccountAggregatedStats"
+          },
+          "description": "Summary of token statistics across different service accounts"
+        }
+      },
+      "description": "Returns aggregated statistics of service account token usage for the specified time range",
+      "title": "Get Aggregated Token Stats Response"
+    },
+    "v1GetAllRequestsResponse": {
+      "type": "object",
+      "properties": {
+        "pagination": {
+          "$ref": "#/definitions/v1PaginationResponse",
+          "description": "Pagination information"
+        },
+        "serviceAccountRequestsSummary": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ServiceAccountRequestsSummary"
+          },
+          "description": "List of request details"
+        }
+      }
+    },
+    "v1GetChartRequestStatsResponse": {
+      "type": "object",
+      "properties": {
+        "barChart": {
+          "$ref": "#/definitions/v1TimeRangeBarChart",
+          "description": "Bar chart containing request statistics over time"
+        }
+      },
+      "description": "Response containing request statistics in chart-based format",
+      "title": "Get Chart Requests Stats Response"
+    },
+    "v1GetChartTokenStatsResponse": {
+      "type": "object",
+      "properties": {
+        "barChart": {
+          "$ref": "#/definitions/v1TimeRangeBarChart",
+          "description": "Bar chart containing token usage statistics over time"
+        }
+      },
+      "description": "Response containing token statistics in chart-based format",
+      "title": "Get Chart Token Stats Response"
+    },
+    "v1GetModelCardResponse": {
+      "type": "object",
+      "properties": {
+        "modelCard": {
+          "$ref": "#/definitions/v1ExtendedModelCard"
+        },
+        "modelCardConfigs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ModelCardConfig"
+          }
+        },
+        "similarModelCards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ShortModelCard"
+          }
+        }
+      }
+    },
+    "v1GetModelRunResponse": {
+      "type": "object",
+      "properties": {
+        "modelRun": {
+          "$ref": "#/definitions/users_apiv1ModelRun"
+        }
+      }
+    },
+    "v1GetRepositoryInfoRequestKey": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "modelSource": {
+          "$ref": "#/definitions/users_apiv1ModelSource"
+        }
+      }
+    },
+    "v1GetRepositoryInfoResponse": {
+      "type": "object",
+      "properties": {
+        "versions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v1GetRepositoryInfoResponseKey": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "versions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "error": {
+          "type": "string"
+        }
+      }
+    },
+    "v1GetRuntimeTemplateResponse": {
+      "type": "object",
+      "properties": {
+        "runtimeTemplate": {
+          "$ref": "#/definitions/v1RuntimeTemplate"
+        }
+      }
+    },
+    "v1Gpu": {
+      "type": "object",
+      "properties": {
+        "resourceType": {
+          "$ref": "#/definitions/users_apiv1ResourceType"
+        },
+        "isAllowed": {
+          "type": "boolean"
+        },
+        "isDefault": {
+          "type": "boolean"
+        }
+      }
+    },
+    "v1HistoryEventType": {
+      "type": "string",
+      "enum": [
+        "HistoryEventType_NONE",
+        "HistoryEventType_CREATION",
+        "HistoryEventType_CHANGED",
+        "HistoryEventType_DELETED",
+        "HistoryEventType_SUSPENDED",
+        "HistoryEventType_RESUMED"
+      ],
+      "default": "HistoryEventType_NONE",
+      "title": "Тип исторического события"
+    },
+    "v1InferenceType": {
+      "type": "string",
+      "enum": [
+        "INFERENCE_TYPE_CONTAINER",
+        "INFERENCE_TYPE_MODEL"
+      ],
+      "default": "INFERENCE_TYPE_CONTAINER"
+    },
+    "v1KeepAliveDuration": {
+      "type": "object",
+      "properties": {
+        "hours": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "minutes": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "seconds": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "Далее в сервисы прокидывается ScaleDownDelay. Здесь это называется так для удобства интеграции фронта"
+    },
+    "v1ListFilesResponse": {
+      "type": "object",
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v1ListQuotasResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1QuotaResponse"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1ListTagsResponse": {
+      "type": "object",
+      "properties": {
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ModelCardTag"
+          }
+        }
+      }
+    },
+    "v1ListTaskTypesResponse": {
+      "type": "object",
+      "properties": {
+        "taskTypes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/users_apiv1ModelTaskType"
+          }
+        }
+      }
+    },
+    "v1ListVendorsResponse": {
+      "type": "object",
+      "properties": {
+        "vendors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Vendor"
+          }
+        }
+      }
+    },
+    "v1ModelCardConfig": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "allowedGpu": {
+          "$ref": "#/definitions/users_apiv1ResourceType"
+        },
+        "bandwidth": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "gpuMemoryAllocGb": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "gpuCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "servingOptions": {
+          "$ref": "#/definitions/users_apiv1ServingOptions"
+        },
+        "frameworkType": {
+          "$ref": "#/definitions/users_apiv1FrameworkType"
+        },
+        "scaling": {
+          "$ref": "#/definitions/users_apiv1Scaling"
+        },
+        "frameworkVersion": {
+          "type": "string"
+        },
+        "price": {
+          "type": "string"
+        },
+        "runtimeTemplateId": {
+          "type": "string",
+          "format": "uuid",
+          "title": "Specific to model inference"
+        },
+        "containerOptions": {
+          "$ref": "#/definitions/v1commonContainerOptions",
+          "title": "Specific to container inference"
+        },
+        "instanceTypeId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "instanceConfigurationType": {
+          "$ref": "#/definitions/v1container_inferencecommonInstanceConfigurationType"
+        }
+      }
+    },
+    "v1ModelCardTag": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "v1ModelRegistryRepository": {
+      "type": "object",
+      "properties": {
+        "repo": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "string"
+        }
+      }
+    },
+    "v1ModelScopeRepository": {
+      "type": "object",
+      "properties": {
+        "repo": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "string"
+        }
+      }
+    },
+    "v1ModelrunHandlerCreateBody": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "frameworkType": {
+          "$ref": "#/definitions/users_apiv1FrameworkType"
+        },
+        "resourceType": {
+          "$ref": "#/definitions/users_apiv1ResourceType"
+        },
+        "modelSource": {
+          "$ref": "#/definitions/users_apiv1ModelSource"
+        },
+        "modelTaskType": {
+          "$ref": "#/definitions/users_apiv1ModelTaskType"
+        },
+        "servingOptions": {
+          "$ref": "#/definitions/users_apiv1ServingOptions"
+        },
+        "scaling": {
+          "$ref": "#/definitions/users_apiv1Scaling"
+        },
+        "gpuGbMemory": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "gpuCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "cacheGbMemory": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "options": {
+          "$ref": "#/definitions/users_apiv1ModelRunOptions"
+        },
+        "runtimeTemplateId": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "v1ModelrunHandlerResumeBody": {
+      "type": "object"
+    },
+    "v1ModelrunHandlerSuspendBody": {
+      "type": "object"
+    },
+    "v1ModelrunHandlerUpdateBody": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "frameworkType": {
+          "$ref": "#/definitions/users_apiv1FrameworkType"
+        },
+        "resourceType": {
+          "$ref": "#/definitions/users_apiv1ResourceType"
+        },
+        "modelSource": {
+          "$ref": "#/definitions/users_apiv1ModelSource"
+        },
+        "servingOptions": {
+          "$ref": "#/definitions/users_apiv1ServingOptions"
+        },
+        "modelTaskType": {
+          "$ref": "#/definitions/users_apiv1ModelTaskType"
+        },
+        "scaling": {
+          "$ref": "#/definitions/users_apiv1Scaling"
+        },
+        "gpuGbMemory": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "gpuCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "cacheGbMemory": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "options": {
+          "$ref": "#/definitions/users_apiv1ModelRunOptions"
+        }
+      },
+      "required": [
+        "true"
+      ]
+    },
+    "v1Pagination": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "integer",
+          "format": "int64",
+          "example": 20,
+          "description": "Maximum number of items to return (1-100)"
+        },
+        "offset": {
+          "type": "integer",
+          "format": "int64",
+          "example": 0,
+          "description": "Number of items to skip"
+        }
+      }
+    },
+    "v1PaginationRequest": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "offset": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ordering": {
+          "type": "string"
+        },
+        "filterFields": {
+          "type": "string"
+        },
+        "search": {
+          "type": "string"
+        }
+      }
+    },
+    "v1PaginationResponse": {
+      "type": "object",
+      "properties": {
+        "total": {
+          "type": "integer",
+          "format": "int64",
+          "example": 150,
+          "description": "Total number of items available"
+        }
+      }
+    },
+    "v1PortProtocol": {
+      "type": "string",
+      "enum": [
+        "PORT_PROTOCOL_NONE",
+        "PORT_PROTOCOL_TCP",
+        "PORT_PROTOCOL_UDP"
+      ],
+      "default": "PORT_PROTOCOL_NONE"
+    },
+    "v1QueueLength": {
+      "type": "object",
+      "properties": {
+        "lagCount": {
+          "type": "integer",
+          "format": "int32",
+          "title": "add lag_count_up, lag_count_down?",
+          "maximum": 10000,
+          "minimum": 1
+        }
+      }
+    },
+    "v1QuotaResponse": {
+      "type": "object",
+      "properties": {
+        "resourceType": {
+          "$ref": "#/definitions/users_apiv1ResourceType"
+        },
+        "free": {
+          "type": "number",
+          "format": "double"
+        },
+        "limit": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "v1RangeDouble": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "number",
+          "format": "double"
+        },
+        "to": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "v1RangeFloat": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        }
+      }
+    },
+    "v1RangeInt": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string",
+          "format": "int64"
+        },
+        "to": {
+          "type": "string",
+          "format": "int64",
+          "minimum": 1
+        }
+      }
+    },
+    "v1RangeValues": {
+      "type": "object",
+      "properties": {
+        "gpuCountRange": {
+          "$ref": "#/definitions/v1RangeInt"
+        },
+        "paramsBnRange": {
+          "$ref": "#/definitions/v1RangeDouble"
+        },
+        "gpuMemoryAllocRange": {
+          "$ref": "#/definitions/v1RangeInt"
+        },
+        "priceRange": {
+          "$ref": "#/definitions/v1RangeFloat"
+        },
+        "contextKRange": {
+          "$ref": "#/definitions/v1RangeInt"
+        }
+      },
+      "required": [
+        "false"
+      ]
+    },
+    "v1ResumeModelRunResponse": {
+      "type": "object"
+    },
+    "v1RuntimeTemplate": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "frameworkType": {
+          "$ref": "#/definitions/users_apiv1FrameworkType"
+        },
+        "containerImage": {
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "version": {
+          "type": "string"
+        },
+        "gpus": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Gpu"
+          }
+        },
+        "featureFlagKey": {
+          "type": "string"
+        }
+      }
+    },
+    "v1S3Options": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "storageCapacity": {
+          "type": "string"
+        },
+        "bucketName": {
+          "type": "string"
+        },
+        "bucketId": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "v1SearchModelCardResponse": {
+      "type": "object",
+      "properties": {
+        "modelCards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ShortModelCard"
+          }
+        },
+        "rangeValues": {
+          "$ref": "#/definitions/v1RangeValues"
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "hasMore": {
+          "type": "boolean"
+        }
+      }
+    },
+    "v1SearchModelRunResponse": {
+      "type": "object",
+      "properties": {
+        "modelRuns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/users_apiv1ModelRun"
+          },
+          "title": "cloud_ru.pagination.v1.PaginationResponse pagination = 2;"
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1SearchRuntimeTemplateResponse": {
+      "type": "object",
+      "properties": {
+        "runtimeTemplates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RuntimeTemplate"
+          }
+        }
+      }
+    },
+    "v1ServiceAccountAggregatedStats": {
+      "type": "object",
+      "properties": {
+        "serviceAccountId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "minValue": {
+          "type": "integer",
+          "format": "int64",
+          "example": 10,
+          "description": "Minimum usage value recorded"
+        },
+        "maxValue": {
+          "type": "integer",
+          "format": "int64",
+          "example": 1000,
+          "description": "Maximum usage value recorded"
+        },
+        "avgValue": {
+          "type": "integer",
+          "format": "int64",
+          "example": 250,
+          "description": "Average usage value"
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64",
+          "example": 5000,
+          "description": "Total usage value across the time period"
+        }
+      },
+      "description": "Usage statistics for a single service account",
+      "title": "Service Account Usage Stats"
+    },
+    "v1ServiceAccountRequestsSummary": {
+      "type": "object",
+      "properties": {
+        "serviceAccountId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2025-11-01T11:40:00Z",
+          "description": "Timestamp when the request was made (UTC)"
+        },
+        "appTitle": {
+          "type": "string",
+          "example": "Chat Application",
+          "description": "Title of the application that made the request"
+        },
+        "inputTokens": {
+          "type": "integer",
+          "format": "int64",
+          "example": 150,
+          "description": "Number of input tokens used in the request"
+        },
+        "outputTokens": {
+          "type": "integer",
+          "format": "int64",
+          "example": 75,
+          "description": "Number of output tokens generated by the request"
+        },
+        "finishReason": {
+          "type": "string",
+          "example": "length",
+          "description": "String that indicates why the model stopped generating text. Common values include stop - a natural stop, length - the maximum token limit was reached, or tool_calls - the model generated a function call to an external tool"
+        }
+      }
+    },
+    "v1ShortModelCard": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "price": {
+          "type": "string"
+        },
+        "vendorName": {
+          "type": "string"
+        },
+        "paramsBn": {
+          "type": "number",
+          "format": "double"
+        },
+        "contextK": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "imageUrl": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v1SortType": {
+      "type": "string",
+      "enum": [
+        "SORT_TYPE_NONE",
+        "SORT_TYPE_POPULARITY_DESC",
+        "SORT_TYPE_POPULARITY_ASC",
+        "SORT_TYPE_PRICE_DESC",
+        "SORT_TYPE_PRICE_ASC",
+        "SORT_TYPE_CONTEXT_DESC",
+        "SORT_TYPE_CONTEXT_ASC",
+        "SORT_TYPE_PARAMS_BN_DESC",
+        "SORT_TYPE_PARAMS_BN_ASC"
+      ],
+      "default": "SORT_TYPE_NONE",
+      "title": "Enums"
+    },
+    "v1SubBar": {
+      "type": "object",
+      "properties": {
+        "metadata": {
+          "type": "object",
+          "example": {
+            "category": "MiniMaxAI/MiniMax-M2",
+            "type": "model"
+          },
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Metadata key-value pairs for the sub-bar (e.g., category: model name, type: service, etc.)",
+          "title": "Category of the sub-bar. Could be an LLM name"
+        },
+        "value": {
+          "type": "integer",
+          "format": "int64",
+          "example": 150,
+          "description": "Value for this sub-bar category"
+        },
+        "percentage": {
+          "type": "number",
+          "format": "float",
+          "example": 25.5,
+          "description": "Percentage of this sub-bar's value relative to the total bar value (0-100)",
+          "title": "Percentage of the total bar value. Value from 0 to 100"
+        }
+      },
+      "description": "Sub-bar segment representing a category within a time bar",
+      "title": "Sub Bar"
+    },
+    "v1SuspendModelRunResponse": {
+      "type": "object"
+    },
+    "v1TimeBar": {
+      "type": "object",
+      "properties": {
+        "periodStart": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2025-11-01T00:00:00Z",
+          "description": "Start time of the period this bar represents (UTC)",
+          "title": "The time period this bar represents"
+        },
+        "periodEnd": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2025-11-01T12:00:00Z",
+          "description": "End time of the period this bar represents (UTC)"
+        },
+        "subBars": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1SubBar"
+          },
+          "description": "Sub-bar segments for stacked data, ordered by value descending",
+          "title": "Sub-bar segments for stacked data\nOrdered by value desc"
+        },
+        "minValue": {
+          "type": "integer",
+          "format": "int64",
+          "example": 10,
+          "description": "Minimum value across all sub-bars",
+          "title": "Min, max, avg and sum of all sub-bars"
+        },
+        "maxValue": {
+          "type": "integer",
+          "format": "int64",
+          "example": 1000,
+          "description": "Maximum value across all sub-bars"
+        },
+        "avgValue": {
+          "type": "integer",
+          "format": "int64",
+          "example": 250,
+          "description": "Average value across all sub-bars"
+        },
+        "totalValue": {
+          "type": "integer",
+          "format": "int64",
+          "example": 5000,
+          "description": "Total sum of all sub-bar values"
+        },
+        "percentage": {
+          "type": "number",
+          "format": "float",
+          "example": 15,
+          "description": "Percentage of this bar's value relative to all bars (0-100)",
+          "title": "Percentage of all bars values. Value from 0 to 100"
+        }
+      },
+      "description": "Individual time-based bar representing statistics for a specific period",
+      "title": "Time Bar"
+    },
+    "v1TimeRangeBarChart": {
+      "type": "object",
+      "properties": {
+        "startDate": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2025-11-01T00:00:00Z",
+          "description": "Start date of the time range (UTC)"
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2026-11-01T00:00:00Z",
+          "description": "End date of the time range (UTC)"
+        },
+        "barDuration": {
+          "type": "string",
+          "example": "3600s",
+          "description": "Duration of each time bar period",
+          "title": "Period duration represents period duration of each time bar"
+        },
+        "bars": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1TimeBar"
+          },
+          "description": "List of time bars representing statistics for each period",
+          "title": "Bars representing each period in the time range\nOrdered by period_start asc"
+        },
+        "minValue": {
+          "type": "integer",
+          "format": "int64",
+          "example": 10,
+          "description": "Minimum value across all bars",
+          "title": "Min, max, avg and sum of all sub-bars"
+        },
+        "maxValue": {
+          "type": "integer",
+          "format": "int64",
+          "example": 1000,
+          "description": "Maximum value across all bars"
+        },
+        "avgValue": {
+          "type": "integer",
+          "format": "int64",
+          "example": 250,
+          "description": "Average value across all bars"
+        },
+        "totalValue": {
+          "type": "integer",
+          "format": "int64",
+          "example": 5000,
+          "description": "Total sum of all bar values"
+        }
+      },
+      "description": "Bar chart data structure for time-based statistics with period grouping",
+      "title": "Time Range Bar Chart"
+    },
+    "v1TokensType": {
+      "type": "string",
+      "enum": [
+        "TOKEN_TYPE_NONE",
+        "REQUEST",
+        "RESPONSE",
+        "REQUEST_RESPONSE"
+      ],
+      "default": "TOKEN_TYPE_NONE"
+    },
+    "v1UpdateModelRunResponse": {
+      "type": "object"
+    },
+    "v1Vendor": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "v1commonAuthentication": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/v1commonAuthenticationType"
+        },
+        "serviceAccountId": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "v1commonAuthenticationType": {
+      "type": "string",
+      "enum": [
+        "AUTHENTICATION_TYPE_NONE",
+        "AUTHENTICATION_TYPE_TOKEN_BASED",
+        "AUTHENTICATION_TYPE_KEY_BASED"
+      ],
+      "default": "AUTHENTICATION_TYPE_NONE"
+    },
+    "v1commonContainerOptions": {
+      "type": "object",
+      "properties": {
+        "exposedPorts": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "entrypoint": {
+          "type": "string"
+        },
+        "args": {
+          "type": "string"
+        },
+        "envOptions": {
+          "$ref": "#/definitions/v1commonEnvironmentOptions"
+        },
+        "readinessProbe": {
+          "$ref": "#/definitions/commonReadinessProbe"
+        },
+        "livenessProbe": {
+          "$ref": "#/definitions/commonLivenessProbe"
+        }
+      }
+    },
+    "v1commonContainerPublicUrlCORS": {
+      "type": "object",
+      "properties": {
+        "allowOrigins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "allow_origins - это поле строки, которое указывает origins (источники), которым разрешено выполнять запросы к URL публичного контейнера."
+        },
+        "allowMethods": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "allow_methods - это поле строки, которое указывает методы HTTP, которые разрешены для выполнения запросов к URL публичного контейнера."
+        },
+        "allowHeaders": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "allow_headers - поле строки, которое указывает заголовки, которые разрешено отправлять вместе с запросами к URL публичного контейнера."
+        },
+        "exposeHeaders": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "expose_headers - это поле строки, которое указывает заголовки, которые разрешено раскрывать клиенту при выполнении запросов к URL публичного контейнера."
+        },
+        "allowCredential": {
+          "type": "boolean",
+          "description": "allow_credential - это логическое поле, которое указывает, разрешено ли использование аутентификационных данных (cookies, HTTP Authentication) при выполнении запросов к URL публичного контейнера."
+        }
+      },
+      "title": "ContainerPublicUrlCORS - это структура, которая определяет параметры CORS (Cross-Origin Resource Sharing)\nдля URL публичного контейнера"
+    },
+    "v1commonEnvSecret": {
+      "type": "object",
+      "properties": {
+        "secret": {
+          "type": "string"
+        },
+        "secretLocator": {
+          "$ref": "#/definitions/v1commonSecretManagerLocator"
+        }
+      }
+    },
+    "v1commonEnvironmentOptions": {
+      "type": "object",
+      "properties": {
+        "rawEnvs": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "secretEnvs": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1commonEnvSecret"
+          }
+        }
+      }
+    },
+    "v1commonModelRunOptions": {
+      "type": "object",
+      "properties": {
+        "isEnabledAuth": {
+          "type": "boolean",
+          "description": "включена ли авторизация."
+        },
+        "auth": {
+          "$ref": "#/definitions/v1commonAuthentication",
+          "description": "ID сервисного аккаунта (может быть пустым)."
+        },
+        "isEnabledLogging": {
+          "type": "boolean",
+          "description": "Включено ли логирование создаваемого объекта."
+        },
+        "logGroupId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Идентификатор группы логовваемого объекта (может быть пустым)."
+        },
+        "isEnabledPublicUrlCors": {
+          "type": "boolean",
+          "description": "Разрешен ли CORS для публичного URL создаваемого объекта (логический тип)."
+        },
+        "publicUrlCors": {
+          "$ref": "#/definitions/v1commonContainerPublicUrlCORS",
+          "description": "Параметры CORS для публичного URL создаемого объекта (может быть пустым)."
+        },
+        "isEnabledAutoUpdate": {
+          "type": "boolean"
+        },
+        "autoUpdateOptions": {
+          "$ref": "#/definitions/commonAutoUpdateOptions"
+        }
+      }
+    },
+    "v1commonSecretManagerLocator": {
+      "type": "object",
+      "properties": {
+        "secretId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int32",
+          "minimum": 1
+        }
+      }
+    },
+    "v1container_inferencecommonInstanceConfigurationType": {
+      "type": "string",
+      "enum": [
+        "INSTANCE_CONFIGURATION_TYPE_NONE",
+        "INSTANCE_CONFIGURATION_TYPE_PREDEFINED",
+        "INSTANCE_CONFIGURATION_TYPE_SHARED_GPU"
+      ],
+      "default": "INSTANCE_CONFIGURATION_TYPE_NONE"
+    },
+    "v1serviceOption": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "Bearer": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
+    }
+  },
+  "externalDocs": {
+    "url": "https://wiki.sbercloud.tech/display/OCP/%5BEVO+ML+Inference%5D%5BBackend%5D+Billing"
+  }
+}
