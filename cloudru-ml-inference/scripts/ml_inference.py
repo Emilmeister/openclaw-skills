@@ -351,7 +351,7 @@ def cmd_catalog(args):
         print(
             f"  {c['id']} | {c['name']:<40} | {c.get('vendorName',''):<10} "
             f"| {c.get('paramsBn','')}B | ctx={c.get('contextK','')}K "
-            f"| {c.get('price','')} rub/day{tags_str}"
+            f"| {c.get('price','')} rub/hour{tags_str}"
         )
 
 
