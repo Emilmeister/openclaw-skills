@@ -30,6 +30,7 @@ Key rules:
 
 - `cloudru-account-setup` — creates Cloud.ru service account and Foundation Models API key via browser-assisted or manual flow. Script uses only Python stdlib.
 - `cloudru-foundation-models` — working with Cloud.ru Foundation Models API: model catalog, cURL/Python examples, OpenClaw provider setup. Requires `CLOUD_RU_FOUNDATION_MODELS_API_KEY`.
+- `cloudru-ml-inference` — full CRUD and inference for Cloud.ru ML Inference (Model RUN). Deploy, manage, and call ML models on GPU. Requires `CP_CONSOLE_KEY_ID`, `CP_CONSOLE_SECRET`, `PROJECT_ID` and the `inference-clients` SDK.
 
 ## Conventions
 

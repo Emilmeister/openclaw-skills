@@ -27,6 +27,9 @@ SERVICE_ACCOUNT_URL = "https://console.cloud.ru/u-api/bff-console/v2/service-acc
 API_KEY_URL_TEMPLATE = (
     "https://console.cloud.ru/u-api/bff-console/v1/service-accounts/{service_account_id}/api_keys"
 )
+ACCESS_KEY_URL_TEMPLATE = (
+    "https://console.cloud.ru/u-api/bff-console/v1/service-accounts/{service_account_id}/access_keys"
+)
 UUID_RE = re.compile(
     r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
 )
@@ -120,6 +123,22 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=365,
         help="API key validity in days. Cloud.ru docs say the maximum is one year.",
+    )
+    parser.add_argument(
+        "--access-key-description",
+        default="ml-inference-access-key",
+        help="Description for the created access key (used for CP_CONSOLE_KEY_ID / CP_CONSOLE_SECRET).",
+    )
+    parser.add_argument(
+        "--access-key-ttl",
+        type=int,
+        default=30,
+        help="Access key TTL in days.",
+    )
+    parser.add_argument(
+        "--skip-access-key",
+        action="store_true",
+        help="Skip access key creation (only create service account and API key).",
     )
     parser.add_argument(
         "--dry-run",
@@ -344,6 +363,22 @@ def create_api_key(token: str, service_account_id: str, payload: Dict[str, Any])
     return request_json(url, method="POST", bearer_token=token, json_body=payload)
 
 
+def create_access_key(token: str, service_account_id: str, description: str, ttl_days: int) -> Dict[str, Any]:
+    """Create an access key for IAM authentication (CP_CONSOLE_KEY_ID / CP_CONSOLE_SECRET).
+
+    POST /u-api/bff-console/v1/service-accounts/{id}/access_keys
+    Body: {"description": "...", "ttl": <days>}
+    Returns: {"id", "service_account_id", "description", "key_id", "secret", "created_at", "expired_at"}
+    """
+    url = ACCESS_KEY_URL_TEMPLATE.format(service_account_id=service_account_id)
+    return request_json(
+        url,
+        method="POST",
+        bearer_token=token,
+        json_body={"description": description, "ttl": ttl_days},
+    )
+
+
 def build_result(
     args: argparse.Namespace,
     ctx: ProjectContext,
@@ -351,11 +386,12 @@ def build_result(
     key_payload: Dict[str, Any],
     service_account: Optional[Dict[str, Any]],
     api_key: Optional[Dict[str, Any]],
+    access_key: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     notes = list(ctx.notes)
     if args.days_valid > 365:
         notes.append("days-valid is greater than 365; Cloud.ru documentation says one year is the maximum.")
-    return {
+    result: Dict[str, Any] = {
         "project": {
             "project_url": ctx.project_url,
             "project_id": ctx.project_id,
@@ -368,8 +404,17 @@ def build_result(
         },
         "service_account": service_account,
         "api_key": api_key,
+        "access_key": access_key,
         "notes": notes,
     }
+    if access_key:
+        result["credentials_summary"] = {
+            "CLOUD_RU_FOUNDATION_MODELS_API_KEY": api_key.get("secret") if api_key else None,
+            "CP_CONSOLE_KEY_ID": access_key.get("key_id"),
+            "CP_CONSOLE_SECRET": access_key.get("secret"),
+            "PROJECT_ID": ctx.project_id,
+        }
+    return result
 
 
 def main() -> int:
@@ -408,7 +453,20 @@ def main() -> int:
                 f"Cloud.ru API key response does not contain a secret: {json.dumps(api_key, ensure_ascii=False)}"
             )
 
-        result = build_result(args, ctx, sa_payload, key_payload, service_account, api_key)
+        access_key = None
+        if not args.skip_access_key:
+            access_key = create_access_key(
+                args.token,
+                service_account_id,
+                args.access_key_description,
+                args.access_key_ttl,
+            )
+            if not access_key.get("key_id") or not access_key.get("secret"):
+                raise BootstrapError(
+                    f"Cloud.ru access key response missing key_id or secret: {json.dumps(access_key, ensure_ascii=False)}"
+                )
+
+        result = build_result(args, ctx, sa_payload, key_payload, service_account, api_key, access_key)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
     except BootstrapError as exc:
