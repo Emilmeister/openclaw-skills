@@ -73,7 +73,9 @@ def build_parser():
     p_create.add_argument("--subnet-name", help="Subnet name")
     p_create.add_argument("--security-group-id", help="Security group UUID")
     p_create.add_argument("--login", help="VM user login (default: user1)")
-    p_create.add_argument("--password", help="VM user password")
+    p_create.add_argument("--password", help="VM user password (auth option 1)")
+    p_create.add_argument("--ssh-key", help="SSH public key string (auth option 2)")
+    p_create.add_argument("--ssh-key-file", help="Path to SSH public key file (e.g. ~/.ssh/id_rsa.pub)")
     p_create.add_argument("--cloud-init", help="Cloud-init script (inline)")
     p_create.add_argument("--cloud-init-file", help="Path to cloud-init file")
 
@@ -100,6 +102,25 @@ def build_parser():
     p_vnc.add_argument("vm_id", help="VM UUID")
     p_vnc.add_argument("--protocol", choices=["vnc", "serial"], default="vnc", help="Console type")
 
+    # --- SSH/SCP commands ---
+
+    p_ssh = subparsers.add_parser("ssh", help="Execute command on VM via SSH")
+    p_ssh.add_argument("vm_id", help="VM UUID (used to resolve IP)")
+    p_ssh.add_argument("--cmd", "-c", dest="remote_cmd", help="Command to execute (omit for interactive shell)")
+    p_ssh.add_argument("--login", "-l", default="user1", help="SSH user (default: user1)")
+    p_ssh.add_argument("--key-file", "-i", help="Path to SSH private key")
+    p_ssh.add_argument("--ip", help="Use this IP instead of auto-resolving from VM")
+
+    p_scp = subparsers.add_parser("scp", help="Copy files to/from VM via SCP")
+    p_scp.add_argument("vm_id", help="VM UUID (used to resolve IP)")
+    p_scp.add_argument("--direction", choices=["upload", "download"], default="upload", help="Transfer direction")
+    p_scp.add_argument("--local-path", required=True, help="Local file/dir path")
+    p_scp.add_argument("--remote-path", required=True, help="Remote file/dir path")
+    p_scp.add_argument("--login", "-l", default="user1", help="SSH user (default: user1)")
+    p_scp.add_argument("--key-file", "-i", help="Path to SSH private key")
+    p_scp.add_argument("--ip", help="Use this IP instead of auto-resolving from VM")
+    p_scp.add_argument("--recursive", "-r", action="store_true", help="Copy directories recursively")
+
     # --- Infrastructure commands ---
 
     p_flavors = subparsers.add_parser("flavors", help="List flavors")
@@ -120,6 +141,34 @@ def build_parser():
 
     p_sg = subparsers.add_parser("security-groups", help="List security groups")
     p_sg.add_argument("--limit", type=int, help="Max results")
+
+    # --- Security group management ---
+
+    p_sgc = subparsers.add_parser("sg-create", help="Create a security group")
+    p_sgc.add_argument("--name", required=True, help="Security group name")
+    p_sgc.add_argument("--zone-name", help="Availability zone name")
+    p_sgc.add_argument("--zone-id", help="Availability zone UUID")
+    p_sgc.add_argument("--description", help="Description")
+    p_sgc.add_argument("--open-ports", nargs="+", help="Ports to open immediately (e.g. 22 80 443 8080-8090)")
+
+    p_sgd = subparsers.add_parser("sg-delete", help="Delete a security group")
+    p_sgd.add_argument("sg_id", help="Security group UUID")
+
+    p_sgr = subparsers.add_parser("sg-rules", help="List rules of a security group")
+    p_sgr.add_argument("sg_id", help="Security group UUID")
+
+    p_sra = subparsers.add_parser("sg-rule-add", help="Add a rule (open port)")
+    p_sra.add_argument("sg_id", help="Security group UUID")
+    p_sra.add_argument("--ports", required=True, help="Port or range (e.g. 22, 8080-8090, 1-65535)")
+    p_sra.add_argument("--protocol", default="tcp", choices=["tcp", "udp", "icmp", "any"], help="IP protocol (default: tcp)")
+    p_sra.add_argument("--direction", default="ingress", choices=["ingress", "egress"], help="Traffic direction (default: ingress)")
+    p_sra.add_argument("--remote-ip", default="0.0.0.0/0", help="Source CIDR (default: 0.0.0.0/0 = any)")
+    p_sra.add_argument("--ether-type", default="IPv4", choices=["IPv4", "IPv6"], help="Ether type (default: IPv4)")
+    p_sra.add_argument("--description", help="Rule description")
+
+    p_srd = subparsers.add_parser("sg-rule-delete", help="Delete a rule (close port)")
+    p_srd.add_argument("sg_id", help="Security group UUID")
+    p_srd.add_argument("rule_id", help="Rule UUID")
 
     # --- Disk commands ---
 

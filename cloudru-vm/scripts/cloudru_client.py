@@ -193,6 +193,28 @@ class CloudruComputeClient:
     def create_security_group(self, payload: dict):
         return self._client.post(f"{API_PREFIX}/security-groups", json=payload, headers=self._headers())
 
+    @with_retry
+    def get_security_group(self, sg_id: str):
+        return self._client.get(f"{API_PREFIX}/security-groups/{sg_id}", headers=self._headers())
+
+    @with_retry
+    def delete_security_group(self, sg_id: str):
+        return self._client.delete(f"{API_PREFIX}/security-groups/{sg_id}", headers=self._headers())
+
+    # --- Security Group Rules ---
+
+    @with_retry
+    def list_sg_rules(self, sg_id: str, **params):
+        return self._client.get(f"{API_PREFIX}/security-groups/{sg_id}/rules", params=params, headers=self._headers())
+
+    @with_retry
+    def create_sg_rule(self, sg_id: str, payload: dict):
+        return self._client.post(f"{API_PREFIX}/security-groups/{sg_id}/rules", json=payload, headers=self._headers())
+
+    @with_retry
+    def delete_sg_rule(self, sg_id: str, rule_id: str):
+        return self._client.delete(f"{API_PREFIX}/security-groups/{sg_id}/rules/{rule_id}", headers=self._headers())
+
     # --- Availability Zones ---
 
     @with_retry
