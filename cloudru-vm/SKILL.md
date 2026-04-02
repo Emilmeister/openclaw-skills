@@ -1,14 +1,13 @@
----
-name: cloudru-vm
-description: Create and manage Cloud.ru virtual machines — full VM lifecycle, disks, networking, images, flavors. Uses the Cloud.ru Compute API via lightweight httpx-based client.
-metadata: {"openclaw":{"emoji":"🖥️","requires":{"bins":["python3"],"env":["CP_CONSOLE_KEY_ID","CP_CONSOLE_SECRET","PROJECT_ID"]}}}
----
+# Cloud.ru Virtual Machines
 
-# Cloud.ru Virtual Machines Skill
+> **Name:** cloudru-vm
+> **Description:** Create and manage Cloud.ru virtual machines — full VM lifecycle, disks, networking, security groups, SSH/SCP. Uses the Cloud.ru Compute API via lightweight httpx-based client.
+> **Required env:** `CP_CONSOLE_KEY_ID`, `CP_CONSOLE_SECRET`, `PROJECT_ID`
+> **Required pip:** `httpx`
 
 Manage virtual machines on Cloud.ru: create, start/stop/reboot, resize, delete VMs. Also manage disks, view flavors, images, subnets, security groups, and availability zones.
 
-# When to use
+## When to use
 
 Use this skill when the user:
 - Wants to create, manage, or delete virtual machines on Cloud.ru
@@ -17,27 +16,34 @@ Use this skill when the user:
 - Needs to start, stop, or reboot a VM
 - Asks about Cloud.ru compute/VM infrastructure
 
-# Prerequisites
+## Prerequisites
 
-## Environment variables
+### Environment variables
 - `CP_CONSOLE_KEY_ID` — Cloud.ru service account key ID
 - `CP_CONSOLE_SECRET` — Cloud.ru service account secret
 - `PROJECT_ID` — Cloud.ru project UUID
 
 If these are not set, guide the user to the `cloudru-account-setup` skill.
 
-## Dependencies
+### Dependencies
 
 The only external dependency is `httpx`. Install if not present:
 ```bash
 pip install httpx
 ```
 
-# How to use
+## How to use
 
-## CLI script
+### CLI script
 
-The main script is `{baseDir}/scripts/vm.py`. Run it from the `{baseDir}/scripts/` directory.
+The main script is `./scripts/vm.py`. It can be run from any directory (sys.path is set automatically).
+
+**Environment variables** can be provided via a `.env` file in the current working directory. The file is loaded automatically at startup. Variables already set in the environment are NOT overwritten. Format:
+```
+CP_CONSOLE_KEY_ID=your-key-id
+CP_CONSOLE_SECRET=your-secret
+PROJECT_ID=your-project-uuid
+```
 
 ### VM lifecycle
 
@@ -71,6 +77,13 @@ python vm.py create \
   --login user1 \
   --ssh-key-file ~/.ssh/id_ed25519.pub
 
+# Create VM, wait for it, auto-assign public IP, wait for SSH
+python vm.py create \
+  --name my-vm \
+  --login user1 \
+  --ssh-key-file ~/.ssh/id_ed25519.pub \
+  --wait --floating-ip --wait-ssh
+
 # Start / Stop / Reboot
 python vm.py start <vm_id>
 python vm.py stop <vm_id>
@@ -80,8 +93,11 @@ python vm.py reboot <vm_id>
 python vm.py update <vm_id> --name new-name
 python vm.py update <vm_id> --flavor-name lowcost10-4-8
 
-# Delete VM
+# Delete VM (warns if floating IPs are attached)
 python vm.py delete <vm_id>
+
+# Delete VM with auto-cleanup of floating IPs
+python vm.py delete <vm_id> --force
 
 # Get VNC console URL
 python vm.py vnc <vm_id>
@@ -173,38 +189,21 @@ python vm.py sg-delete <sg_id>
 
 ### Floating IP (public IP address)
 
-Floating IPs are NOT managed via `vm.py` CLI — use `CloudruComputeClient` directly from Python.
+Floating IPs are managed via `vm.py` CLI commands:
 
-To assign a public IP to a VM:
+```bash
+# List all floating IPs
+python vm.py fip-list
 
-```python
-from cloudru_client import CloudruComputeClient
-import os
+# Create a floating IP for a VM (auto-detects zone and interface)
+python vm.py fip-create <vm_id>
+python vm.py fip-create <vm_id> --name my-public-ip
 
-client = CloudruComputeClient(os.environ["CP_CONSOLE_KEY_ID"], os.environ["CP_CONSOLE_SECRET"])
-
-# 1. Get VM interface ID
-vm = client.get_vm("<vm_id>").json()
-interface_id = vm["interfaces"][0]["id"]
-
-# 2. Create floating IP attached to that interface
-res = client.create_floating_ip({
-    "name": "fip-my-vm",
-    "project_id": os.environ["PROJECT_ID"],
-    "availability_zone_name": "ru.AZ-1",  # must match VM's zone
-    "interface_id": interface_id,
-})
-print(f"Public IP: {res.json()['ip_address']}")
+# Delete a floating IP
+python vm.py fip-delete <fip_id>
 ```
 
-To list or delete floating IPs:
-```python
-# List
-fips = client.list_floating_ips(os.environ["PROJECT_ID"]).json()
-
-# Delete
-client.delete_floating_ip("<floating_ip_id>")
-```
+You can also auto-create a floating IP during VM creation with `--floating-ip` (see below).
 
 ### Disk management
 
@@ -241,18 +240,28 @@ python vm.py task <task_id>
    - Common: `ubuntu-22.04`, `Ubuntu-24.04`
 4. Pick a disk type: `python vm.py disk-types`
    - Available: `SSD`, `HDD`
-5. Create the VM:
+5. Create the VM with `--wait`, `--floating-ip`, and optionally `--wait-ssh`:
    ```bash
    python vm.py create --name my-vm \
      --flavor-name lowcost10-2-4 \
      --image-name ubuntu-22.04 \
      --zone-name ru.AZ-1 \
      --disk-size 20 --disk-type-name SSD \
-     --login user1 --password 'SecurePass123!'
+     --login user1 --ssh-key-file ~/.ssh/id_ed25519.pub \
+     --wait --floating-ip --wait-ssh
    ```
-6. Wait for it to become `running`: `python vm.py get <vm_id>`
-7. Assign a public IP (floating IP) — use Python snippet from the "Floating IP" section above
-8. Connect: `ssh user1@<public_ip>`
+   This will create the VM, wait for it to reach `running`, auto-create a floating IP, and wait for SSH to become ready.
+6. Connect: `python vm.py ssh <vm_id> -i ~/.ssh/id_ed25519`
+
+**Shortcut with defaults:** If you omit `--flavor-name`, `--image-name`, `--zone-name`, `--disk-size`, `--disk-type-name`, the following defaults apply:
+- Flavor: `lowcost10-1-1` (1 vCPU, 1 GB RAM)
+- Image: `ubuntu-22.04`
+- Zone: `ru.AZ-1`
+- Disk: 10 GB SSD
+So the minimal create command is:
+```bash
+python vm.py create --name my-vm --login user1 --ssh-key-file ~/.ssh/id_ed25519.pub --wait --floating-ip
+```
 
 ## Important notes and gotchas
 
@@ -266,7 +275,7 @@ python vm.py task <task_id>
 - The API (v1.1) creates VMs asynchronously — the VM starts in `creating` state and transitions through `creating` -> `running` (typically 30-90 seconds).
 - VM names must match pattern: `^[a-zA-Z][a-zA-Z0-9.\-_]*$` (1-64 chars, must start with a letter).
 
-### Stop / Start (приостановка / возобновление)
+### Stop / Start
 
 - `stop` sends `power_off` — VM transitions `running` -> `stopping` -> `stopped` (~15 seconds).
 - `start` sends `power_on` — VM transitions `stopped` -> `starting` -> `running` (~30-40 seconds).
@@ -276,7 +285,8 @@ python vm.py task <task_id>
 ### Deletion
 
 - **If a floating IP is attached, delete it FIRST** before deleting the VM. Otherwise the API returns `floating_ip_can_not_be_detached_from_vm_in_current_state` (HTTP 422).
-- Correct deletion order: 1) delete floating IP, 2) wait a few seconds, 3) delete VM.
+- Use `python vm.py delete <vm_id> --force` to auto-delete floating IPs before deleting the VM.
+- Without `--force`, the CLI will warn about attached floating IPs and exit.
 - VM deletion is asynchronous — the VM goes through `deleting` state before being fully removed.
 
 ### Floating IP (public IP)
@@ -286,11 +296,21 @@ python vm.py task <task_id>
 - One interface can have only one floating IP. Assigning another returns `interface_connected_another_floating_ip` error.
 - After creating a floating IP, the VM is accessible at the assigned public IP via SSH: `ssh <login>@<public_ip>`.
 
+### Network and cloud-init
+
+- **Cloud-init takes 2-5 minutes** on lowcost VMs after the VM reaches `running` state. During this time:
+  - SSH is not available (user/keys not yet configured)
+  - **Outbound internet may not work** (network configuration is part of cloud-init)
+  - `apt`, `curl`, `docker pull` will fail until cloud-init finishes
+- On `lowcost10-1-1` VMs, cloud-init can take up to **5 minutes** due to dpkg locks and slow CPU.
+- **Recommended:** after `--wait-ssh` succeeds, wait an additional **30-60 seconds** before running `apt update` or network-dependent commands. Or check with: `cloud-init status --wait`
+- The `--wait-ssh` flag only checks that SSH port accepts connections. It does NOT guarantee that cloud-init has fully completed or that internet is available.
+
 ### SSH connectivity
 
-- **Cloud-init takes 2-3 minutes** on lowcost VMs after the VM reaches `running` state. SSH won't connect until cloud-init finishes setting up the user, keys, and sshd.
 - The `vm.py ssh` command auto-resolves the VM's floating IP. If no floating IP is assigned, it falls back to the private IP (only works from within the same network).
 - Use `--ssh-key-file` when creating a VM and `-i <private_key>` when connecting with `vm.py ssh`.
+- Use `--wait-ready` to retry SSH connections until cloud-init sets up sshd.
 - The SSH commands disable strict host key checking (`StrictHostKeyChecking=no`) for convenience — VMs are ephemeral and IPs get reused.
 
 ### Disk sizes (tested)
@@ -317,13 +337,27 @@ python vm.py task <task_id>
 - VM create (v1.1) accepts and returns an array (batch create support).
 - Many operations are async — use `python vm.py task <task_id>` to track progress.
 
+## Cloud-init templates
+
+Ready-to-use cloud-init templates are in `./assets/`:
+
+- **`cloud-init-docker.yaml`** — installs Docker + Docker Compose from official repo. Usage:
+  ```bash
+  python vm.py create --name docker-vm --cloud-init-file ./assets/cloud-init-docker.yaml \
+    --login user1 --ssh-key-file ~/.ssh/id_ed25519.pub --wait --floating-ip --wait-ssh
+  ```
+  Note: Docker installation takes 3-5 minutes after cloud-init starts. After `--wait-ssh` succeeds, wait for cloud-init to finish:
+  ```bash
+  python vm.py ssh <vm_id> -i ~/.ssh/id_ed25519 -c "cloud-init status --wait"
+  ```
+
 ## Building custom Python code
 
-When the user needs custom code beyond what the script provides, use the patterns from `{baseDir}/references/examples.md` to construct Python code with the `CloudruComputeClient` from `{baseDir}/scripts/cloudru_client.py`.
+When the user needs custom code beyond what the script provides, use the patterns from `./references/examples.md` to construct Python code with the `CloudruComputeClient` from `./scripts/cloudru_client.py`.
 
-For full API reference, see `{baseDir}/references/api-reference.md`.
+For full API reference, see `./references/api-reference.md`.
 
-# Limitations
+## Limitations
 
 - Do not output secrets (CP_CONSOLE_KEY_ID, CP_CONSOLE_SECRET) to the user
 - Do not run destructive commands (delete, stop) without user confirmation

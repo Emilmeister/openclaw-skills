@@ -6,6 +6,37 @@ import sys
 
 from cloudru_client import CloudruInferenceClient
 
+
+def _load_dotenv():
+    """Read .env file (key=value lines) into os.environ if keys not already set.
+
+    Search order:
+      1. CLOUDRU_ENV_FILE env var (explicit path)
+      2. .env in current working directory
+    """
+    explicit = os.environ.get("CLOUDRU_ENV_FILE")
+    candidates = [explicit] if explicit else [os.path.join(os.getcwd(), ".env")]
+    for candidate in candidates:
+        if candidate and os.path.isfile(candidate):
+            with open(candidate) as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#"):
+                        continue
+                    if "=" not in line:
+                        continue
+                    key, _, value = line.partition("=")
+                    key = key.strip()
+                    value = value.strip()
+                    if len(value) >= 2 and value[0] == value[-1] and value[0] in ('"', "'"):
+                        value = value[1:-1]
+                    if key not in os.environ:
+                        os.environ[key] = value
+            break
+
+
+_load_dotenv()
+
 FRAMEWORK_ENUM_MAP = {
     "VLLM": "FrameworkType_VLLM",
     "SGLANG": "FrameworkType_SGLANG",

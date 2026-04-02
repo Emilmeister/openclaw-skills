@@ -29,6 +29,9 @@ Environment variables required:
     PROJECT_ID          — Cloud.ru project UUID
 """
 
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 import argparse
 import json
 
@@ -47,10 +50,13 @@ def build_parser():
     p_list = subparsers.add_parser("list", help="List model runs")
     p_list.add_argument("--limit", type=int, help="Max results")
     p_list.add_argument("--offset", type=int, help="Offset for pagination")
+    p_list.add_argument("--status", help="Filter by status (e.g. MODEL_RUN_STATUS_RUNNING)")
+    p_list.add_argument("--all", action="store_true", help="Show all runs including deleted")
 
     # get
     p_get = subparsers.add_parser("get", help="Get model run details")
     p_get.add_argument("model_run_id", help="Model run UUID")
+    p_get.add_argument("--json", action="store_true", dest="output_json", help="Output raw JSON")
 
     # create
     p_create = subparsers.add_parser("create", help="Create a model run")
@@ -172,6 +178,8 @@ def build_parser():
     p_deploy.add_argument("model_card_id", help="Model card UUID from catalog")
     p_deploy.add_argument("--name", help="Custom name (default: model name from catalog)")
     p_deploy.add_argument("--config-index", type=int, help="Config index if multiple available (default: 0)")
+    p_deploy.add_argument("--wait", action="store_true", help="Wait for model to reach RUNNING status")
+    p_deploy.add_argument("--wait-timeout", type=int, default=600, help="Max seconds to wait (default: 600)")
 
     return parser
 

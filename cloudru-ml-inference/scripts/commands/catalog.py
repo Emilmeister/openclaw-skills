@@ -1,8 +1,13 @@
 """Catalog commands: browse predefined models and deploy them."""
 
+import re
 import sys
+import time
 
 from helpers import build_client, check_response
+
+# Model run names: only latin letters, digits, hyphens
+NAME_RE = re.compile(r'^[a-z][a-z0-9\-]*$')
 
 
 def cmd_catalog(args):
@@ -54,7 +59,7 @@ def cmd_catalog_detail(args):
             f"\n  [{i}] GPU: {cfg.get('allowedGpu', '?')} x{cfg.get('gpuCount', '?')} "
             f"({cfg.get('gpuMemoryAllocGb', '?')}GB) | "
             f"Framework: {cfg.get('frameworkType', '?')} {cfg.get('frameworkVersion', '')} | "
-            f"Price: {cfg.get('price', '?')} rub/day"
+            f"Price: {cfg.get('price', '?')} rub/hour"
         )
         print(f"      Config ID: {cfg.get('id', '?')}")
         print(f"      Runtime: {cfg.get('runtimeTemplateId', '?')}")
@@ -81,7 +86,12 @@ def cmd_deploy(args):
         sys.exit(1)
     cfg = configs[config_index]
 
-    model_name = args.name or card.get("name", "model-run")
+    raw_name = args.name or card.get("name", "model-run")
+    # Sanitize: lowercase, replace non-alphanum with hyphens, collapse
+    model_name = re.sub(r'[^a-z0-9\-]', '-', raw_name.lower())
+    model_name = re.sub(r'-+', '-', model_name).strip('-')
+    if not model_name or not model_name[0].isalpha():
+        model_name = "model-" + model_name
     task_type = card.get("taskType", "ModelTaskType_GENERATE")
 
     payload = {
@@ -104,12 +114,45 @@ def cmd_deploy(args):
     print(f"Deploying '{card.get('name', '?')}' with config [{config_index}]:")
     print(f"  GPU: {cfg.get('allowedGpu')} x{cfg.get('gpuCount')} ({cfg.get('gpuMemoryAllocGb')}GB)")
     print(f"  Framework: {cfg.get('frameworkType')} {cfg.get('frameworkVersion', '')}")
-    print(f"  Price: {cfg.get('price', '?')} rub/day")
+    print(f"  Price: {cfg.get('price', '?')} rub/hour")
 
     create_res = client.create_model_run(project_id, payload)
+
+    # Handle name collision — retry with suffixed names
+    if not create_res.is_success and "name" in create_res.text.lower():
+        for suffix in range(2, 6):
+            new_name = f"{model_name}-{suffix}"
+            print(f"Name '{payload['name']}' is taken, trying '{new_name}'...")
+            payload["name"] = new_name
+            create_res = client.create_model_run(project_id, payload)
+            if create_res.is_success:
+                break
+
     check_response(create_res, "creating model run")
 
     result = create_res.json()
     model_run_id = result.get("modelRunId", result)
     print(f"\nCreated model run: {model_run_id}")
-    print(f"Public URL: {model_run_id}.modelrun.inference.cloud.ru")
+    print(f"Public URL: https://{model_run_id}.modelrun.inference.cloud.ru")
+
+    # --wait: poll until RUNNING
+    if getattr(args, "wait", False) and model_run_id:
+        print("Waiting for model to become RUNNING...")
+        deadline = time.time() + (getattr(args, "wait_timeout", 600) or 600)
+        last_status = None
+        while time.time() < deadline:
+            r = client.get_model_run(project_id, model_run_id)
+            if r.is_success:
+                mr = r.json().get("modelRun", r.json())
+                status = mr.get("status", "?")
+                if status != last_status:
+                    print(f"  Status: {status}")
+                    last_status = status
+                if status == "MODEL_RUN_STATUS_RUNNING":
+                    print("Model is RUNNING!")
+                    return
+                if "FAILED" in status or "DELETED" in status:
+                    print(f"Error: model entered status {status}", file=sys.stderr)
+                    sys.exit(1)
+            time.sleep(15)
+        print(f"Warning: timed out waiting for RUNNING (last: {last_status})", file=sys.stderr)

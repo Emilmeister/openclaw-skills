@@ -82,4 +82,15 @@ def cmd_security_groups(args):
     data = res.json()
     print(f"Security groups ({data.get('total', '?')} total):\n")
     for sg in data.get("items", []):
-        print(f"  {sg['id']} | {sg['name']:<30} | rules: {len(sg.get('rules', []))}")
+        rule_count = sg.get("rule_count", len(sg.get("rules", [])))
+        # If API doesn't return rules in list, fetch them
+        if rule_count == 0 and not sg.get("rules"):
+            try:
+                r = client.list_sg_rules(sg["id"])
+                if r.is_success:
+                    rd = r.json()
+                    items = rd.get("items", rd) if isinstance(rd, dict) else rd
+                    rule_count = len(items) if isinstance(items, list) else 0
+            except Exception:
+                pass
+        print(f"  {sg['id']} | {sg['name']:<30} | rules: {rule_count}")

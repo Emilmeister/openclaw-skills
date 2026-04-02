@@ -24,6 +24,7 @@ from urllib.request import Request, urlopen
 context = ssl._create_unverified_context()
 
 SERVICE_ACCOUNT_URL = "https://console.cloud.ru/u-api/bff-console/v2/service-accounts/add"
+SERVICE_ACCOUNT_LIST_URL = "https://console.cloud.ru/u-api/bff-console/v2/service-accounts"
 API_KEY_URL_TEMPLATE = (
     "https://console.cloud.ru/u-api/bff-console/v1/service-accounts/{service_account_id}/api_keys"
 )
@@ -284,7 +285,11 @@ def request_json(
     method: str = "GET",
     bearer_token: Optional[str] = None,
     json_body: Optional[Dict[str, Any]] = None,
+    query_params: Optional[Dict[str, str]] = None,
 ) -> Any:
+    if query_params:
+        from urllib.parse import urlencode
+        url = f"{url}?{urlencode(query_params)}"
     headers = {
         "Accept": "application/json",
         "User-Agent": "PostmanRuntime/7.48.0",
@@ -347,6 +352,42 @@ def api_key_payload(args: argparse.Namespace) -> Dict[str, Any]:
         "enabled": True,
         "expiredAt": iso_z(expiry),
     }
+
+
+def find_service_account(token: str, project_id: str, customer_id: Optional[str], name: str) -> Optional[Dict[str, Any]]:
+    """Find an existing service account by name via POST list endpoint."""
+    if not customer_id:
+        return None
+    try:
+        data = request_json(
+            SERVICE_ACCOUNT_LIST_URL,
+            method="POST",
+            bearer_token=token,
+            json_body={"projectIds": [project_id], "customerId": customer_id},
+        )
+    except BootstrapError as exc:
+        print(f"  List service accounts failed: {exc}", file=sys.stderr)
+        return None
+
+    # Extract accounts from response — API returns {"accounts": [...]}
+    if isinstance(data, list):
+        accounts = data
+    elif isinstance(data, dict):
+        accounts = (
+            data.get("accounts")
+            or data.get("serviceAccounts")
+            or data.get("items")
+            or data.get("data")
+            or []
+        )
+    else:
+        return None
+
+    for sa in accounts:
+        if sa.get("name") == name:
+            return sa
+
+    return None
 
 
 def create_service_account(token: str, payload: Dict[str, Any]) -> Dict[str, Any]:
@@ -439,7 +480,27 @@ def main() -> int:
                 "Missing --token. Pass the Cloud.ru console bearer token from the browser localStorage flow."
             )
 
-        service_account = create_service_account(args.token, sa_payload)
+        try:
+            service_account = create_service_account(args.token, sa_payload)
+        except BootstrapError as exc:
+            if "409" not in str(exc) and "already exists" not in str(exc):
+                raise
+
+            print(f"Service account '{args.service_account_name}' already exists, looking it up...", file=sys.stderr)
+            service_account = find_service_account(args.token, ctx.project_id, ctx.customer_id, args.service_account_name)
+
+            if not service_account:
+                # Fallback: create with a unique name
+                import random, string
+                suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
+                new_name = f"{args.service_account_name}-{suffix}"
+                print(f"Could not find existing account. Creating new one: '{new_name}'", file=sys.stderr)
+                sa_payload["name"] = new_name
+                sa_payload["description"] = new_name
+                service_account = create_service_account(args.token, sa_payload)
+            else:
+                print(f"Found existing service account: {service_account.get('id')}", file=sys.stderr)
+
         service_account_id = service_account.get("id")
         if not service_account_id:
             raise BootstrapError(
