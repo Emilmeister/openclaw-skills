@@ -1,6 +1,7 @@
 """VM CRUD and power commands."""
 
 import json
+import subprocess
 import sys
 
 from helpers import build_client, check_response, print_json
@@ -90,13 +91,22 @@ def cmd_create(args):
         if "interfaces" in payload:
             payload["interfaces"][0]["security_groups"] = [{"id": args.security_group_id}]
 
-    # Image metadata (login, password, hostname, etc.)
-    if args.login or args.password:
+    # Image metadata (login, password/ssh-key, hostname)
+    if args.login or args.password or args.ssh_key or args.ssh_key_file:
         image_meta = {}
         image_meta["name"] = args.login or "user1"
-        if args.password:
-            image_meta["linux_password"] = args.password
         image_meta["hostname"] = args.name
+        # Auth: SSH key or password (one is required)
+        ssh_key = None
+        if args.ssh_key:
+            ssh_key = args.ssh_key
+        elif args.ssh_key_file:
+            with open(args.ssh_key_file) as f:
+                ssh_key = f.read().strip()
+        if ssh_key:
+            image_meta["public_key"] = ssh_key
+        elif args.password:
+            image_meta["linux_password"] = args.password
         payload["image_metadata"] = image_meta
 
     res = client.create_vm(payload)
@@ -164,3 +174,90 @@ def cmd_vnc(args):
     check_response(res, "getting console URL")
     data = res.json()
     print(f"Console URL: {data.get('url', data)}")
+
+
+def _resolve_vm_ip(args):
+    """Get the public (floating) or private IP of a VM."""
+    client, _ = build_client()
+    res = client.get_vm(args.vm_id)
+    check_response(res, "getting VM")
+    vm = res.json()
+
+    # Prefer floating IP (public), fall back to private
+    for iface in vm.get("interfaces", []):
+        fip = iface.get("floating_ip")
+        if fip and fip.get("ip_address"):
+            return fip["ip_address"]
+
+    # No floating IP — use private IP
+    for iface in vm.get("interfaces", []):
+        ip = iface.get("ip_address")
+        if ip:
+            return ip
+
+    print("Error: VM has no IP address", file=sys.stderr)
+    sys.exit(1)
+
+
+def cmd_ssh(args):
+    """Execute a command on VM via SSH."""
+    if args.ip:
+        host = args.ip
+    else:
+        host = _resolve_vm_ip(args)
+
+    user = args.login or "user1"
+
+    ssh_cmd = [
+        "ssh",
+        "-o", "StrictHostKeyChecking=no",
+        "-o", "UserKnownHostsFile=/dev/null",
+        "-o", "LogLevel=ERROR",
+    ]
+
+    if args.key_file:
+        ssh_cmd += ["-i", args.key_file]
+
+    ssh_cmd.append(f"{user}@{host}")
+
+    if args.remote_cmd:
+        ssh_cmd.append(args.remote_cmd)
+        result = subprocess.run(ssh_cmd, capture_output=False)
+        sys.exit(result.returncode)
+    else:
+        # Interactive — just exec ssh
+        import os
+        os.execvp("ssh", ssh_cmd)
+
+
+def cmd_scp(args):
+    """Copy files to/from VM via SCP."""
+    if args.ip:
+        host = args.ip
+    else:
+        host = _resolve_vm_ip(args)
+
+    user = args.login or "user1"
+
+    scp_cmd = [
+        "scp",
+        "-o", "StrictHostKeyChecking=no",
+        "-o", "UserKnownHostsFile=/dev/null",
+        "-o", "LogLevel=ERROR",
+    ]
+
+    if args.key_file:
+        scp_cmd += ["-i", args.key_file]
+
+    if args.recursive:
+        scp_cmd.append("-r")
+
+    # Determine direction: upload (local -> remote) or download (remote -> local)
+    remote_prefix = f"{user}@{host}:"
+    if args.direction == "upload":
+        scp_cmd += [args.local_path, f"{remote_prefix}{args.remote_path}"]
+    else:
+        scp_cmd += [f"{remote_prefix}{args.remote_path}", args.local_path]
+
+    result = subprocess.run(scp_cmd, capture_output=False)
+    sys.exit(result.returncode)

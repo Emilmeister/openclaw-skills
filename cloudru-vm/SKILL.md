@@ -49,8 +49,7 @@ python vm.py list --state running
 # Get VM details
 python vm.py get <vm_id>
 
-# Create VM (requires flavor, image, zone, login/password)
-# IMPORTANT: --login and --password are required for most images (they set image_metadata)
+# Create VM with password auth
 python vm.py create \
   --name my-vm \
   --flavor-name lowcost10-2-4 \
@@ -60,6 +59,17 @@ python vm.py create \
   --disk-type-name SSD \
   --login user1 \
   --password 'MySecurePass123!'
+
+# Create VM with SSH key auth (recommended for agent use)
+python vm.py create \
+  --name my-vm \
+  --flavor-name lowcost10-2-4 \
+  --image-name ubuntu-22.04 \
+  --zone-name ru.AZ-1 \
+  --disk-size 20 \
+  --disk-type-name SSD \
+  --login user1 \
+  --ssh-key-file ~/.ssh/id_ed25519.pub
 
 # Start / Stop / Reboot
 python vm.py start <vm_id>
@@ -75,6 +85,30 @@ python vm.py delete <vm_id>
 
 # Get VNC console URL
 python vm.py vnc <vm_id>
+```
+
+### SSH and SCP (remote execution)
+
+Execute commands on a VM or copy files. The `ssh`/`scp` commands auto-resolve the VM's public IP from its floating IP.
+
+```bash
+# Execute a command on VM
+python vm.py ssh <vm_id> -i ~/.ssh/key -c "uname -a"
+
+# Run multiple commands
+python vm.py ssh <vm_id> -i ~/.ssh/key -c "apt update && apt install -y nginx"
+
+# Upload a file to VM
+python vm.py scp <vm_id> -i ~/.ssh/key --local-path ./app.py --remote-path /home/user1/app.py
+
+# Download a file from VM
+python vm.py scp <vm_id> -i ~/.ssh/key --direction download --local-path ./logs.tar.gz --remote-path /var/log/logs.tar.gz
+
+# Upload a directory
+python vm.py scp <vm_id> -i ~/.ssh/key -r --local-path ./my-project --remote-path /home/user1/my-project
+
+# Override IP (if auto-resolve doesn't work)
+python vm.py ssh <vm_id> -i ~/.ssh/key --ip 1.2.3.4 -c "hostname"
 ```
 
 ### Infrastructure info
@@ -93,6 +127,49 @@ python vm.py zones
 python vm.py disk-types
 python vm.py security-groups
 ```
+
+### Security groups and port management
+
+```bash
+# List security groups
+python vm.py security-groups
+
+# Create a security group with ports open immediately
+python vm.py sg-create --name my-sg --zone-name ru.AZ-1 --open-ports 22 80 443
+
+# Create an empty security group
+python vm.py sg-create --name my-sg --zone-name ru.AZ-1 --description "My firewall rules"
+
+# List rules of a security group
+python vm.py sg-rules <sg_id>
+
+# Open a port (add ingress rule)
+python vm.py sg-rule-add <sg_id> --ports 8080
+python vm.py sg-rule-add <sg_id> --ports 8080 --description "App server"
+
+# Open a port range
+python vm.py sg-rule-add <sg_id> --ports 3000-3100
+
+# Open a UDP port
+python vm.py sg-rule-add <sg_id> --ports 53 --protocol udp
+
+# Restrict to specific IP/CIDR
+python vm.py sg-rule-add <sg_id> --ports 22 --remote-ip 203.0.113.0/24
+
+# Close a port (delete a rule)
+python vm.py sg-rule-delete <sg_id> <rule_id>
+
+# Delete entire security group
+python vm.py sg-delete <sg_id>
+```
+
+**Port format:** single port (`22`), range (`3000-3100`). The API normalizes to `port:port` format (e.g. `22:22`, `3000:3100`).
+
+**Protocols:** `tcp` (default), `udp`, `icmp`, `any`.
+
+**Direction:** `ingress` (default, incoming traffic), `egress` (outgoing traffic).
+
+**To assign a security group to a VM:** specify `--security-group-id` when creating the VM, or assign it to the VM's network interface.
 
 ### Floating IP (public IP address)
 
@@ -181,7 +258,8 @@ python vm.py task <task_id>
 
 ### VM creation
 
-- **`--login` and `--password` are required** for most Cloud.ru images. They set `image_metadata` (login, password, hostname). Without them the API returns `image_metadata_required` error.
+- **Authentication is required** for most Cloud.ru images — use either `--password` or `--ssh-key-file` (not both). They set `image_metadata`. Without auth the API returns `image_metadata_required` error. For agent use, **SSH key is preferred** — no password in command line.
+- `--login` sets the username (default: `user1`).
 - **`--disk-type-name`** (`SSD` or `HDD`) is required. Without it the API returns `disk_type_id or disk_type_name should be set` error.
 - **Minimum boot disk size is ~8-10 GB** for Ubuntu images. Smaller values (e.g. 5 GB) return `vm_root_disk_too_small` error. Maximum disk size is 16384 GB.
 - Zone names use dots: `ru.AZ-1`, `ru.AZ-2`, `ru.AZ-3` (not `ru-9a`).
@@ -207,6 +285,13 @@ python vm.py task <task_id>
 - The floating IP's availability zone **must match** the VM's zone.
 - One interface can have only one floating IP. Assigning another returns `interface_connected_another_floating_ip` error.
 - After creating a floating IP, the VM is accessible at the assigned public IP via SSH: `ssh <login>@<public_ip>`.
+
+### SSH connectivity
+
+- **Cloud-init takes 2-3 minutes** on lowcost VMs after the VM reaches `running` state. SSH won't connect until cloud-init finishes setting up the user, keys, and sshd.
+- The `vm.py ssh` command auto-resolves the VM's floating IP. If no floating IP is assigned, it falls back to the private IP (only works from within the same network).
+- Use `--ssh-key-file` when creating a VM and `-i <private_key>` when connecting with `vm.py ssh`.
+- The SSH commands disable strict host key checking (`StrictHostKeyChecking=no`) for convenience — VMs are ephemeral and IPs get reused.
 
 ### Disk sizes (tested)
 

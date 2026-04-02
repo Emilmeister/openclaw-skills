@@ -7,7 +7,7 @@ Skills for working with [Cloud.ru](https://cloud.ru) services in the OpenClaw ag
 - **cloudru-account-setup** — create a Cloud.ru service account, Foundation Models API key, and IAM access key (`CP_CONSOLE_KEY_ID`/`CP_CONSOLE_SECRET`)
 - **cloudru-foundation-models** — work with Cloud.ru Foundation Models API: list models, call completions, configure OpenClaw provider
 - **cloudru-ml-inference** — deploy and manage ML models on Cloud.ru ML Inference (GPU): browse the predefined model catalog, deploy with one command, full CRUD, call inference endpoints (chat, embeddings, rerank)
-- **cloudru-vm** — create and manage Cloud.ru virtual machines: full VM lifecycle (create, start/stop/reboot, resize, delete), disk management, floating IPs, flavors, images, subnets, security groups
+- **cloudru-vm** — create and manage Cloud.ru virtual machines: full VM lifecycle, disk management, floating IPs, security groups (open/close ports), SSH/SCP remote execution
 
 ## Quick start
 
@@ -56,20 +56,31 @@ python cloudru-ml-inference/scripts/ml_inference.py delete <model_run_id>
 python cloudru-vm/scripts/vm.py flavors
 python cloudru-vm/scripts/vm.py images
 
-# Create a VM
+# Create a VM with SSH key
 python cloudru-vm/scripts/vm.py create \
   --name my-vm \
   --flavor-name lowcost10-2-4 \
   --image-name ubuntu-22.04 \
   --zone-name ru.AZ-1 \
   --disk-size 20 --disk-type-name SSD \
-  --login user1 --password 'SecurePass123!'
+  --login user1 --ssh-key-file ~/.ssh/id_ed25519.pub
 
 # Manage lifecycle
 python cloudru-vm/scripts/vm.py list
 python cloudru-vm/scripts/vm.py stop <vm_id>
 python cloudru-vm/scripts/vm.py start <vm_id>
 python cloudru-vm/scripts/vm.py delete <vm_id>
+
+# Open ports (security groups)
+python cloudru-vm/scripts/vm.py sg-create --name web-sg --zone-name ru.AZ-1 --open-ports 22 80 443
+python cloudru-vm/scripts/vm.py sg-rule-add <sg_id> --ports 8080
+python cloudru-vm/scripts/vm.py sg-rule-delete <sg_id> <rule_id>
+
+# SSH into VM / run commands remotely
+python cloudru-vm/scripts/vm.py ssh <vm_id> -i ~/.ssh/key -c "uname -a"
+
+# Copy files to/from VM
+python cloudru-vm/scripts/vm.py scp <vm_id> -i ~/.ssh/key --local-path ./app.py --remote-path /home/user1/app.py
 ```
 
 ## Installation
