@@ -1,6 +1,6 @@
 ---
 name: cloudru-ml-inference
-description: Manage Cloud.ru ML Inference model runs — browse the predefined model catalog, deploy models with one command, manage lifecycle, and call inference endpoints. Full CRUD and inference via the inference-clients Python SDK.
+description: Manage Cloud.ru ML Inference model runs — browse the predefined model catalog, deploy models with one command, manage lifecycle, and call inference endpoints. Full CRUD and inference via lightweight httpx-based client.
 homepage: https://cloud.ru/docs/ml-platform/mlspace/concepts/inference/about-inference.html
 metadata: {"openclaw":{"emoji":"🤖","requires":{"bins":["python3"],"env":["CP_CONSOLE_KEY_ID","CP_CONSOLE_SECRET","PROJECT_ID"]}}}
 ---
@@ -36,19 +36,9 @@ The user must have these environment variables set:
 
 If credentials are missing, direct the user to the `cloudru-account-setup` skill.
 
-The `inference-clients` Python package and its dependencies must be installed. If not, run:
+The only external dependency is `httpx`. Install if not present:
 ```bash
-pip install \
-    --index-url https://pkg.sbercloud.tech/artifactory/api/pypi/aicloud-pypi/simple \
-    --extra-index-url https://pkg.sbercloud.tech/artifactory/api/pypi/sc-tt-pypi/simple \
-    --extra-index-url https://pkg.sbercloud.tech/artifactory/api/pypi/proxies-pypi/simple \
-    inference-clients http_client_retries evoapp-common evoapp-http-clients
-
-pip install \
-    --index-url https://pkg.sbercloud.tech/artifactory/api/pypi/sc-tt-pypi/simple \
-    --no-deps --force-reinstall pydantic-extensions
-
-pip install pydantic-settings
+pip install httpx
 ```
 
 ## How to use
@@ -138,7 +128,7 @@ Note: the Cloud.ru API is strict about payload format. Prefer `deploy` from the 
 
 ### Building custom Python code
 
-When the user needs custom code beyond what the script provides, use the patterns from `{baseDir}/references/examples.md` to construct Python code with the `inference-clients` SDK directly.
+When the user needs custom code beyond what the script provides, use the patterns from `{baseDir}/references/examples.md` to construct Python code with the `CloudruInferenceClient` from `{baseDir}/scripts/cloudru_client.py`.
 
 ## What to return
 
