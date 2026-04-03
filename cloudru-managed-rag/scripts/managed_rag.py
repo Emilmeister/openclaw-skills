@@ -54,6 +54,7 @@ def build_parser():
     # --- version-detail ---
     p = sub.add_parser("version-detail", help="Get version details")
     p.add_argument("--version-id", required=True, help="Version ID")
+    p.add_argument("--kb-id", help="KB ID (required by API)")
 
     # --- delete ---
     p = sub.add_parser("delete", help="Delete a knowledge base")
