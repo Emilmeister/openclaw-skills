@@ -19,11 +19,7 @@ import base64
 import json
 import os
 import pathlib
-import ssl
 import time
-import urllib.error
-import urllib.parse
-import urllib.request
 from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
@@ -174,54 +170,6 @@ def _api_request(
 
 
 # ---------------------------------------------------------------------------
-# Helpers: urllib-based HTTPS requests (kept for S3 operations)
-# ---------------------------------------------------------------------------
-
-
-def _ssl_context() -> ssl.SSLContext:
-    return ssl.create_default_context()
-
-
-def _https_request(
-    host: str,
-    method: str,
-    path: str,
-    headers: Optional[Dict[str, str]] = None,
-    body: Optional[Any] = None,
-    timeout: int = 30,
-) -> Tuple[int, Dict[str, Any]]:
-    """urllib-based HTTPS request. Kept for S3 AWS Signature V4 operations."""
-    hdrs = dict(headers or {})
-    hdrs.setdefault("Content-Type", "application/json")
-
-    url = f"https://{host}{path}"
-    encoded_body = json.dumps(body).encode("utf-8") if body is not None else None
-
-    req = urllib.request.Request(url, data=encoded_body, headers=hdrs, method=method)
-
-    opener = urllib.request.build_opener(
-        urllib.request.ProxyHandler({}),
-        urllib.request.HTTPSHandler(context=_ssl_context()),
-    )
-
-    try:
-        resp = opener.open(req, timeout=timeout)
-        raw = resp.read().decode("utf-8", errors="replace")
-        status = resp.status
-    except urllib.error.HTTPError as e:
-        raw = e.read().decode("utf-8", errors="replace") if e.fp else ""
-        status = e.code
-    except Exception as exc:
-        return 0, {"_error": str(exc)}
-
-    try:
-        data = json.loads(raw) if raw.strip() else {}
-    except json.JSONDecodeError:
-        data = {"_raw": raw}
-    return status, data
-
-
-# ---------------------------------------------------------------------------
 # Helpers: headers
 # ---------------------------------------------------------------------------
 
@@ -317,6 +265,7 @@ class PipelineContext:
         self.tenant_id: Optional[str] = None
         self.kb_id: Optional[str] = None
         self.search_url: Optional[str] = None
+        self.log_group_id: Optional[str] = None
         self.iam_token: Optional[str] = None
         self.results: List[Dict[str, Any]] = []
 
@@ -600,7 +549,7 @@ def step_create_access_key(ctx: PipelineContext) -> Dict[str, Any]:
         )
 
     return ctx.record(
-        {"step": step, "key_id": ctx.key_id, "secret": ctx.key_secret}
+        {"step": step, "key_id": ctx.key_id, "secret": "***saved***"}
     )
 
 
@@ -641,10 +590,36 @@ def step_get_tenant_id(ctx: PipelineContext) -> Dict[str, Any]:
     return ctx.record({"step": step, "tenant_id": ctx.tenant_id})
 
 
-def step_ensure_bucket(ctx: PipelineContext) -> Dict[str, Any]:
-    """Step 6: Create an S3 bucket if it does not exist (via boto3).
+def _fetch_bucket_log_group_id(ctx: PipelineContext, bucket_name: str) -> None:
+    """Try to get log_group_id from an existing bucket via BFF.
 
-    Uses boto3 with AWS Signature V4 -- NOT rewritten to httpx.
+    Called when bucket creation returns 409 (already exists).
+    Sets ctx.log_group_id if found.
+    """
+    if not ctx.tenant_id:
+        return
+    # List buckets and find ours
+    status, data = _bff_request(
+        "GET",
+        f"/u-api/s3e-controller/v1/tenants/{ctx.tenant_id}/buckets",
+        ctx.token,
+    )
+    if status != 200:
+        return
+    buckets = data if isinstance(data, list) else data.get("buckets", data.get("items", []))
+    for b in buckets:
+        if b.get("name") == bucket_name:
+            gid = b.get("log_group_id") or b.get("logGroupId") or ""
+            if gid:
+                ctx.log_group_id = gid
+            return
+
+
+def step_ensure_bucket(ctx: PipelineContext) -> Dict[str, Any]:
+    """Step 6: Create an S3 bucket via BFF (s3e-controller).
+
+    Uses BFF endpoint so the bucket is registered in Cloud.ru platform
+    and accessible by Managed RAG for indexing.
     """
     step = "ensure-bucket"
     bucket_name = ctx.bucket_name
@@ -653,9 +628,9 @@ def step_ensure_bucket(ctx: PipelineContext) -> Dict[str, Any]:
         return ctx.record(
             make_error(step, "--bucket-name is required")
         )
-    if not ctx.tenant_id or not ctx.key_id or not ctx.key_secret:
+    if not ctx.tenant_id:
         return ctx.record(
-            make_error(step, "tenant_id, key_id, key_secret required -- run previous steps")
+            make_error(step, "tenant_id required -- run get-tenant-id first")
         )
 
     if ctx.dry_run:
@@ -663,44 +638,33 @@ def step_ensure_bucket(ctx: PipelineContext) -> Dict[str, Any]:
             {"step": step, "bucket_name": bucket_name, "dry_run": True}
         )
 
-    try:
-        import boto3
-        from botocore.config import Config as BotoConfig
-        from botocore.exceptions import ClientError
-    except ImportError:
-        return ctx.record(
-            make_error(step, "boto3 is not installed -- pip install boto3")
-        )
-
-    # IMPORTANT: access_key for S3 is "{tenant_id}:{key_id}"
-    s3_access_key = f"{ctx.tenant_id}:{ctx.key_id}"
-
-    s3 = boto3.client(
-        "s3",
-        endpoint_url=S3_ENDPOINT,
-        region_name=S3_REGION,
-        aws_access_key_id=s3_access_key,
-        aws_secret_access_key=ctx.key_secret,
-        config=BotoConfig(s3={"addressing_style": "path"}),
+    # Create bucket via BFF s3e-controller (registers in platform)
+    # Match UI payload exactly — no global_name/domain_name, quota=0
+    bucket_body = {
+        "name": bucket_name,
+        "storage_class": "STANDARD",
+        "quotas": [{"type": "BUCKET_SIZE", "value": 0, "unit": "GB"}],
+    }
+    status, data = _bff_request(
+        "POST",
+        f"/u-api/s3e-controller/v1/tenants/{ctx.tenant_id}/buckets",
+        ctx.token,
+        body=bucket_body,
     )
 
     created = False
-    try:
-        s3.head_bucket(Bucket=bucket_name)
-    except ClientError as exc:
-        error_code = int(exc.response["Error"].get("Code", 0))
-        if error_code == 404:
-            try:
-                s3.create_bucket(Bucket=bucket_name)
-                created = True
-            except ClientError as create_exc:
-                return ctx.record(
-                    make_error(step, f"Failed to create bucket: {create_exc}", None)
-                )
-        else:
-            return ctx.record(
-                make_error(step, f"S3 head_bucket error: {exc}", error_code)
-            )
+    if status in (200, 201):
+        created = True
+        # Save log_group_id from response for telemetry_configuration in KB
+        ctx.log_group_id = data.get("log_group_id") if isinstance(data, dict) else None
+    elif status == 409 or (isinstance(data, dict) and "already exists" in str(data).lower()):
+        # Bucket already exists — try to fetch its log_group_id
+        created = False
+        _fetch_bucket_log_group_id(ctx, bucket_name)
+    else:
+        return ctx.record(
+            make_error(step, f"Failed to create bucket via BFF: {json.dumps(data)}", status)
+        )
 
     return ctx.record({"step": step, "bucket_name": bucket_name, "created": created})
 
@@ -783,10 +747,18 @@ def step_upload_docs(ctx: PipelineContext) -> Dict[str, Any]:
     uploaded = 0
     for fpath in files_to_upload:
         relative = fpath.relative_to(docs_dir)
-        s3_key = f"docs/{relative}"
+        s3_key = str(relative)
         file_size = fpath.stat().st_size
         try:
-            s3.upload_file(str(fpath), bucket_name, s3_key)
+            # ACL=bucket-owner-full-control is CRITICAL:
+            # Without it, Managed RAG Search API cannot read the files
+            s3.upload_file(
+                str(fpath), bucket_name, s3_key,
+                ExtraArgs={
+                    "StorageClass": "STANDARD",
+                    "ACL": "bucket-owner-full-control",
+                },
+            )
             uploaded += 1
             total_size += file_size
         except Exception as exc:
@@ -795,6 +767,70 @@ def step_upload_docs(ctx: PipelineContext) -> Dict[str, Any]:
     return ctx.record(
         {"step": step, "files_uploaded": uploaded, "total_size_bytes": total_size}
     )
+
+
+LOGAAS_HOST_PATH = "/u-api/logaas-bff-console/v1"
+DEFAULT_LOG_GROUP_NAME = "managed-rag-logs"
+
+
+def _resolve_log_group_id(ctx: PipelineContext) -> str:
+    """Get logaas_log_group_id for telemetry configuration.
+
+    CRITICAL: Empty string breaks Search API deployment (platform bug).
+    Must provide a real log group ID.
+
+    Strategy:
+      1. Already resolved (from bucket creation) → use it
+      2. List project log groups → prefer 'default', else first active
+      3. No log groups → create one
+    """
+    if ctx.log_group_id:
+        return ctx.log_group_id
+
+    if not ctx.project_id or not ctx.token:
+        return ""
+
+    # List existing log groups
+    status, data = _bff_request(
+        "GET",
+        f"{LOGAAS_HOST_PATH}/{ctx.project_id}/log-groups",
+        ctx.token,
+    )
+    if status == 200:
+        groups = data.get("logGroups", [])
+        # Prefer 'default' type, then any active
+        for g in groups:
+            if g.get("type") == "DEFAULT" and g.get("status") == "STATUS_ACTIVE":
+                ctx.log_group_id = g["id"]
+                return g["id"]
+        for g in groups:
+            if g.get("status") == "STATUS_ACTIVE":
+                ctx.log_group_id = g["id"]
+                return g["id"]
+
+    # No log groups — create one
+    emit({"info": "Нет log groups на проекте, создаю managed-rag-logs..."})
+    status, data = _bff_request(
+        "POST",
+        f"{LOGAAS_HOST_PATH}/{ctx.project_id}/log-group",
+        ctx.token,
+        body={
+            "name": DEFAULT_LOG_GROUP_NAME,
+            "description": "Auto-created for Managed RAG (required for Search API)",
+            "retentionPeriod": 3,
+            "status": "STATUS_ACTIVE",
+        },
+    )
+    if status == 200 and data.get("id"):
+        ctx.log_group_id = data["id"]
+        return data["id"]
+
+    emit({
+        "warning": "Не удалось получить или создать log group. "
+        "Search API может не заработать. Создайте log group в консоли "
+        "(Observability → Log Groups) и повторите setup."
+    })
+    return ""
 
 
 def _build_kb_payload(ctx: PipelineContext) -> Dict[str, Any]:
@@ -851,12 +887,19 @@ def _build_kb_payload(ctx: PipelineContext) -> Dict[str, Any]:
                 "model_name": "Qwen/Qwen3-Embedding-0.6B",
                 "model_source": "MODEL_SOURCE_FOUNDATION_MODELS",
             },
+            "telemetry_configuration": {
+                "logging": {
+                    "logaas_log_group_id": _resolve_log_group_id(ctx),
+                },
+            },
             "data_source_configuration": {
                 "cloud_ru_evolution_object_storage_source": {
                     "bucket_name": ctx.bucket_name,
-                    "paths": ["docs/"],
+                    "paths": [""],
                     "object_storage_scan_options": {
+                        "recursive": True,
                         "file_extensions": extensions,
+                        "max_depth": 0,
                     },
                 }
             },
@@ -1095,9 +1138,29 @@ STEP_REGISTRY: Dict[str, Any] = {
 # ---------------------------------------------------------------------------
 
 
+STEP_LABELS = {
+    "extract-info": "Извлекаю info из JWT",
+    "ensure-sa": "Создаю Service Account",
+    "ensure-role": "Назначаю роль managed_rag.admin",
+    "create-access-key": "Создаю access-key",
+    "get-tenant-id": "Получаю tenant_id для S3",
+    "ensure-bucket": "Создаю S3 бакет",
+    "upload-docs": "Загружаю документы в S3",
+    "create-kb": "Создаю Knowledge Base",
+    "wait-active": "Жду активации KB",
+    "save-env": "Сохраняю .env с credentials",
+}
+
+
 def run_pipeline(ctx: PipelineContext) -> int:
     """Run all steps sequentially. Stop on first critical error."""
-    for step_name in ALL_STEPS:
+    total = len(ALL_STEPS)
+    warnings = []
+
+    for i, step_name in enumerate(ALL_STEPS, 1):
+        label = STEP_LABELS.get(step_name, step_name)
+        emit({"progress": f"[{i}/{total}] {label}..."})
+
         step_fn = STEP_REGISTRY[step_name]
         try:
             result = step_fn(ctx)
@@ -1105,8 +1168,12 @@ def run_pipeline(ctx: PipelineContext) -> int:
             result = {"step": step_name, "error": str(exc)}
             ctx.record(result)
 
+        if result.get("warning"):
+            warnings.append(f"  - {step_name}: {result['warning']}")
+
         if "error" in result:
             if step_name not in ("ensure-role", "upload-docs", "wait-active", "save-env"):
+                emit({"progress": f"[{i}/{total}] ОШИБКА на шаге '{label}'"})
                 emit(
                     {
                         "pipeline": "stopped",
@@ -1116,6 +1183,17 @@ def run_pipeline(ctx: PipelineContext) -> int:
                 )
                 return 1
 
+    # Human-readable summary
+    summary_lines = [f"Pipeline завершён ({total} шагов)"]
+    if ctx.kb_id:
+        summary_lines.append(f"  KB: {ctx.kb_id}")
+    if ctx.search_url:
+        summary_lines.append(f"  Search URL: {ctx.search_url}")
+    if warnings:
+        summary_lines.append("  Warnings:")
+        summary_lines.extend(warnings)
+
+    emit({"progress": "\n".join(summary_lines)})
     emit({"pipeline": "complete", "results": ctx.results})
     return 0
 

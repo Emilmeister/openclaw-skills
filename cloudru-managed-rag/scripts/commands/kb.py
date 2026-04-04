@@ -1,5 +1,6 @@
 """Knowledge base management commands."""
 
+import os
 import sys
 
 from helpers import build_client, check_response, get_env, print_json
@@ -90,7 +91,8 @@ def cmd_versions(args):
 
 def cmd_version_detail(args):
     client, project_id = build_client()
-    res = client.get_version(args.version_id, project_id)
+    kb_id = _get_kb_id(args) if getattr(args, "kb_id", None) else os.environ.get("MANAGED_RAG_KB_ID", "")
+    res = client.get_version(args.version_id, project_id, kb_id=kb_id)
     check_response(res, f"getting version {args.version_id}")
     data = res.json()
     output = {

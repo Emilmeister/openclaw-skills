@@ -166,10 +166,13 @@ class ManagedRagClient:
         )
 
     @with_retry
-    def get_version(self, version_id: str, project_id: str):
+    def get_version(self, version_id: str, project_id: str, kb_id: str = ""):
+        params = {"project_id": project_id}
+        if kb_id:
+            params["knowledgebase_id"] = kb_id
         return self._public.get(
             f"/v1/knowledge-bases/versions/{version_id}",
-            params={"project_id": project_id},
+            params=params,
             headers=self._headers(),
         )
 
