@@ -326,7 +326,13 @@ def service_account_payload(args: argparse.Namespace, ctx: ProjectContext) -> Di
         "name": args.service_account_name,
         "description": args.service_account_description,
         "customerId": ctx.customer_id,
-        "serviceRoles": [],
+        "serviceRoles": [
+            "managed_rag.admin",
+            "ai-agents.agents.admin",
+            "ai-agents.systems.admin",
+            "ai-agents.mcp-servers.admin",
+            "ai-agents.prompts.admin",
+        ],
         "projectId": ctx.project_id,
         "projectRole": args.project_role,
         "artifactRoles": [],
@@ -420,6 +426,21 @@ def create_access_key(token: str, service_account_id: str, description: str, ttl
     )
 
 
+def ensure_service_roles(token: str, sa_id: str, project_id: str, roles: List[str]) -> Dict[str, Any]:
+    """PATCH service account to add multiple service roles. Idempotent.
+
+    PATCH /u-api/bff-console/v2/service-accounts/{sa_id}
+    Body: {"projectId": "...", "serviceRoles": {"adds": [...], "removes": []}}
+    Accepts IAM bearer or console OIDC bearer.
+    """
+    url = f"https://console.cloud.ru/u-api/bff-console/v2/service-accounts/{sa_id}"
+    body = {
+        "projectId": project_id,
+        "serviceRoles": {"adds": roles, "removes": []},
+    }
+    return request_json(url, method="PATCH", bearer_token=token, json_body=body)
+
+
 def build_result(
     args: argparse.Namespace,
     ctx: ProjectContext,
@@ -432,6 +453,11 @@ def build_result(
     notes = list(ctx.notes)
     if args.days_valid > 365:
         notes.append("days-valid is greater than 365; Cloud.ru documentation says one year is the maximum.")
+    if service_account:
+        notes.append(
+            "Service roles assigned to the SA: managed_rag.admin, "
+            "ai-agents.{agents,systems,mcp-servers,prompts}.admin."
+        )
     result: Dict[str, Any] = {
         "project": {
             "project_url": ctx.project_url,
@@ -500,6 +526,29 @@ def main() -> int:
                 service_account = create_service_account(args.token, sa_payload)
             else:
                 print(f"Found existing service account: {service_account.get('id')}", file=sys.stderr)
+                ai_agents_roles = [
+                    "managed_rag.admin",
+                    "ai-agents.agents.admin",
+                    "ai-agents.systems.admin",
+                    "ai-agents.mcp-servers.admin",
+                    "ai-agents.prompts.admin",
+                ]
+                try:
+                    ensure_service_roles(
+                        args.token,
+                        service_account.get("id"),
+                        ctx.project_id,
+                        ai_agents_roles,
+                    )
+                    print(
+                        f"Ensured service roles on existing SA {service_account.get('id')}: {ai_agents_roles}",
+                        file=sys.stderr,
+                    )
+                except BootstrapError as exc:
+                    ctx.notes.append(
+                        f"Existing SA found but ensure_service_roles failed: {exc}. "
+                        f"Verify service roles are assigned via UI."
+                    )
 
         service_account_id = service_account.get("id")
         if not service_account_id:
