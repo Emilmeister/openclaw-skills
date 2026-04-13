@@ -14,7 +14,7 @@ metadata: { "requires": { "bins": ["python3"] } }
 
 ## Предварительные требования
 
-Скилл использует credentials из `.env` (создаются при setup или скиллом `cloudru-account-setup`):
+Скилл использует credentials из env vars (получаются через `cloudru-account-setup`):
 
 ```
 CP_CONSOLE_KEY_ID=...
@@ -22,7 +22,7 @@ CP_CONSOLE_SECRET=...
 PROJECT_ID=...
 ```
 
-Если credentials нет — запусти setup (Сценарий 2) или `cloudru-account-setup`.
+Если credentials нет — запусти `cloudru-account-setup`. Он создаст Service Account с ролью `managed_rag.admin` автоматически.
 
 Зависимости: `pip install httpx boto3` (если не установлены).
 
@@ -38,56 +38,30 @@ python scripts/managed_rag.py list
 
 ## Сценарий 2: Настройка с нуля (setup)
 
-Setup — 10-шаговый pipeline:
+Setup — 7-шаговый pipeline (все BFF-вызовы идут через IAM-токен, browser token не нужен):
 
-1. extract-info — декодирует JWT, извлекает project_id/customer_id
-2. ensure-sa — создаёт/находит Service Account
-3. ensure-role — назначает managed_rag.admin (non-fatal)
-4. create-access-key — создаёт access key (секрет показывается один раз!)
-5. get-tenant-id — получает tenant_id для S3
-6. ensure-bucket — создаёт S3 бакет через BFF
-7. upload-docs — загружает документы в S3 (boto3, ACL=bucket-owner-full-control)
-8. create-kb — создаёт Knowledge Base с log group для телеметрии
-9. wait-active — поллит до KNOWLEDGEBASE_ACTIVE (через IAM token)
-10. save-env — сохраняет .env с credentials
+1. get-iam-token — обмен CP_CONSOLE_KEY_ID/SECRET → IAM bearer
+2. get-tenant-id — получает tenant_id для S3
+3. ensure-bucket — создаёт S3-бакет через BFF
+4. upload-docs — загружает документы в S3 (boto3, ACL=bucket-owner-full-control)
+5. create-kb — создаёт Knowledge Base с log group для телеметрии
+6. wait-active — поллит до KNOWLEDGEBASE_ACTIVE
+7. save-env — сохраняет `MANAGED_RAG_KB_ID` и `MANAGED_RAG_SEARCH_URL` в `.env`
 
 ### Запуск
 
-1. Получи browser token (через browser tool, из localStorage Cloud.ru console)
-2. Узнай у пользователя: путь к документам, имя KB, имя бакета
-3. Запусти:
-
 ```bash
 python scripts/managed_rag.py setup \
-  --token "BROWSER_TOKEN" \
-  --project-id "PROJECT_ID" \
-  --customer-id "CUSTOMER_ID" \
   --docs-path "/path/to/docs" \
   --kb-name "my-kb" \
   --bucket-name "my-rag-bucket"
 ```
 
-### Откуда брать параметры
-
-Browser token (из localStorage браузера, живёт ~5 мин):
-```javascript
-JSON.parse(localStorage.getItem(Object.keys(localStorage).find(k => k.startsWith('oidc.user:')))).access_token
-```
-
-Project ID и Customer ID — из URL консоли:
-```
-console.cloud.ru/spa/svp?customerId=<CUSTOMER_ID>&projectId=<PROJECT_ID>
-```
-
-**ВАЖНО:**
-- `--customer-id` обязателен. Если не передать — pipeline упадёт на шаге ensure-sa.
-- `--project-id` обязателен. JWT не содержит project_id.
-- Browser token живёт ~5 мин, но после шага create-access-key полинг идёт через IAM token (не зависит от browser token).
+`PROJECT_ID` берётся из env (выдаётся `cloudru-account-setup`). `--project-id` передаётся только если нужно переопределить.
 
 ### Дополнительные опции setup
 
 ```
---sa-name NAME        Имя Service Account (default: managed-rag-sa)
 --file-extensions EXT Расширения файлов для загрузки (default: txt,pdf)
 --output-env PATH     Путь для .env (default: ~/.openclaw/workspace/skills/managed-rag-skill/.env)
 --dry-run             Превью без API вызовов
@@ -96,7 +70,7 @@ console.cloud.ru/spa/svp?customerId=<CUSTOMER_ID>&projectId=<PROJECT_ID>
 ### Запуск отдельного шага
 
 ```bash
-python scripts/managed_rag.py setup-step --token "TOKEN" --step ensure-sa --project-id "..." --customer-id "..."
+python scripts/managed_rag.py setup-step --step ensure-bucket --bucket-name my-bucket
 ```
 
 ## Команды
@@ -158,9 +132,9 @@ python scripts/managed_rag.py reindex --version-id <ID>
 ## Env vars
 
 ```
-CP_CONSOLE_KEY_ID        IAM access key ID
-CP_CONSOLE_SECRET        IAM access key secret
-PROJECT_ID               Cloud.ru project ID
+CP_CONSOLE_KEY_ID        IAM access key ID (от cloudru-account-setup)
+CP_CONSOLE_SECRET        IAM access key secret (от cloudru-account-setup)
+PROJECT_ID               Cloud.ru project ID (от cloudru-account-setup)
 MANAGED_RAG_KB_ID        Default KB ID (не нужно передавать --kb-id)
 MANAGED_RAG_SEARCH_URL   Default Search API URL (не нужно резолвить)
 CLOUDRU_ENV_FILE         Путь к .env (default: .env в CWD)
