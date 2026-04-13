@@ -25,9 +25,6 @@ def _load_dotenv():
                         continue
                     if "=" not in line:
                         continue
-                    # Strip "export " prefix if present
-                    if line.startswith("export "):
-                        line = line[7:]
                     key, _, value = line.partition("=")
                     key = key.strip()
                     value = value.strip()
