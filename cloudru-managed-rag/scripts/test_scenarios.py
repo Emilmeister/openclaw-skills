@@ -81,8 +81,6 @@ def main():
                     line = line.strip()
                     if not line or line.startswith("#"):
                         continue
-                    if line.startswith("export "):
-                        line = line[7:]
                     if "=" in line:
                         k, _, v = line.partition("=")
                         v = v.strip().strip('"').strip("'")
@@ -175,19 +173,9 @@ def main():
     # =========================================================================
     print("\n=== Сценарий 6: Setup dry-run ===")
     # =========================================================================
-    # Minimal valid JWT: header.payload.signature
-    import base64
-    fake_payload = base64.urlsafe_b64encode(json.dumps({
-        "sub": "test-user", "exp": 9999999999,
-    }).encode()).rstrip(b"=").decode()
-    fake_header = base64.urlsafe_b64encode(b'{"alg":"none"}').rstrip(b"=").decode()
-    fake_jwt = f"{fake_header}.{fake_payload}.fakesig"
-
+    # CP_CONSOLE_KEY_ID/SECRET/PROJECT_ID already in env from .env
     run("setup --dry-run — preview без API",
         ["setup",
-         "--token", fake_jwt,
-         "--project-id", "test-project",
-         "--customer-id", "test-customer",
          "--docs-path", os.path.dirname(os.path.abspath(__file__)),
          "--kb-name", "dry-run-test",
          "--bucket-name", "dry-run-bucket",
