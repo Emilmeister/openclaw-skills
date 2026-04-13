@@ -28,6 +28,7 @@ Commands:
 """
 
 import argparse
+import os
 import sys
 
 from commands import COMMANDS
@@ -88,32 +89,25 @@ def build_parser():
     p.add_argument("--rerank-results", type=int, default=0, help="Number of reranked results")
 
     # --- setup ---
-    p = sub.add_parser("setup", help="Full infra setup (requires browser --token)")
-    p.add_argument("--token", required=True, help="Browser token from Cloud.ru console")
-    p.add_argument("--project-id", help="Project ID (auto-detected from token if omitted)")
-    p.add_argument("--customer-id", help="Customer ID (auto-detected from token if omitted)")
+    p = sub.add_parser("setup", help="Full RAG infra setup (requires CP_CONSOLE_KEY_ID/SECRET/PROJECT_ID env)")
     p.add_argument("--docs-path", required=True, help="Path to documents folder")
     p.add_argument("--kb-name", required=True, help="Knowledge base name")
     p.add_argument("--bucket-name", required=True, help="S3 bucket name")
-    p.add_argument("--sa-name", default="managed-rag-sa", help="Service account name")
+    p.add_argument("--project-id", default=os.environ.get("PROJECT_ID"), help="Project ID (default: PROJECT_ID env)")
     p.add_argument("--file-extensions", default="txt,pdf", help="File extensions to upload")
     p.add_argument("--output-env", help="Path to save .env file")
     p.add_argument("--dry-run", action="store_true", help="Preview without API calls")
 
     # --- setup-step ---
     p = sub.add_parser("setup-step", help="Run single setup step")
-    p.add_argument("--token", required=True, help="Browser token")
     p.add_argument("--step", required=True, choices=[
-        "extract-info", "ensure-sa", "ensure-role", "create-access-key",
-        "get-tenant-id", "ensure-bucket", "upload-docs", "create-kb",
-        "wait-active", "save-env",
+        "get-iam-token", "get-tenant-id", "ensure-bucket", "upload-docs",
+        "create-kb", "wait-active", "save-env",
     ])
-    p.add_argument("--project-id", help="Project ID")
-    p.add_argument("--customer-id", help="Customer ID")
+    p.add_argument("--project-id", default=os.environ.get("PROJECT_ID"), help="Project ID (default: PROJECT_ID env)")
     p.add_argument("--docs-path", help="Path to documents folder")
     p.add_argument("--kb-name", help="Knowledge base name")
     p.add_argument("--bucket-name", help="S3 bucket name")
-    p.add_argument("--sa-name", default="managed-rag-sa", help="Service account name")
     p.add_argument("--file-extensions", default="txt,pdf", help="File extensions to upload")
     p.add_argument("--output-env", help="Path to save .env file")
     p.add_argument("--dry-run", action="store_true", help="Preview without API calls")
