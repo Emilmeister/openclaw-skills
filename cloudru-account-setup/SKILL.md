@@ -9,7 +9,8 @@
 
 Creates a Cloud.ru service account and the credentials needed for Cloud.ru services:
 1. **Foundation Models API key** (`CLOUD_RU_FOUNDATION_MODELS_API_KEY`) — for the Foundation Models API.
-2. **IAM access key** (`CP_CONSOLE_KEY_ID` + `CP_CONSOLE_SECRET`) — for IAM token-based authentication used by ML Inference, VM, and other Cloud.ru services.
+2. **IAM access key** (`CP_CONSOLE_KEY_ID` + `CP_CONSOLE_SECRET`) — for IAM token-based authentication used by ML Inference, VM, Managed RAG, AI Agents, and other Cloud.ru services.
+3. **Service roles** — automatically attached to the SA (on create or via PATCH for an existing SA): `managed_rag.admin` + `ai-agents.{agents,systems,mcp-servers,prompts}.admin`. Required by `cloudru-managed-rag` and `cloudru-ai-agents`.
 
 After a successful run the user will have all credentials ready to use.
 
