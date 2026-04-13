@@ -445,9 +445,19 @@ def step_upload_docs(ctx: PipelineContext) -> Dict[str, Any]:
             }
         )
 
-    if not ctx.tenant_id or not ctx.key_id or not ctx.key_secret:
+    if not ctx.tenant_id:
         return ctx.record(
-            make_error(step, "S3 credentials required -- run previous steps")
+            make_error(step, "tenant_id required -- run get-tenant-id first")
+        )
+    key_id = os.environ.get("CP_CONSOLE_KEY_ID")
+    key_secret = os.environ.get("CP_CONSOLE_SECRET")
+    if not key_id or not key_secret:
+        return ctx.record(
+            make_error(
+                step,
+                "CP_CONSOLE_KEY_ID/CP_CONSOLE_SECRET env vars required "
+                "(run cloudru-account-setup first)",
+            )
         )
 
     try:
@@ -458,13 +468,13 @@ def step_upload_docs(ctx: PipelineContext) -> Dict[str, Any]:
             make_error(step, "boto3 is not installed -- pip install boto3")
         )
 
-    s3_access_key = f"{ctx.tenant_id}:{ctx.key_id}"
+    s3_access_key = f"{ctx.tenant_id}:{key_id}"
     s3 = boto3.client(
         "s3",
         endpoint_url=S3_ENDPOINT,
         region_name=S3_REGION,
         aws_access_key_id=s3_access_key,
-        aws_secret_access_key=ctx.key_secret,
+        aws_secret_access_key=key_secret,
         config=BotoConfig(s3={"addressing_style": "path"}),
     )
 
