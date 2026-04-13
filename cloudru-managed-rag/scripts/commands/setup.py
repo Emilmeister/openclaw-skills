@@ -52,10 +52,7 @@ DEFAULT_ENV_PATH = os.path.expanduser(
 )
 
 ALL_STEPS = [
-    "extract-info",
-    "ensure-sa",
-    "ensure-role",
-    "create-access-key",
+    "get-iam-token",
     "get-tenant-id",
     "ensure-bucket",
     "upload-docs",
@@ -184,26 +181,6 @@ def _auth_headers(token: str) -> Dict[str, str]:
 
 
 # ---------------------------------------------------------------------------
-# Helpers: JWT decoding (no third-party libs)
-# ---------------------------------------------------------------------------
-
-
-def _b64_decode_segment(segment: str) -> bytes:
-    """Decode a base64url segment with padding fix."""
-    padded = segment + "=" * (-len(segment) % 4)
-    return base64.urlsafe_b64decode(padded)
-
-
-def decode_jwt_payload(token: str) -> Dict[str, Any]:
-    """Decode the payload of a JWT without signature verification."""
-    parts = token.split(".")
-    if len(parts) < 2:
-        raise ValueError("Invalid JWT: expected at least 2 dot-separated segments")
-    payload_bytes = _b64_decode_segment(parts[1])
-    return json.loads(payload_bytes)
-
-
-# ---------------------------------------------------------------------------
 # Helpers: IAM token exchange
 # ---------------------------------------------------------------------------
 
@@ -237,10 +214,7 @@ class PipelineContext:
 
     def __init__(
         self,
-        token: str,
         project_id: Optional[str] = None,
-        customer_id: Optional[str] = None,
-        sa_name: str = DEFAULT_SA_NAME,
         bucket_name: Optional[str] = None,
         docs_path: Optional[str] = None,
         kb_name: Optional[str] = None,
@@ -248,10 +222,7 @@ class PipelineContext:
         output_env: Optional[str] = None,
         dry_run: bool = False,
     ) -> None:
-        self.token: str = token
         self.project_id: Optional[str] = project_id
-        self.customer_id: Optional[str] = customer_id
-        self.sa_name: str = sa_name
         self.bucket_name: Optional[str] = bucket_name
         self.docs_path: Optional[str] = docs_path
         self.kb_name: Optional[str] = kb_name
@@ -259,9 +230,6 @@ class PipelineContext:
         self.output_env: Optional[str] = output_env
         self.dry_run: bool = dry_run
 
-        self.sa_id: Optional[str] = None
-        self.key_id: Optional[str] = None
-        self.key_secret: Optional[str] = None
         self.tenant_id: Optional[str] = None
         self.kb_id: Optional[str] = None
         self.search_url: Optional[str] = None
@@ -275,282 +243,21 @@ class PipelineContext:
         return result
 
     def ensure_iam_token(self) -> str:
-        """Get or refresh an IAM token from the access key pair."""
-        if self.iam_token:
-            return self.iam_token
-        if not self.key_id or not self.key_secret:
+        """Fresh exchange CP_CONSOLE_KEY_ID/SECRET -> IAM bearer on each call."""
+        key_id = os.environ.get("CP_CONSOLE_KEY_ID")
+        key_secret = os.environ.get("CP_CONSOLE_SECRET")
+        if not key_id or not key_secret:
             raise RuntimeError(
-                "Access key not available yet -- run create-access-key first"
+                "CP_CONSOLE_KEY_ID/CP_CONSOLE_SECRET not set. "
+                "Run cloudru-account-setup first."
             )
-        self.iam_token = get_iam_token(self.key_id, self.key_secret)
+        self.iam_token = get_iam_token(key_id, key_secret)
         return self.iam_token
 
 
 # ---------------------------------------------------------------------------
 # Step implementations
 # ---------------------------------------------------------------------------
-
-
-def step_extract_info(ctx: PipelineContext) -> Dict[str, Any]:
-    """Step 1: Decode JWT to extract project_id, customer_id, user sub."""
-    step = "extract-info"
-    try:
-        payload = decode_jwt_payload(ctx.token)
-    except Exception as exc:
-        return ctx.record(make_error(step, f"JWT decode failed: {exc}"))
-
-    project_id = (
-        ctx.project_id
-        or payload.get("project_id")
-        or payload.get("proj")
-        or payload.get("prj")
-    )
-    customer_id = (
-        ctx.customer_id
-        or payload.get("customer_id")
-        or payload.get("cid")
-    )
-    user_sub = payload.get("sub", "")
-
-    if not project_id:
-        return ctx.record(make_error(
-            step,
-            "project_id not found in token. Browser OIDC tokens don't contain project_id. "
-            "Pass --project-id explicitly. You can find it in the console URL: "
-            "console.cloud.ru/spa/svp?projectId=<THIS_VALUE>"
-        ))
-
-    if not customer_id:
-        return ctx.record(make_error(
-            step,
-            "customer_id not found in token. Browser OIDC tokens don't contain customer_id. "
-            "Pass --customer-id explicitly. You can find it in the console URL: "
-            "console.cloud.ru/spa/svp?customerId=<THIS_VALUE>"
-        ))
-
-    ctx.project_id = project_id
-    ctx.customer_id = customer_id
-
-    result = {
-        "step": step,
-        "project_id": project_id,
-        "customer_id": customer_id,
-        "user_sub": user_sub,
-    }
-    return ctx.record(result)
-
-
-def step_ensure_sa(ctx: PipelineContext) -> Dict[str, Any]:
-    """Step 2: Find or create a Service Account via BFF (httpx)."""
-    step = "ensure-sa"
-    sa_name = ctx.sa_name
-
-    if not ctx.project_id:
-        return ctx.record(
-            make_error(step, "project_id is required -- run extract-info first")
-        )
-    if not ctx.customer_id:
-        return ctx.record(
-            make_error(step, "customer_id is required -- run extract-info first")
-        )
-
-    if ctx.dry_run:
-        ctx.sa_id = ctx.sa_id or "dry-run-sa-id"
-        return ctx.record({"step": step, "sa_name": sa_name, "dry_run": True})
-
-    # --- helper: search SA by name across project's accounts ---
-    def _find_sa_by_name() -> Optional[str]:
-        list_path = f"/u-api/bff-console/v1/projects/{ctx.project_id}/service-accounts"
-        list_status, list_data = _bff_request("GET", list_path, ctx.token)
-        if list_status != 200:
-            return None
-        accounts = list_data.get(
-            "accounts",
-            list_data.get("service_accounts", list_data.get("items", [])),
-        )
-        for sa in accounts:
-            if sa.get("name") == sa_name:
-                return sa.get("id")
-        return None
-
-    # Try to find existing SA first
-    existing_id = _find_sa_by_name()
-    if existing_id:
-        ctx.sa_id = existing_id
-        return ctx.record(
-            {"step": step, "sa_id": ctx.sa_id, "sa_name": sa_name, "created": False}
-        )
-
-    # Create new SA via BFF v2
-    create_body = {
-        "name": sa_name,
-        "description": "Service account for Managed RAG",
-        "customerId": ctx.customer_id,
-        "serviceRoles": [],
-        "projectId": ctx.project_id,
-        "projectRole": "PROJECT_ROLE_PROJECT_ADMIN",
-        "artifactRoles": [],
-        "artifactRegistries": [],
-        "s3eRoles": [],
-        "s3eBuckets": [],
-    }
-    status, data = _bff_request(
-        "POST",
-        "/u-api/bff-console/v2/service-accounts/add",
-        ctx.token,
-        body=create_body,
-    )
-
-    if status == 409:
-        emit({"step": step, "info": f"SA '{sa_name}' already exists (409), looking up by name..."})
-        found_id = _find_sa_by_name()
-        if found_id:
-            ctx.sa_id = found_id
-            return ctx.record(
-                {"step": step, "sa_id": ctx.sa_id, "sa_name": sa_name, "created": False}
-            )
-        # Name taken by another project — try with suffix
-        for suffix in range(2, 6):
-            alt_name = f"{sa_name}-{suffix}"
-            emit({"step": step, "info": f"Trying alternative name '{alt_name}'..."})
-            create_body["name"] = alt_name
-            alt_status, alt_data = _bff_request(
-                "POST",
-                f"/u-api/bff-console/v2/service-accounts",
-                ctx.token,
-                body=create_body,
-            )
-            if alt_status in (200, 201):
-                ctx.sa_id = alt_data.get("id") or alt_data.get("service_account", {}).get("id")
-                ctx.sa_name = alt_name
-                return ctx.record(
-                    {"step": step, "sa_id": ctx.sa_id, "sa_name": alt_name, "created": True}
-                )
-            if alt_status != 409:
-                break
-        return ctx.record(
-            make_error(
-                step,
-                f"SA '{sa_name}' and variants already exist in customer {ctx.customer_id}. "
-                f"Use --sa-name with a unique name.",
-                409,
-            )
-        )
-
-    if status not in (200, 201):
-        return ctx.record(
-            make_error(step, f"Failed to create SA via BFF: {json.dumps(data)}", status)
-        )
-
-    ctx.sa_id = data.get("id") or data.get("service_account", {}).get("id")
-    if not ctx.sa_id:
-        return ctx.record(
-            make_error(step, f"SA created but id not found in response: {json.dumps(data)}")
-        )
-    return ctx.record(
-        {"step": step, "sa_id": ctx.sa_id, "sa_name": sa_name, "created": True}
-    )
-
-
-def step_ensure_role(ctx: PipelineContext) -> Dict[str, Any]:
-    """Step 3: Assign managed_rag.admin service role to the SA via BFF (httpx).
-
-    Non-fatal -- if the endpoint fails, a warning is logged and the pipeline
-    continues. The SA may already have sufficient permissions via PROJECT_ADMIN.
-    """
-    step = "ensure-role"
-    role = "managed_rag.admin"
-
-    if not ctx.sa_id or not ctx.project_id:
-        return ctx.record(
-            make_error(step, "sa_id and project_id required -- run previous steps")
-        )
-
-    if ctx.dry_run:
-        return ctx.record(
-            {"step": step, "role": role, "sa_id": ctx.sa_id, "dry_run": True}
-        )
-
-    # Try multiple known endpoints for role assignment
-    endpoints = [
-        (
-            f"/u-api/bff-console/v2/service-accounts/{ctx.sa_id}/service-roles",
-            {"projectId": ctx.project_id, "roles": [role]},
-        ),
-        (
-            f"/u-api/bff-console/v1/service-accounts/{ctx.sa_id}/service-roles",
-            {"projectId": ctx.project_id, "roles": [role]},
-        ),
-        (
-            f"/u-api/iam-sa/v1/{ctx.customer_id}/service-accounts/{ctx.sa_id}/roles",
-            {"projectId": ctx.project_id, "serviceRoles": [role]},
-        ),
-    ]
-
-    status, data = 404, {}
-    for path, body in endpoints:
-        status, data = _bff_request("POST", path, ctx.token, body=body)
-        if status in (200, 201, 409):
-            return ctx.record({"step": step, "role": role, "sa_id": ctx.sa_id})
-        if status != 404:
-            break
-
-    # Non-fatal: log a warning and continue pipeline.
-    emit({
-        "step": step,
-        "warning": (
-            f"Failed to assign service role '{role}' (HTTP {status}): {json.dumps(data)}. "
-            f"This is non-fatal -- SA has PROJECT_ROLE_PROJECT_ADMIN from creation. "
-            f"If Managed RAG operations fail later, assign '{role}' manually in the console."
-        ),
-    })
-    return ctx.record({
-        "step": step,
-        "role": role,
-        "sa_id": ctx.sa_id,
-        "warning": f"Service role assignment failed (HTTP {status}), continuing with PROJECT_ADMIN",
-    })
-
-
-def step_create_access_key(ctx: PipelineContext) -> Dict[str, Any]:
-    """Step 4: Create an access key for the SA via BFF (httpx). Secret shown only once!"""
-    step = "create-access-key"
-
-    if not ctx.sa_id:
-        return ctx.record(
-            make_error(step, "sa_id required -- run ensure-sa first")
-        )
-
-    if ctx.dry_run:
-        ctx.key_id = ctx.key_id or "dry-run-key-id"
-        ctx.key_secret = ctx.key_secret or "dry-run-key-secret"
-        return ctx.record(
-            {"step": step, "sa_id": ctx.sa_id, "ttl": DEFAULT_ACCESS_KEY_TTL, "dry_run": True}
-        )
-
-    body = {
-        "description": "Access key for Managed RAG S3 and API (auto-created)",
-        "ttl": DEFAULT_ACCESS_KEY_TTL,
-    }
-    path = f"/u-api/bff-console/v1/service-accounts/{ctx.sa_id}/access_keys"
-    status, data = _bff_request("POST", path, ctx.token, body=body)
-
-    if status not in (200, 201):
-        return ctx.record(
-            make_error(step, f"Failed to create access key via BFF: {json.dumps(data)}", status)
-        )
-
-    ctx.key_id = data.get("key_id") or data.get("access_key", {}).get("key_id") or data.get("id")
-    ctx.key_secret = data.get("secret") or data.get("access_key", {}).get("secret")
-
-    if not ctx.key_id or not ctx.key_secret:
-        return ctx.record(
-            make_error(step, f"Unexpected response format: {json.dumps(data)}")
-        )
-
-    return ctx.record(
-        {"step": step, "key_id": ctx.key_id, "secret": "***saved***"}
-    )
 
 
 def step_get_tenant_id(ctx: PipelineContext) -> Dict[str, Any]:
