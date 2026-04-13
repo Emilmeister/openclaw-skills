@@ -1,24 +1,23 @@
 """Cloud.ru Managed RAG Infrastructure Setup pipeline.
 
-Full automation for creating Managed RAG infrastructure:
-  1. extract-info   -- decode JWT from browser token
-  2. ensure-sa      -- create/find Service Account
-  3. ensure-role    -- assign managed_rag.admin
-  4. create-access-key -- create access key (secret shown only once!)
-  5. get-tenant-id  -- get tenant_id for S3
-  6. ensure-bucket  -- create S3 bucket
-  7. upload-docs    -- upload documents to bucket
-  8. create-kb      -- create Knowledge Base
-  9. wait-active    -- poll until KNOWLEDGEBASE_ACTIVE
- 10. save-env       -- save .env with credentials
+Requires CP_CONSOLE_KEY_ID/SECRET/PROJECT_ID env vars (from cloudru-account-setup).
+
+Pipeline (IAM-only, no browser OIDC token):
+  1. get-iam-token  -- exchange CP_CONSOLE_KEY_ID/SECRET for an IAM bearer
+  2. get-tenant-id  -- get tenant_id for S3
+  3. ensure-bucket  -- create S3 bucket via BFF
+  4. upload-docs    -- upload documents to bucket (boto3)
+  5. create-kb      -- create Knowledge Base (with log group)
+  6. wait-active    -- poll until KNOWLEDGEBASE_ACTIVE
+  7. save-env       -- save .env with KB-specific vars
 """
 
 from __future__ import annotations
 
-import base64
 import json
 import os
 import pathlib
+import sys
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -244,6 +243,9 @@ class PipelineContext:
 
     def ensure_iam_token(self) -> str:
         """Fresh exchange CP_CONSOLE_KEY_ID/SECRET -> IAM bearer on each call."""
+        if self.dry_run:
+            self.iam_token = "dry-run-iam-token"
+            return self.iam_token
         key_id = os.environ.get("CP_CONSOLE_KEY_ID")
         key_secret = os.environ.get("CP_CONSOLE_SECRET")
         if not key_id or not key_secret:
@@ -260,8 +262,24 @@ class PipelineContext:
 # ---------------------------------------------------------------------------
 
 
+def step_get_iam_token(ctx: PipelineContext) -> Dict[str, Any]:
+    """Step 1: Exchange CP_CONSOLE_KEY_ID/SECRET for an IAM bearer token.
+
+    Fails early if env vars are missing or the IAM exchange returns non-200.
+    """
+    step = "get-iam-token"
+    if ctx.dry_run:
+        ctx.iam_token = "dry-run-iam-token"
+        return ctx.record({"step": step, "dry_run": True})
+    try:
+        ctx.ensure_iam_token()
+    except Exception as exc:
+        return ctx.record(make_error(step, str(exc)))
+    return ctx.record({"step": step, "ok": True})
+
+
 def step_get_tenant_id(ctx: PipelineContext) -> Dict[str, Any]:
-    """Step 5: Get tenant_id from the S3 controller BFF (httpx)."""
+    """Step 2: Get tenant_id from the S3 controller BFF (httpx)."""
     step = "get-tenant-id"
 
     if not ctx.project_id:
@@ -276,7 +294,7 @@ def step_get_tenant_id(ctx: PipelineContext) -> Dict[str, Any]:
         )
 
     path = f"/u-api/s3e-controller/v2/projects/{ctx.project_id}"
-    status, data = _bff_request("GET", path, ctx.token)
+    status, data = _bff_request("GET", path, ctx.ensure_iam_token())
 
     if status != 200:
         return ctx.record(
@@ -309,7 +327,7 @@ def _fetch_bucket_log_group_id(ctx: PipelineContext, bucket_name: str) -> None:
     status, data = _bff_request(
         "GET",
         f"/u-api/s3e-controller/v1/tenants/{ctx.tenant_id}/buckets",
-        ctx.token,
+        ctx.ensure_iam_token(),
     )
     if status != 200:
         return
@@ -355,7 +373,7 @@ def step_ensure_bucket(ctx: PipelineContext) -> Dict[str, Any]:
     status, data = _bff_request(
         "POST",
         f"/u-api/s3e-controller/v1/tenants/{ctx.tenant_id}/buckets",
-        ctx.token,
+        ctx.ensure_iam_token(),
         body=bucket_body,
     )
 
@@ -494,14 +512,14 @@ def _resolve_log_group_id(ctx: PipelineContext) -> str:
     if ctx.log_group_id:
         return ctx.log_group_id
 
-    if not ctx.project_id or not ctx.token:
+    if not ctx.project_id:
         return ""
 
     # List existing log groups
     status, data = _bff_request(
         "GET",
         f"{LOGAAS_HOST_PATH}/{ctx.project_id}/log-groups",
-        ctx.token,
+        ctx.ensure_iam_token(),
     )
     if status == 200:
         groups = data.get("logGroups", [])
@@ -520,7 +538,7 @@ def _resolve_log_group_id(ctx: PipelineContext) -> str:
     status, data = _bff_request(
         "POST",
         f"{LOGAAS_HOST_PATH}/{ctx.project_id}/log-group",
-        ctx.token,
+        ctx.ensure_iam_token(),
         body={
             "name": DEFAULT_LOG_GROUP_NAME,
             "description": "Auto-created for Managed RAG (required for Search API)",
@@ -639,7 +657,7 @@ def step_create_kb(ctx: PipelineContext) -> Dict[str, Any]:
     status, data = _bff_request(
         "POST",
         "/u-api/managed-rag/user-plane/api/v2/knowledge-bases",
-        ctx.token,
+        ctx.ensure_iam_token(),
         body=payload,
         timeout=60.0,
     )
@@ -726,7 +744,7 @@ def step_wait_active(ctx: PipelineContext) -> Dict[str, Any]:
                 poll_host, "GET", poll_path, headers=headers, timeout=30.0
             )
         else:
-            status_code, data = _bff_request("GET", poll_path, ctx.token, timeout=30.0)
+            status_code, data = _bff_request("GET", poll_path, ctx.ensure_iam_token(), timeout=30.0)
 
         if status_code == 401 and use_iam:
             # IAM token expired -- refresh
@@ -792,7 +810,11 @@ def step_wait_active(ctx: PipelineContext) -> Dict[str, Any]:
 
 
 def step_save_env(ctx: PipelineContext) -> Dict[str, Any]:
-    """Step 10: Save .env file with credentials and KB info."""
+    """Step 7: Save KB-specific env vars to .env file.
+
+    CP_CONSOLE_KEY_ID/SECRET/PROJECT_ID are provided by cloudru-account-setup
+    and not rewritten here. Only KB-specific vars are written.
+    """
     step = "save-env"
 
     env_path = ctx.output_env or DEFAULT_ENV_PATH
@@ -801,11 +823,8 @@ def step_save_env(ctx: PipelineContext) -> Dict[str, Any]:
         "# Auto-generated by managed_rag setup pipeline",
         f"# Created: {time.strftime('%Y-%m-%d %H:%M:%S')}",
         "",
-        f'export CP_CONSOLE_KEY_ID="{ctx.key_id or ""}"',
-        f'export CP_CONSOLE_SECRET="{ctx.key_secret or ""}"',
-        f'export PROJECT_ID="{ctx.project_id or ""}"',
-        f'export MANAGED_RAG_KB_ID="{ctx.kb_id or ""}"',
-        f'export MANAGED_RAG_SEARCH_URL="{ctx.search_url or ""}"',
+        f'MANAGED_RAG_KB_ID={ctx.kb_id or ""}',
+        f'MANAGED_RAG_SEARCH_URL={ctx.search_url or ""}',
         "",
     ]
     env_content = "\n".join(env_content_lines)
@@ -827,10 +846,7 @@ def step_save_env(ctx: PipelineContext) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 STEP_REGISTRY: Dict[str, Any] = {
-    "extract-info": step_extract_info,
-    "ensure-sa": step_ensure_sa,
-    "ensure-role": step_ensure_role,
-    "create-access-key": step_create_access_key,
+    "get-iam-token": step_get_iam_token,
     "get-tenant-id": step_get_tenant_id,
     "ensure-bucket": step_ensure_bucket,
     "upload-docs": step_upload_docs,
@@ -846,16 +862,13 @@ STEP_REGISTRY: Dict[str, Any] = {
 
 
 STEP_LABELS = {
-    "extract-info": "Извлекаю info из JWT",
-    "ensure-sa": "Создаю Service Account",
-    "ensure-role": "Назначаю роль managed_rag.admin",
-    "create-access-key": "Создаю access-key",
+    "get-iam-token": "Получаю IAM токен из access key",
     "get-tenant-id": "Получаю tenant_id для S3",
     "ensure-bucket": "Создаю S3 бакет",
     "upload-docs": "Загружаю документы в S3",
     "create-kb": "Создаю Knowledge Base",
     "wait-active": "Жду активации KB",
-    "save-env": "Сохраняю .env с credentials",
+    "save-env": "Сохраняю .env с KB info",
 }
 
 
@@ -927,11 +940,16 @@ def run_single_step(ctx: PipelineContext, step_name: str) -> int:
 def _build_context(args) -> PipelineContext:
     """Build PipelineContext from argparse namespace."""
     _setup_no_proxy()
+    pid = getattr(args, "project_id", None) or os.environ.get("PROJECT_ID")
+    if not pid and not getattr(args, "dry_run", False):
+        print(
+            "PROJECT_ID is required. Pass --project-id or set PROJECT_ID env "
+            "(usually from cloudru-account-setup).",
+            file=sys.stderr,
+        )
+        sys.exit(1)
     return PipelineContext(
-        token=args.token,
-        project_id=getattr(args, "project_id", None),
-        customer_id=getattr(args, "customer_id", None),
-        sa_name=getattr(args, "sa_name", DEFAULT_SA_NAME),
+        project_id=pid,
         bucket_name=getattr(args, "bucket_name", None),
         docs_path=getattr(args, "docs_path", None),
         kb_name=getattr(args, "kb_name", None),
