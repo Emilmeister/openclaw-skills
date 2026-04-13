@@ -326,7 +326,7 @@ def service_account_payload(args: argparse.Namespace, ctx: ProjectContext) -> Di
         "name": args.service_account_name,
         "description": args.service_account_description,
         "customerId": ctx.customer_id,
-        "serviceRoles": [],
+        "serviceRoles": ["managed_rag.admin"],
         "projectId": ctx.project_id,
         "projectRole": args.project_role,
         "artifactRoles": [],
