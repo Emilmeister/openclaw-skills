@@ -11,6 +11,19 @@ from helpers import build_client, check_response, get_env, print_json
 
 # --- Helpers ---
 
+def _resolve_zone_id(client, zone_name: str) -> str | None:
+    """Resolve availability zone name (e.g. ru.AZ-1) to its UUID."""
+    res = client.list_zones()
+    if not res.is_success:
+        return None
+    data = res.json()
+    zones = data if isinstance(data, list) else data.get("items", [])
+    for z in zones:
+        if z.get("name") == zone_name:
+            return z.get("id")
+    return None
+
+
 def _get_vm_ips(vm: dict) -> tuple[str | None, str | None]:
     """Return (public_ip, private_ip) from VM data."""
     public_ip = None
@@ -298,10 +311,15 @@ def _auto_create_fip(client, project_id, vm_id, vm, zone_name):
         print("Warning: VM interface has no ID", file=sys.stderr)
         return
 
+    zone_id = _resolve_zone_id(client, zone_name)
+    if not zone_id:
+        print(f"Warning: could not resolve zone '{zone_name}' to ID", file=sys.stderr)
+        return
+
     fip_payload = {
         "name": f"fip-{vm.get('name', vm_id)[:50]}",
         "project_id": project_id,
-        "availability_zone_name": zone_name,
+        "availability_zone_id": zone_id,
         "interface_id": interface_id,
     }
     res = client.create_floating_ip(fip_payload)
@@ -415,6 +433,9 @@ def cmd_vnc(args):
     client, _ = build_client()
     res = client.remote_console(args.vm_id, protocol=args.protocol or "vnc")
     check_response(res, "getting console URL")
+    if not res.content:
+        print(f"Error: empty response from console API (HTTP {res.status_code})", file=sys.stderr)
+        sys.exit(1)
     data = res.json()
     print(f"Console URL: {data.get('url', data)}")
 
@@ -449,10 +470,16 @@ def cmd_fip_create(args):
 
     fip_name = args.name or f"fip-{vm.get('name', args.vm_id)[:50]}"
 
+    zone_name = args.zone_name or vm_zone
+    zone_id = _resolve_zone_id(client, zone_name)
+    if not zone_id:
+        print(f"Error: could not resolve zone '{zone_name}' to ID", file=sys.stderr)
+        sys.exit(1)
+
     payload = {
         "name": fip_name,
         "project_id": project_id,
-        "availability_zone_name": args.zone_name or vm_zone,
+        "availability_zone_id": zone_id,
         "interface_id": interface_id,
     }
     res = client.create_floating_ip(payload)

@@ -17,6 +17,7 @@ from __future__ import annotations
 import json
 import os
 import pathlib
+import re
 import sys
 import time
 from typing import Any, Dict, List, Optional, Tuple
@@ -45,9 +46,15 @@ DEFAULT_SA_NAME = "managed-rag-sa"
 DEFAULT_FILE_EXTENSIONS = "txt,pdf"
 DEFAULT_KB_POLL_INTERVAL = 15  # seconds
 DEFAULT_KB_POLL_TIMEOUT = 600  # 10 minutes
+MAX_UPLOAD_FILE_SIZE = 100 * 1024 * 1024  # 100 MB per file
 DEFAULT_ACCESS_KEY_TTL = 365  # days (BFF expects uint32 in range [0, 10000])
+_SAFE_NAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]{0,62}$")
 DEFAULT_ENV_PATH = os.path.expanduser(
     "~/.openclaw/workspace/skills/managed-rag-skill/.env"
+)
+
+_UUID_RE = re.compile(
+    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
 )
 
 ALL_STEPS = [
@@ -244,8 +251,7 @@ class PipelineContext:
     def ensure_iam_token(self) -> str:
         """Fresh exchange CP_CONSOLE_KEY_ID/SECRET -> IAM bearer on each call."""
         if self.dry_run:
-            self.iam_token = "dry-run-iam-token"
-            return self.iam_token
+            return ""
         key_id = os.environ.get("CP_CONSOLE_KEY_ID")
         key_secret = os.environ.get("CP_CONSOLE_SECRET")
         if not key_id or not key_secret:
@@ -269,7 +275,7 @@ def step_get_iam_token(ctx: PipelineContext) -> Dict[str, Any]:
     """
     step = "get-iam-token"
     if ctx.dry_run:
-        ctx.iam_token = "dry-run-iam-token"
+        ctx.iam_token = ""
         return ctx.record({"step": step, "dry_run": True})
     try:
         ctx.ensure_iam_token()
@@ -309,7 +315,11 @@ def step_get_tenant_id(ctx: PipelineContext) -> Dict[str, Any]:
     )
     if not ctx.tenant_id:
         return ctx.record(
-            make_error(step, f"tenant_id not found in response: {json.dumps(data)}")
+            make_error(step, "tenant_id not found in response")
+        )
+    if not _UUID_RE.match(ctx.tenant_id):
+        return ctx.record(
+            make_error(step, f"tenant_id has invalid format: {ctx.tenant_id}")
         )
 
     return ctx.record({"step": step, "tenant_id": ctx.tenant_id})
@@ -352,6 +362,10 @@ def step_ensure_bucket(ctx: PipelineContext) -> Dict[str, Any]:
     if not bucket_name:
         return ctx.record(
             make_error(step, "--bucket-name is required")
+        )
+    if not _SAFE_NAME_RE.match(bucket_name):
+        return ctx.record(
+            make_error(step, f"Invalid bucket name '{bucket_name}': must be 1-63 alphanumeric chars, dots, hyphens, underscores")
         )
     if not ctx.tenant_id:
         return ctx.record(
@@ -484,6 +498,9 @@ def step_upload_docs(ctx: PipelineContext) -> Dict[str, Any]:
         relative = fpath.relative_to(docs_dir)
         s3_key = str(relative)
         file_size = fpath.stat().st_size
+        if file_size > MAX_UPLOAD_FILE_SIZE:
+            emit({"step": step, "warning": f"Skipping {relative}: exceeds {MAX_UPLOAD_FILE_SIZE} byte limit ({file_size} bytes)"})
+            continue
         try:
             # ACL=bucket-owner-full-control is CRITICAL:
             # Without it, Managed RAG Search API cannot read the files
@@ -650,6 +667,10 @@ def step_create_kb(ctx: PipelineContext) -> Dict[str, Any]:
     if not ctx.kb_name:
         return ctx.record(
             make_error(step, "--kb-name is required")
+        )
+    if not _SAFE_NAME_RE.match(ctx.kb_name):
+        return ctx.record(
+            make_error(step, f"Invalid KB name '{ctx.kb_name}': must be 1-63 alphanumeric chars, dots, hyphens, underscores")
         )
     if not ctx.project_id:
         return ctx.record(
@@ -847,6 +868,7 @@ def step_save_env(ctx: PipelineContext) -> Dict[str, Any]:
     env_file = pathlib.Path(env_path).expanduser()
     env_file.parent.mkdir(parents=True, exist_ok=True)
     env_file.write_text(env_content, encoding="utf-8")
+    env_file.chmod(0o600)
 
     return ctx.record({"step": step, "path": str(env_file)})
 
@@ -957,6 +979,9 @@ def _build_context(args) -> PipelineContext:
             "(usually from cloudru-account-setup).",
             file=sys.stderr,
         )
+        sys.exit(1)
+    if pid and not _UUID_RE.match(pid):
+        print(f"PROJECT_ID must be a valid UUID, got: {pid}", file=sys.stderr)
         sys.exit(1)
     return PipelineContext(
         project_id=pid,

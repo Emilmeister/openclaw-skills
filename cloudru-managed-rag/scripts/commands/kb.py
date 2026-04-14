@@ -1,9 +1,22 @@
 """Knowledge base management commands."""
 
 import os
+import re
 import sys
 
 from helpers import build_client, check_response, get_env, print_json
+
+_UUID_RE = re.compile(
+    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+)
+
+
+def _validate_id(value: str, label: str) -> str:
+    """Validate that a value is a well-formed UUID."""
+    if not _UUID_RE.match(value):
+        print(f"Error: {label} must be a valid UUID, got: {value}", file=sys.stderr)
+        sys.exit(1)
+    return value
 
 
 def _get_kb_id(args):
@@ -11,7 +24,7 @@ def _get_kb_id(args):
     kb_id = getattr(args, "kb_id", None)
     if not kb_id:
         kb_id = get_env("MANAGED_RAG_KB_ID")
-    return kb_id
+    return _validate_id(kb_id, "kb_id")
 
 
 def cmd_list(args):
@@ -92,6 +105,7 @@ def cmd_versions(args):
 def cmd_version_detail(args):
     client, project_id = build_client()
     kb_id = _get_kb_id(args) if getattr(args, "kb_id", None) else os.environ.get("MANAGED_RAG_KB_ID", "")
+    _validate_id(args.version_id, "version_id")
     res = client.get_version(args.version_id, project_id, kb_id=kb_id)
     check_response(res, f"getting version {args.version_id}")
     data = res.json()
@@ -127,6 +141,7 @@ def cmd_delete(args):
 def cmd_reindex(args):
     client, project_id = build_client()
     kb_id = getattr(args, "kb_id", None) or get_env("MANAGED_RAG_KB_ID")
+    _validate_id(args.version_id, "version_id")
     res = client.reindex_version(args.version_id, kb_id, project_id)
     check_response(res, f"reindexing version {args.version_id}")
     print_json(res.json())

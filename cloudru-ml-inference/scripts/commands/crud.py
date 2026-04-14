@@ -203,7 +203,7 @@ def cmd_create(args):
         "servingOptions": serving_options,
         "scaling": scaling,
         "options": {
-            "isEnabledAuth": False,
+            "isEnabledAuth": True,
             "isEnabledLogging": False,
         },
     }

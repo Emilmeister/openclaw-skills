@@ -106,7 +106,7 @@ def cmd_deploy(args):
         "servingOptions": cfg.get("servingOptions", {}),
         "scaling": cfg.get("scaling", {"minScale": 1, "maxScale": 1, "scalingRules": {"rpsType": {"value": 200}}}),
         "options": {
-            "isEnabledAuth": False,
+            "isEnabledAuth": True,
             "isEnabledLogging": False,
         },
     }

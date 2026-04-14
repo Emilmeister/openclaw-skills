@@ -3,6 +3,7 @@
 > **Name:** cloudru-account-setup
 > **Description:** Create a Cloud.ru service account, Foundation Models API key, and IAM access key (CP_CONSOLE_KEY_ID/CP_CONSOLE_SECRET). Use when the user needs to bootstrap Cloud.ru API access from scratch.
 > **Required tools:** `python3`
+> **Required pip:** `httpx`
 > **Required pip (browser flow):** `playwright`
 
 ## What this skill does
@@ -52,6 +53,8 @@ Example output:
   "customer_id": "def-456"
 }
 ```
+
+> **Security note:** The JSON output contains a short-lived IAM bearer token. Do not redirect stdout to a log file or share the output. The token expires in ~5 minutes but should be treated as sensitive until then.
 
 If the script times out (default 180s), pass `--timeout 300` for more time.
 

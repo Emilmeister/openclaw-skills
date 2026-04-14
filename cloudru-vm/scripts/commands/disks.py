@@ -32,8 +32,9 @@ def cmd_disk_create(args):
         payload["availability_zone_name"] = args.zone_name
     elif args.zone_id:
         payload["availability_zone_id"] = args.zone_id
-    if args.disk_type_name:
-        payload["disk_type_name"] = args.disk_type_name
+    disk_type_name = args.disk_type_name or (None if args.disk_type_id else "SSD")
+    if disk_type_name:
+        payload["disk_type_name"] = disk_type_name
     elif args.disk_type_id:
         payload["disk_type_id"] = args.disk_type_id
 
