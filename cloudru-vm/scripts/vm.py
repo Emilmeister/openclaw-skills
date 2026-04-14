@@ -7,13 +7,18 @@ Usage:
 Commands:
     list            List virtual machines
     get             Get VM details
-    create          Create a VM
+    create          Create a VM (sensible defaults: ubuntu-22.04, ru.AZ-1, 10GB SSD, lowcost10-1-1)
     update          Update a VM
     delete          Delete a VM
     start           Start a VM
     stop            Stop a VM
     reboot          Reboot a VM
     vnc             Get remote console URL
+    ssh             Execute command on VM via SSH (--wait-ready to retry until cloud-init done)
+    scp             Copy files to/from VM
+    fip-list        List floating IPs (public IPs)
+    fip-create      Create floating IP for a VM
+    fip-delete      Delete a floating IP
     flavors         List available flavors (CPU/RAM configs)
     images          List available OS images
     subnets         List available subnets
@@ -33,6 +38,9 @@ Environment variables required:
     PROJECT_ID          — Cloud.ru project UUID
 """
 
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 import argparse
 
 from commands import COMMANDS
@@ -48,26 +56,27 @@ def build_parser():
 
     # --- VM commands ---
 
-    p_list = subparsers.add_parser("list", help="List VMs")
+    p_list = subparsers.add_parser("list", help="List VMs (shows IP addresses)")
     p_list.add_argument("--limit", type=int, help="Max results")
     p_list.add_argument("--offset", type=int, help="Offset")
     p_list.add_argument("--state", help="Filter by state (running, stopped, etc.)")
 
     p_get = subparsers.add_parser("get", help="Get VM details")
     p_get.add_argument("vm_id", help="VM UUID")
+    p_get.add_argument("--json", action="store_true", help="Output raw JSON instead of compact summary")
 
-    p_create = subparsers.add_parser("create", help="Create a VM")
+    p_create = subparsers.add_parser("create", help="Create a VM (defaults: ubuntu-22.04, ru.AZ-1, 10GB SSD, lowcost10-1-1)")
     p_create.add_argument("--name", required=True, help="VM name (alphanumeric, starts with letter)")
-    p_create.add_argument("--flavor-name", help="Flavor name (e.g. m1.medium)")
+    p_create.add_argument("--flavor-name", help="Flavor name (default: lowcost10-1-1)")
     p_create.add_argument("--flavor-id", help="Flavor UUID")
-    p_create.add_argument("--image-name", help="OS image name")
+    p_create.add_argument("--image-name", help="OS image name (default: ubuntu-22.04)")
     p_create.add_argument("--image-id", help="OS image UUID")
-    p_create.add_argument("--zone-name", help="Availability zone name")
+    p_create.add_argument("--zone-name", help="Availability zone (default: ru.AZ-1)")
     p_create.add_argument("--zone-id", help="Availability zone UUID")
     p_create.add_argument("--description", help="VM description")
     p_create.add_argument("--disk-name", help="Boot disk name (default: <vm-name>-boot)")
-    p_create.add_argument("--disk-size", type=int, default=20, help="Boot disk size in GB (default: 20)")
-    p_create.add_argument("--disk-type-name", help="Disk type name")
+    p_create.add_argument("--disk-size", type=int, help="Boot disk size in GB (default: 10)")
+    p_create.add_argument("--disk-type-name", help="Disk type name (default: SSD)")
     p_create.add_argument("--disk-type-id", help="Disk type UUID")
     p_create.add_argument("--subnet-id", help="Subnet UUID")
     p_create.add_argument("--subnet-name", help="Subnet name")
@@ -75,9 +84,15 @@ def build_parser():
     p_create.add_argument("--login", help="VM user login (default: user1)")
     p_create.add_argument("--password", help="VM user password (auth option 1)")
     p_create.add_argument("--ssh-key", help="SSH public key string (auth option 2)")
-    p_create.add_argument("--ssh-key-file", help="Path to SSH public key file (e.g. ~/.ssh/id_rsa.pub)")
+    p_create.add_argument("--ssh-key-file", help="Path to SSH public key file (e.g. ~/.ssh/id_ed25519.pub)")
     p_create.add_argument("--cloud-init", help="Cloud-init script (inline)")
     p_create.add_argument("--cloud-init-file", help="Path to cloud-init file")
+    p_create.add_argument("--wait", action="store_true", help="Wait for VM to reach 'running' state")
+    p_create.add_argument("--wait-timeout", type=int, default=600, help="Max seconds to wait for running (default: 600)")
+    p_create.add_argument("--floating-ip", action="store_true", help="Auto-create floating IP after VM is running (implies --wait)")
+    p_create.add_argument("--wait-ssh", action="store_true", help="After --wait, also wait for SSH to become ready (cloud-init)")
+    p_create.add_argument("--wait-ssh-timeout", type=int, default=300, help="SSH readiness timeout in seconds (default: 300)")
+    p_create.add_argument("--key-file", help="SSH private key for --wait-ssh check")
 
     p_update = subparsers.add_parser("update", help="Update a VM")
     p_update.add_argument("vm_id", help="VM UUID")
@@ -88,6 +103,7 @@ def build_parser():
 
     p_delete = subparsers.add_parser("delete", help="Delete a VM")
     p_delete.add_argument("vm_id", help="VM UUID")
+    p_delete.add_argument("--force", action="store_true", help="Auto-delete floating IPs before deleting the VM")
 
     p_start = subparsers.add_parser("start", help="Start a VM")
     p_start.add_argument("vm_id", help="VM UUID")
@@ -110,6 +126,8 @@ def build_parser():
     p_ssh.add_argument("--login", "-l", default="user1", help="SSH user (default: user1)")
     p_ssh.add_argument("--key-file", "-i", help="Path to SSH private key")
     p_ssh.add_argument("--ip", help="Use this IP instead of auto-resolving from VM")
+    p_ssh.add_argument("--wait-ready", type=int, nargs="?", const=300, default=0,
+                        help="Retry SSH until ready (cloud-init done). Optional: timeout in seconds (default: 300)")
 
     p_scp = subparsers.add_parser("scp", help="Copy files to/from VM via SCP")
     p_scp.add_argument("vm_id", help="VM UUID (used to resolve IP)")
@@ -120,6 +138,18 @@ def build_parser():
     p_scp.add_argument("--key-file", "-i", help="Path to SSH private key")
     p_scp.add_argument("--ip", help="Use this IP instead of auto-resolving from VM")
     p_scp.add_argument("--recursive", "-r", action="store_true", help="Copy directories recursively")
+
+    # --- Floating IP commands ---
+
+    subparsers.add_parser("fip-list", help="List floating IPs (public IPs)")
+
+    p_fip_c = subparsers.add_parser("fip-create", help="Create floating IP for a VM")
+    p_fip_c.add_argument("vm_id", help="VM UUID")
+    p_fip_c.add_argument("--name", help="Floating IP name (default: fip-<vm-name>)")
+    p_fip_c.add_argument("--zone-name", help="Availability zone (auto-detected from VM if omitted)")
+
+    p_fip_d = subparsers.add_parser("fip-delete", help="Delete a floating IP")
+    p_fip_d.add_argument("fip_id", help="Floating IP UUID")
 
     # --- Infrastructure commands ---
 
@@ -205,6 +235,11 @@ def build_parser():
 def main():
     parser = build_parser()
     args = parser.parse_args()
+
+    # --floating-ip implies --wait
+    if hasattr(args, 'floating_ip') and args.floating_ip:
+        args.wait = True
+
     COMMANDS[args.command](args)
 
 

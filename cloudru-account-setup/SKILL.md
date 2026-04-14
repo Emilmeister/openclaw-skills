@@ -1,17 +1,16 @@
----
-name: cloudru-account-setup
-description: Create a Cloud.ru service account, Foundation Models API key, and IAM access key (CP_CONSOLE_KEY_ID/CP_CONSOLE_SECRET). Use when the user needs to register a service account, obtain API credentials via the Cloud.ru console, or bootstrap Cloud.ru API access from scratch.
-homepage: https://cloud.ru/docs/foundation-models/ug/index
-metadata: {"openclaw":{"emoji":"🔑","requires":{"anyBins":["python3","python"]}}}
----
-
 # Cloud.ru Account Setup
+
+> **Name:** cloudru-account-setup
+> **Description:** Create a Cloud.ru service account, Foundation Models API key, and IAM access key (CP_CONSOLE_KEY_ID/CP_CONSOLE_SECRET). Use when the user needs to bootstrap Cloud.ru API access from scratch.
+> **Required tools:** `python3`
+> **Required pip (browser flow):** `playwright`
 
 ## What this skill does
 
 Creates a Cloud.ru service account and the credentials needed for Cloud.ru services:
 1. **Foundation Models API key** (`CLOUD_RU_FOUNDATION_MODELS_API_KEY`) — for the Foundation Models API.
-2. **IAM access key** (`CP_CONSOLE_KEY_ID` + `CP_CONSOLE_SECRET`) — for IAM token-based authentication used by ML Inference and other Cloud.ru services.
+2. **IAM access key** (`CP_CONSOLE_KEY_ID` + `CP_CONSOLE_SECRET`) — for IAM token-based authentication used by ML Inference, VM, Managed RAG, and other Cloud.ru services.
+3. **Service role `managed_rag.admin`** — automatically attached to the SA (on create or via PATCH for an existing SA) so `cloudru-managed-rag` works out of the box.
 
 After a successful run the user will have all credentials ready to use.
 
@@ -22,74 +21,80 @@ After a successful run the user will have all credentials ready to use.
 - The user needs `CP_CONSOLE_KEY_ID` and `CP_CONSOLE_SECRET` for ML Inference or other IAM-authenticated services.
 - The user mentions Cloud.ru onboarding, registration, or bootstrap.
 
-## Prefer browser-assisted onboarding
+## Browser-assisted flow (recommended)
 
-When browser control is available, prefer the browser tool or the equivalent `openclaw browser ...` commands.
+This flow opens a real browser window. The user only needs to log in — everything else is automated.
 
-If browser control is unavailable, ask the user for one of these:
-- an already-created Cloud.ru Foundation Models API key; or
-- the current Cloud.ru project URL, plus the Cloud.ru console bearer token retrieved from the browser.
-
-## Browser-assisted onboarding flow
-
-1. Open the Cloud.ru login page:
-   ```bash
-   openclaw browser open https://console.cloud.ru/static-page/login-destination
-   ```
-2. Ask the user to log in and open the target project in the Cloud.ru console.
-3. Capture the current browser state and extract the project URL:
-   ```bash
-   openclaw browser evaluate --fn 'window.location.href'
-   ```
-4. Extract `project_id` from the URL.
-   - The user-supplied flow also refers to `secret_id`.
-   - The service-account API needs `customerId`.
-   - Treat `secret_id` as an alias for `customerId` when it is present in the URL.
-   - If `customerId` cannot be inferred, ask the user for it explicitly and pass `--customer-id` to the script.
-5. Extract the Cloud.ru browser token:
-   ```bash
-   openclaw browser evaluate --fn 'JSON.parse(localStorage["oidc.user:https://id.cloud.ru/auth/system/:e95a1db5-a61c-425b-ae62-26d3a7e224f7"])["access_token"]'
-   ```
-6. If the hard-coded storage key is absent, inspect local storage and find the key that starts with `oidc.user:https://id.cloud.ru/auth/system/`, then parse `access_token` from that JSON value.
-7. Run the bundled bootstrap script:
-   ```bash
-   python3 {baseDir}/scripts/cloudru_account_bootstrap.py \
-     --project-url '<project-url>' \
-     --token '<cloudru-browser-token>'
-   ```
-   Add `--customer-id '<customer-id>'` if the URL does not expose it.
-8. Read the JSON result. It contains:
-   - the created service account response;
-   - the created API key response, including the generated secret.
-
-## Manual or no-browser flow
-
-If the user already has the required values, skip the browser steps and run:
+### Step 1: Install playwright (one-time)
 
 ```bash
-python3 {baseDir}/scripts/cloudru_account_bootstrap.py \
+pip install playwright && playwright install chromium
+```
+
+### Step 2: Run the browser login script
+
+```bash
+python3 ./scripts/browser_login.py
+```
+
+This opens a Chromium window with the Cloud.ru login page. The user logs in and navigates to their project. The script automatically:
+- detects when the user reaches a project page
+- extracts the project URL, project_id, and customer_id from the URL
+- extracts the bearer token from the browser's localStorage
+- outputs a JSON with all extracted values to stdout
+
+Example output:
+```json
+{
+  "project_url": "https://console.cloud.ru/projects/abc-123?customerId=def-456",
+  "token": "eyJ...",
+  "project_id": "abc-123",
+  "customer_id": "def-456"
+}
+```
+
+If the script times out (default 180s), pass `--timeout 300` for more time.
+
+### Step 3: Run the bootstrap script with extracted values
+
+Take the `project_url` and `token` from Step 2 and pass them to the bootstrap script:
+
+```bash
+python3 ./scripts/cloudru_account_bootstrap.py \
+  --project-url '<project_url from step 2>' \
+  --token '<token from step 2>'
+```
+
+Add `--customer-id '<customer_id>'` if it was not extracted from the URL (null in the JSON).
+
+### Step 4: Read the result
+
+The bootstrap script outputs JSON with:
+- the created service account
+- the Foundation Models API key (including the secret)
+- the IAM access key (`key_id` and `secret`)
+- a `credentials_summary` with all env var values
+
+## Manual / no-browser flow
+
+If the user already has the project URL and token (or doesn't want to use the browser script):
+
+```bash
+python3 ./scripts/cloudru_account_bootstrap.py \
   --project-url '<project-url>' \
   --project-id '<project-id>' \
   --customer-id '<customer-id>' \
-  --token '<cloudru-browser-token>'
+  --token '<bearer-token>'
+```
+
+The token can be extracted manually by opening the browser DevTools console on console.cloud.ru and running:
+```javascript
+JSON.parse(localStorage["oidc.user:https://id.cloud.ru/auth/system/:e95a1db5-a61c-425b-ae62-26d3a7e224f7"])["access_token"]
 ```
 
 ## Access key creation (CP_CONSOLE_KEY_ID / CP_CONSOLE_SECRET)
 
 The bootstrap script also creates an **access key** for IAM authentication. This is a separate credential from the Foundation Models API key.
-
-The access key is created via:
-```
-POST /u-api/bff-console/v1/service-accounts/{service_account_id}/access_keys
-Body: {"description": "<description>", "ttl": <days>}
-```
-
-The response contains:
-- `key_id` — use as `CP_CONSOLE_KEY_ID`
-- `secret` — use as `CP_CONSOLE_SECRET`
-- `expired_at` — expiration timestamp
-
-These credentials are used for IAM token-based authentication (`IAM_Auth` from `http-client-auth`), which is required by ML Inference and other Cloud.ru services that authenticate via `https://iam.api.cloud.ru/`.
 
 To skip access key creation (e.g. if the user only needs Foundation Models), pass `--skip-access-key`.
 
@@ -101,7 +106,7 @@ To customize the access key, use:
 
 - Treat the returned API key and access key as secrets.
 - Show them only when the user explicitly needs them.
-- Prefer moving them immediately into env vars or OpenClaw secret refs.
+- Prefer moving them immediately into env vars or secret storage.
 - Do not paste raw keys into config files unless the user asked for plaintext.
 
 ## What to return after a successful run
@@ -117,4 +122,4 @@ To customize the access key, use:
    export CP_CONSOLE_SECRET=<access_key_secret>
    export PROJECT_ID=<project_id>
    ```
-6. Next step: tell the user they can now use Cloud.ru Foundation Models and ML Inference.
+6. Next step: tell the user they can now use Cloud.ru Foundation Models, ML Inference, and VM skills.

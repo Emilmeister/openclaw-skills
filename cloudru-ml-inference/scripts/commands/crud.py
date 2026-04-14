@@ -17,19 +17,76 @@ def cmd_list(args):
     res = client.list_model_runs(project_id, limit=args.limit or 100, offset=args.offset or 0)
     check_response(res, "listing model runs")
     data = res.json()
+    all_runs = data.get("modelRuns", [])
+
+    # Filter by --status if provided
+    if getattr(args, "status", None):
+        all_runs = [mr for mr in all_runs if mr.get("status") == args.status]
+
+    # Hide deleted runs by default unless --all is set
+    hidden = 0
+    show_all = getattr(args, "all", False)
+    if not getattr(args, "status", None) and not show_all:
+        visible = []
+        for mr in all_runs:
+            if mr.get("status") == "MODEL_RUN_STATUS_DELETED":
+                hidden += 1
+            else:
+                visible.append(mr)
+        all_runs = visible
+
     print(f"Total: {data.get('total', '?')}")
-    for mr in data.get("modelRuns", []):
+    for mr in all_runs:
         print(
             f"  {mr['modelRunId']} | {mr['name']} | {mr['status']} | "
             f"{mr.get('frameworkType', '')} | {mr.get('resourceType', '')} | gpu={mr.get('gpuCount', '?')}"
         )
+    if hidden > 0:
+        print(f"\n(hiding {hidden} deleted runs, use --all to show)")
 
 
 def cmd_get(args):
     client, project_id = build_client()
     res = client.get_model_run(project_id, args.model_run_id)
     check_response(res, "getting model run details")
-    print_json(res.json().get("modelRun", res.json()))
+    mr = res.json().get("modelRun", res.json())
+
+    if getattr(args, "output_json", False):
+        print_json(mr)
+        return
+
+    # Compact human-readable output
+    print(f"Name:          {mr.get('name', '?')}")
+    print(f"ID:            {mr.get('modelRunId', '?')}")
+    print(f"Status:        {mr.get('status', '?')}")
+    print(f"Framework:     {mr.get('frameworkType', '?')}")
+    print(f"Resource:      {mr.get('resourceType', '?')}")
+    print(f"GPU count:     {mr.get('gpuCount', '?')}")
+
+    # Model source
+    source = mr.get("modelSource", {})
+    for src_key in ("huggingFaceRepository", "ollama", "modelRegistry", "modelScope"):
+        src = source.get(src_key)
+        if src:
+            print(f"Model source:  {src.get('repo', '')}/{src.get('model', '')}")
+            break
+
+    # Scaling
+    scaling = mr.get("scaling", {})
+    print(f"Scaling:       min={scaling.get('minScale', '?')} max={scaling.get('maxScale', '?')}")
+
+    # Auth
+    options = mr.get("options", {})
+    auth = "yes" if options.get("isEnabledAuth") else "no"
+    print(f"Auth enabled:  {auth}")
+
+    # Endpoint
+    endpoint = mr.get("publicUrl") or mr.get("endpoint") or f"{mr.get('modelRunId', '?')}.modelrun.inference.cloud.ru"
+    print(f"Endpoint:      {endpoint}")
+
+    # Timestamps
+    print(f"Created at:    {mr.get('createdAt', '?')}")
+    print(f"Updated at:    {mr.get('updatedAt', '?')}")
 
 
 def cmd_create(args):
