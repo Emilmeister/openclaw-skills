@@ -19,12 +19,12 @@ RESULTS = []
 
 
 def run(description: str, cmd: list, expect_success: bool = True,
-        expect_in_output: str = None) -> dict:
+        expect_in_output: str = None, timeout: int = 180) -> dict:
     global PASS, FAIL
     full_cmd = [sys.executable, "ai_agents.py"] + cmd
     try:
         result = subprocess.run(
-            full_cmd, capture_output=True, text=True, timeout=180,
+            full_cmd, capture_output=True, text=True, timeout=timeout,
             cwd=os.path.dirname(os.path.abspath(__file__)),
         )
         output = result.stdout + result.stderr
@@ -108,6 +108,19 @@ def main():
             except Exception:
                 pass
 
+        if not instance_type_id:
+            r = run("instance_type_id fallback via agents list", ["agents", "list"])
+            if r["ok"]:
+                try:
+                    for a in json.loads(r["stdout"]).get("data", []):
+                        it = (a.get("instanceType") or {}).get("id")
+                        if it:
+                            instance_type_id = it
+                            print(f"    fallback instance type from existing agent: {instance_type_id}")
+                            break
+                except Exception:
+                    pass
+
         if not instance_type_id or not mcp_card_id or not agent_card_id:
             print("\n[SKIP] E2E creation — missing instance_type_id or marketplace cards")
             return
@@ -121,13 +134,18 @@ def main():
         ])
         if r["ok"]:
             try:
-                mcp_id = json.loads(r["stdout"])["id"]
+                resp = json.loads(r["stdout"])
+                mcp_id = resp.get("mcpServerId") or resp.get("id")
                 print(f"    created mcp: {mcp_id}")
             except Exception:
                 pass
 
         if mcp_id:
-            run("mcp-servers wait", ["mcp-servers", "wait", mcp_id, "--timeout", "300"])
+            wait_r = run("mcp-servers wait", ["mcp-servers", "wait", mcp_id, "--timeout", "420"],
+                         timeout=480)
+            if not wait_r["ok"]:
+                print("    [ABORT] MCP did not reach RUNNING — skipping agent create")
+                return
 
             r = run("agents create", [
                 "agents", "create",
@@ -138,13 +156,15 @@ def main():
             ])
             if r["ok"]:
                 try:
-                    agent_id = json.loads(r["stdout"])["id"]
+                    resp = json.loads(r["stdout"])
+                    agent_id = resp.get("agentId") or resp.get("id")
                     print(f"    created agent: {agent_id}")
                 except Exception:
                     pass
 
             if agent_id:
-                run("agents wait", ["agents", "wait", agent_id, "--timeout", "300"])
+                run("agents wait", ["agents", "wait", agent_id, "--timeout", "420"],
+                    timeout=480)
                 run("agents get has publicUrl", ["agents", "get", agent_id],
                     expect_in_output="publicUrl")
 

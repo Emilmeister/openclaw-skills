@@ -102,7 +102,8 @@ def cmd_wait(args):
     while time.time() < deadline:
         resp = client.get_system(project_id, args.system_id)
         check_response(resp, f"polling system {args.system_id}")
-        data = resp.json()
+        raw = resp.json()
+        data = raw.get("agentSystem", raw)
         status = data.get("status")
         if status != last_status:
             print(f"status={status}", file=sys.stderr)

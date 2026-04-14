@@ -32,15 +32,25 @@ def cmd_get(args):
     print_json(resp.json())
 
 
-def _build_create_body(args, client) -> dict:
+def _build_create_body(args, client, project_id) -> dict:
     """Combine --from-marketplace card + --config-json/file + simple flags into create body."""
     body: dict = load_config_from_args(args)
     if args.from_marketplace:
-        card_resp = client.get_marketplace_agent(args.from_marketplace)
+        card_resp = client.get_marketplace_agent(project_id, args.from_marketplace)
         check_response(card_resp, f"fetching marketplace card {args.from_marketplace}")
-        card = card_resp.json()
-        body.setdefault("imageSource", {})["marketplaceAgentId"] = card["id"]
+        raw = card_resp.json()
+        card = raw.get("predefinedAgent", raw)
+        body.setdefault("imageSource", {})["marketplaceAgentId"] = card.get("id", args.from_marketplace)
         body.setdefault("description", card.get("description", ""))
+        body.setdefault("agentType", "AGENT_TYPE_FROM_HUB")
+        model_id = card.get("modelId")
+        if model_id:
+            options = body.setdefault("options", {})
+            llm = options.setdefault("llm", {})
+            fm = llm.setdefault("foundationModels", {})
+            fm.setdefault("modelName", model_id)
+    else:
+        body.setdefault("agentType", "AGENT_TYPE_CUSTOM")
     if args.name:
         body["name"] = args.name
     if args.description:
@@ -48,13 +58,16 @@ def _build_create_body(args, client) -> dict:
     if args.instance_type_id:
         body["instanceTypeId"] = args.instance_type_id
     if args.mcp_server_id:
-        body["mcpServerId"] = args.mcp_server_id
+        existing = body.get("mcpServers") or []
+        if not any(m.get("mcpServerId") == args.mcp_server_id for m in existing):
+            existing.append({"mcpServerId": args.mcp_server_id})
+        body["mcpServers"] = existing
     return body
 
 
 def cmd_create(args):
     client, project_id = build_client()
-    body = _build_create_body(args, client)
+    body = _build_create_body(args, client, project_id)
     resp = client.create_agent(project_id, body)
     check_response(resp, "creating agent")
     print_json(resp.json())
@@ -112,7 +125,8 @@ def cmd_wait(args):
     while time.time() < deadline:
         resp = client.get_agent(project_id, args.agent_id)
         check_response(resp, f"polling agent {args.agent_id}")
-        data = resp.json()
+        raw = resp.json()
+        data = raw.get("agent", raw)
         status = data.get("status")
         if status != last_status:
             print(f"status={status}", file=sys.stderr)

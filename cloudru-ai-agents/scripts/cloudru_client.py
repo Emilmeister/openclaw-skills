@@ -18,7 +18,11 @@ for _k in ("HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy"):
 
 
 IAM_URL = "https://iam.api.cloud.ru"
-PUBLIC_API_URL = "https://ai-agents.api.cloud.ru"
+# BFF endpoint — raw public API (ai-agents.api.cloud.ru) has server-side bugs on
+# POST /agents (nil pointer / invalid UUID); BFF injects required defaults and
+# accepts the same IAM Bearer token.
+PUBLIC_API_URL = "https://console.cloud.ru"
+API_PREFIX = "/u-api/ai-agents/v1"
 
 RETRY_MAX_ATTEMPTS = 3
 RETRY_BACKOFF_BASE = 1.0
@@ -100,43 +104,43 @@ class CloudruAiAgentsClient:
 
     def list_agents(self, project_id: str, *, limit: int = 100, offset: int = 0) -> httpx.Response:
         return _request_with_retry(
-            self._client, "GET", f"/api/v1/{project_id}/agents",
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/agents",
             params={"limit": limit, "offset": offset}, headers=self._headers(),
         )
 
     def get_agent(self, project_id: str, agent_id: str) -> httpx.Response:
         return _request_with_retry(
-            self._client, "GET", f"/api/v1/{project_id}/agents/{agent_id}",
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/agents/{agent_id}",
             headers=self._headers(),
         )
 
     def create_agent(self, project_id: str, body: Dict[str, Any]) -> httpx.Response:
         return _request_with_retry(
-            self._client, "POST", f"/api/v1/{project_id}/agents",
+            self._client, "POST", f"/u-api/ai-agents/v1/{project_id}/agents",
             json=body, headers=self._headers(), timeout=60.0,
         )
 
     def update_agent(self, project_id: str, agent_id: str, body: Dict[str, Any]) -> httpx.Response:
         return _request_with_retry(
-            self._client, "PATCH", f"/api/v1/{project_id}/agents/{agent_id}",
+            self._client, "PATCH", f"/u-api/ai-agents/v1/{project_id}/agents/{agent_id}",
             json=body, headers=self._headers(), timeout=60.0,
         )
 
     def delete_agent(self, project_id: str, agent_id: str) -> httpx.Response:
         return _request_with_retry(
-            self._client, "DELETE", f"/api/v1/{project_id}/agents/{agent_id}",
+            self._client, "DELETE", f"/u-api/ai-agents/v1/{project_id}/agents/{agent_id}",
             headers=self._headers(),
         )
 
     def suspend_agent(self, project_id: str, agent_id: str) -> httpx.Response:
         return _request_with_retry(
-            self._client, "PATCH", f"/api/v1/{project_id}/agents/suspend/{agent_id}",
+            self._client, "PATCH", f"/u-api/ai-agents/v1/{project_id}/agents/suspend/{agent_id}",
             headers=self._headers(),
         )
 
     def resume_agent(self, project_id: str, agent_id: str) -> httpx.Response:
         return _request_with_retry(
-            self._client, "PATCH", f"/api/v1/{project_id}/agents/resume/{agent_id}",
+            self._client, "PATCH", f"/u-api/ai-agents/v1/{project_id}/agents/resume/{agent_id}",
             headers=self._headers(),
         )
 
@@ -144,43 +148,43 @@ class CloudruAiAgentsClient:
 
     def list_systems(self, project_id: str, *, limit: int = 100, offset: int = 0) -> httpx.Response:
         return _request_with_retry(
-            self._client, "GET", f"/api/v1/{project_id}/agentSystems",
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/agentSystems",
             params={"limit": limit, "offset": offset}, headers=self._headers(),
         )
 
     def get_system(self, project_id: str, system_id: str) -> httpx.Response:
         return _request_with_retry(
-            self._client, "GET", f"/api/v1/{project_id}/agentSystems/{system_id}",
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/agentSystems/{system_id}",
             headers=self._headers(),
         )
 
     def create_system(self, project_id: str, body: Dict[str, Any]) -> httpx.Response:
         return _request_with_retry(
-            self._client, "POST", f"/api/v1/{project_id}/agentSystems",
+            self._client, "POST", f"/u-api/ai-agents/v1/{project_id}/agentSystems",
             json=body, headers=self._headers(), timeout=60.0,
         )
 
     def update_system(self, project_id: str, system_id: str, body: Dict[str, Any]) -> httpx.Response:
         return _request_with_retry(
-            self._client, "PATCH", f"/api/v1/{project_id}/agentSystems/{system_id}",
+            self._client, "PATCH", f"/u-api/ai-agents/v1/{project_id}/agentSystems/{system_id}",
             json=body, headers=self._headers(), timeout=60.0,
         )
 
     def delete_system(self, project_id: str, system_id: str) -> httpx.Response:
         return _request_with_retry(
-            self._client, "DELETE", f"/api/v1/{project_id}/agentSystems/{system_id}",
+            self._client, "DELETE", f"/u-api/ai-agents/v1/{project_id}/agentSystems/{system_id}",
             headers=self._headers(),
         )
 
     def suspend_system(self, project_id: str, system_id: str) -> httpx.Response:
         return _request_with_retry(
-            self._client, "PATCH", f"/api/v1/{project_id}/agentSystems/suspend/{system_id}",
+            self._client, "PATCH", f"/u-api/ai-agents/v1/{project_id}/agentSystems/suspend/{system_id}",
             headers=self._headers(),
         )
 
     def resume_system(self, project_id: str, system_id: str) -> httpx.Response:
         return _request_with_retry(
-            self._client, "PATCH", f"/api/v1/{project_id}/agentSystems/resume/{system_id}",
+            self._client, "PATCH", f"/u-api/ai-agents/v1/{project_id}/agentSystems/resume/{system_id}",
             headers=self._headers(),
         )
 
@@ -188,84 +192,82 @@ class CloudruAiAgentsClient:
 
     def list_mcp_servers(self, project_id: str, *, limit: int = 100, offset: int = 0) -> httpx.Response:
         return _request_with_retry(
-            self._client, "GET", f"/api/v1/{project_id}/mcpServers",
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/mcpServers",
             params={"limit": limit, "offset": offset}, headers=self._headers(),
         )
 
     def get_mcp_server(self, project_id: str, mcp_id: str) -> httpx.Response:
         return _request_with_retry(
-            self._client, "GET", f"/api/v1/{project_id}/mcpServers/{mcp_id}",
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/mcpServers/{mcp_id}",
             headers=self._headers(),
         )
 
     def create_mcp_server(self, project_id: str, body: Dict[str, Any]) -> httpx.Response:
         return _request_with_retry(
-            self._client, "POST", f"/api/v1/{project_id}/mcpServers",
+            self._client, "POST", f"/u-api/ai-agents/v1/{project_id}/mcpServers",
             json=body, headers=self._headers(), timeout=60.0,
         )
 
     def update_mcp_server(self, project_id: str, mcp_id: str, body: Dict[str, Any]) -> httpx.Response:
         return _request_with_retry(
-            self._client, "PATCH", f"/api/v1/{project_id}/mcpServers/{mcp_id}",
+            self._client, "PATCH", f"/u-api/ai-agents/v1/{project_id}/mcpServers/{mcp_id}",
             json=body, headers=self._headers(), timeout=60.0,
         )
 
     def delete_mcp_server(self, project_id: str, mcp_id: str) -> httpx.Response:
         return _request_with_retry(
-            self._client, "DELETE", f"/api/v1/{project_id}/mcpServers/{mcp_id}",
+            self._client, "DELETE", f"/u-api/ai-agents/v1/{project_id}/mcpServers/{mcp_id}",
             headers=self._headers(),
         )
 
     def suspend_mcp_server(self, project_id: str, mcp_id: str) -> httpx.Response:
         return _request_with_retry(
-            self._client, "PATCH", f"/api/v1/{project_id}/mcpServers/suspend/{mcp_id}",
+            self._client, "PATCH", f"/u-api/ai-agents/v1/{project_id}/mcpServers/suspend/{mcp_id}",
             headers=self._headers(),
         )
 
     def resume_mcp_server(self, project_id: str, mcp_id: str) -> httpx.Response:
         return _request_with_retry(
-            self._client, "PATCH", f"/api/v1/{project_id}/mcpServers/resume/{mcp_id}",
+            self._client, "PATCH", f"/u-api/ai-agents/v1/{project_id}/mcpServers/resume/{mcp_id}",
             headers=self._headers(),
         )
 
     # ---- Instance Types ----
 
-    def list_instance_types(self, project_id: str) -> httpx.Response:
+    def list_instance_types(self, project_id: str, *, is_active: bool = True,
+                             limit: int = 100, offset: int = 0) -> httpx.Response:
+        params: Dict[str, Any] = {"limit": limit, "offset": offset, "isActive": str(is_active).lower()}
         return _request_with_retry(
-            self._client, "GET", f"/api/v1/{project_id}/instanceTypes",
-            headers=self._headers(),
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/instanceTypes",
+            params=params, headers=self._headers(),
         )
 
     # ---- Marketplace ----
 
-    def list_marketplace_agents(self, *, search: Optional[str] = None,
+    def list_marketplace_agents(self, project_id: str, *, search: Optional[str] = None,
                                  limit: int = 100, offset: int = 0) -> httpx.Response:
-        params: Dict[str, Any] = {"limit": limit, "offset": offset}
-        if search:
-            params["search"] = search
+        params: Dict[str, Any] = {"limit": limit, "offset": offset, "name": search or "", "source": "all"}
         return _request_with_retry(
-            self._client, "GET", "/api/v1/marketplace/agents",
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/marketplace/agents",
             params=params, headers=self._headers(),
         )
 
-    def get_marketplace_agent(self, card_id: str) -> httpx.Response:
+    def get_marketplace_agent(self, project_id: str, card_id: str) -> httpx.Response:
         return _request_with_retry(
-            self._client, "GET", f"/api/v1/marketplace/agents/{card_id}",
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/marketplace/agents/{card_id}",
             headers=self._headers(),
         )
 
-    def list_marketplace_mcp_servers(self, *, search: Optional[str] = None,
+    def list_marketplace_mcp_servers(self, project_id: str, *, search: Optional[str] = None,
                                       limit: int = 100, offset: int = 0) -> httpx.Response:
-        params: Dict[str, Any] = {"limit": limit, "offset": offset}
-        if search:
-            params["search"] = search
+        params: Dict[str, Any] = {"limit": limit, "offset": offset, "name": search or "", "source": "all"}
         return _request_with_retry(
-            self._client, "GET", "/api/v1/marketplace/mcpServers",
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/marketplace/mcpServers",
             params=params, headers=self._headers(),
         )
 
-    def get_marketplace_mcp_server(self, card_id: str) -> httpx.Response:
+    def get_marketplace_mcp_server(self, project_id: str, card_id: str) -> httpx.Response:
         return _request_with_retry(
-            self._client, "GET", f"/api/v1/marketplace/mcpServers/{card_id}",
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/marketplace/mcpServers/{card_id}",
             headers=self._headers(),
         )
