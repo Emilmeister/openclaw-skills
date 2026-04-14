@@ -2,12 +2,13 @@
 
 ## Base URLs
 
-- Public API: `https://ai-agents.api.cloud.ru`
+- **BFF (used by skill)**: `https://console.cloud.ru/u-api/ai-agents/v1`
+- Raw public API: `https://ai-agents.api.cloud.ru/api/v1` — **has server-side bugs on POST /agents** (nil pointer / invalid UUID on missing defaults). Skill uses BFF instead; both accept the same IAM Bearer.
 - IAM auth: `https://iam.api.cloud.ru/api/v1/auth/token`
 
 ## Authentication
 
-All public API calls require `Authorization: Bearer <IAM_TOKEN>`. Exchange access key pair for bearer:
+All calls require `Authorization: Bearer <IAM_TOKEN>`. Exchange access key pair for bearer:
 
 ```
 POST https://iam.api.cloud.ru/api/v1/auth/token
@@ -19,7 +20,7 @@ Token TTL ~30 minutes. `IAMAuth` auto-refreshes on 401.
 
 ## Endpoints
 
-All endpoints are under `/api/v1/`. Placeholders: `{projectId}`, `{agentId}`, `{systemId}`, `{mcpId}`, `{cardId}`.
+All endpoints under `/u-api/ai-agents/v1/`. Placeholders: `{projectId}`, `{agentId}`, `{systemId}`, `{mcpId}`, `{cardId}`.
 
 ### Agents
 
@@ -146,3 +147,8 @@ https://cloud.ru/docs/api/cdn/ai-agents/ug/_specs/openapi__ai-agents.yaml
 - Project info returns quotas under key `quotes` (sic), not `quotas`.
 - `suspend` on already-SUSPENDED returns `HTTP 200 {}` (idempotent).
 - Error responses include `Recommendation` and `HelpLink` fields — useful for user diagnostics.
+- **Raw `/api/v1/` at `ai-agents.api.cloud.ru` fails on `POST /agents`** with `nil pointer dereference` or `invalid UUID length: 0` regardless of body shape (some required UUIDs like `serviceAccountId`/`logGroupId` are not defaulted). Use BFF `/u-api/ai-agents/v1/` at `console.cloud.ru` — same Bearer token, BFF injects the missing defaults.
+- `instanceTypes` list returns empty `[]` unless `?isActive=true` is passed.
+- Create returns `{"mcpServerId": "..."}` / `{"agentId": "..."}` (not `{"id": "..."}`), while `get` returns envelope `{"mcpServer": {...}}` / `{"agent": {...}}` / `{"agentSystem": {...}}`. `wait` must unwrap envelope before reading `.status`.
+- Marketplace `get` returns envelope `{"predefinedMcpServer": {...}}` / `{"predefinedAgent": {...}}`.
+- `agents` create requires `options.llm.foundationModels.modelName`, `mcpServers: [{mcpServerId}]` (array, not scalar), and explicit `agentType` (`AGENT_TYPE_FROM_HUB` for marketplace, `AGENT_TYPE_CUSTOM` otherwise).
