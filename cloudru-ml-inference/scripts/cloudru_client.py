@@ -4,6 +4,7 @@ Replaces the inference-clients SDK and all pkg.sbercloud.tech dependencies.
 Only requires: httpx.
 """
 
+import re
 import time
 import uuid
 from functools import wraps
@@ -14,6 +15,7 @@ IAM_URL = "https://iam.api.cloud.ru"
 BFF_URL = "https://console.cloud.ru"
 BFF_PREFIX = "/u-api/inference/model-run/v1"
 INFERENCE_DOMAIN = "modelrun.inference.cloud.ru"
+_MODEL_RUN_ID_RE = re.compile(r"^[a-zA-Z0-9-]+$")
 
 MAX_RETRIES = 3
 RETRY_STATUSES = (502, 503, 504)
@@ -199,6 +201,8 @@ class CloudruInferenceClient:
     # --- Inference: call deployed models ---
 
     def _inference_url(self, model_run_id: str, path: str) -> str:
+        if not _MODEL_RUN_ID_RE.match(model_run_id):
+            raise ValueError(f"Invalid model_run_id: must be alphanumeric/hyphens only, got '{model_run_id}'")
         return f"https://{model_run_id}.{INFERENCE_DOMAIN}{path}"
 
     @with_retry

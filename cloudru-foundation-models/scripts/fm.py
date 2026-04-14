@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Cloud.ru Foundation Models CLI — list models and call completions."""
 
-import sys, os, json, ssl, urllib.request
+import sys, os, json, ssl, urllib.request, urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -24,13 +24,17 @@ def load_api_key():
 
 
 def api_request(path, api_key, method="GET", body=None):
-    ctx = ssl._create_unverified_context()
+    ctx = ssl.create_default_context()
     headers = {"Authorization": f"Bearer {api_key}", "Accept": "application/json"}
     data = None
     if body is not None:
         headers["Content-Type"] = "application/json"
         data = json.dumps(body).encode()
-    req = urllib.request.Request(f"{API_BASE}{path}", data=data, headers=headers, method=method)
+    url = f"{API_BASE}{path}"
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme not in ("https",):
+        raise ValueError(f"Only HTTPS URLs are allowed, got: {parsed.scheme}")
+    req = urllib.request.Request(url, data=data, headers=headers, method=method)
     with urllib.request.urlopen(req, context=ctx, timeout=120) as resp:
         return json.loads(resp.read().decode())
 

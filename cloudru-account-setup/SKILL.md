@@ -53,6 +53,8 @@ Example output:
 }
 ```
 
+> **Security note:** The JSON output contains a short-lived IAM bearer token. Do not redirect stdout to a log file or share the output. The token expires in ~5 minutes but should be treated as sensitive until then.
+
 If the script times out (default 180s), pass `--timeout 300` for more time.
 
 ### Step 3: Run the bootstrap script with extracted values

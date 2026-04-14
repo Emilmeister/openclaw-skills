@@ -7,9 +7,11 @@ Only requires: httpx.
 from __future__ import annotations
 
 import os
+import re
 import time
 import uuid
 from functools import wraps
+from urllib.parse import urlparse
 
 import httpx
 
@@ -111,11 +113,24 @@ class ManagedRagClient:
     def _headers(self):
         return {"X-Request-ID": str(uuid.uuid4())}
 
+    @staticmethod
+    def _validate_search_url(url: str) -> None:
+        """Validate that the search URL points to a trusted Cloud.ru domain."""
+        parsed = urlparse(url)
+        if parsed.scheme != "https":
+            raise ValueError(f"Search URL must use HTTPS, got: {parsed.scheme}")
+        host = parsed.hostname or ""
+        if not host.endswith(f".{SEARCH_DOMAIN}") and host != SEARCH_DOMAIN:
+            raise ValueError(
+                f"Search URL host '{host}' is not under trusted domain '{SEARCH_DOMAIN}'"
+            )
+
     def _search_client(self, search_url: str) -> httpx.Client:
         """Get or create a search client for a specific KB search URL."""
         if not search_url.startswith("https://"):
             search_url = f"https://{search_url}"
         search_url = search_url.rstrip("/")
+        self._validate_search_url(search_url)
 
         if search_url not in self._search_clients:
             self._search_clients[search_url] = httpx.Client(

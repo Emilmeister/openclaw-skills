@@ -17,6 +17,7 @@ from __future__ import annotations
 import json
 import os
 import pathlib
+import re
 import sys
 import time
 from typing import Any, Dict, List, Optional, Tuple
@@ -46,9 +47,12 @@ DEFAULT_FILE_EXTENSIONS = "txt,pdf"
 DEFAULT_KB_POLL_INTERVAL = 15  # seconds
 DEFAULT_KB_POLL_TIMEOUT = 600  # 10 minutes
 DEFAULT_ACCESS_KEY_TTL = 365  # days (BFF expects uint32 in range [0, 10000])
+_SAFE_NAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]{0,62}$")
 DEFAULT_ENV_PATH = os.path.expanduser(
     "~/.openclaw/workspace/skills/managed-rag-skill/.env"
 )
+
+_DRY_RUN_TOKEN_PLACEHOLDER = "DRY-RUN-PLACEHOLDER"
 
 ALL_STEPS = [
     "get-iam-token",
@@ -269,7 +273,7 @@ def step_get_iam_token(ctx: PipelineContext) -> Dict[str, Any]:
     """
     step = "get-iam-token"
     if ctx.dry_run:
-        ctx.iam_token = "dry-run-iam-token"
+        ctx.iam_token = _DRY_RUN_TOKEN_PLACEHOLDER
         return ctx.record({"step": step, "dry_run": True})
     try:
         ctx.ensure_iam_token()
@@ -352,6 +356,10 @@ def step_ensure_bucket(ctx: PipelineContext) -> Dict[str, Any]:
     if not bucket_name:
         return ctx.record(
             make_error(step, "--bucket-name is required")
+        )
+    if not _SAFE_NAME_RE.match(bucket_name):
+        return ctx.record(
+            make_error(step, f"Invalid bucket name '{bucket_name}': must be 1-63 alphanumeric chars, dots, hyphens, underscores")
         )
     if not ctx.tenant_id:
         return ctx.record(
@@ -651,6 +659,10 @@ def step_create_kb(ctx: PipelineContext) -> Dict[str, Any]:
         return ctx.record(
             make_error(step, "--kb-name is required")
         )
+    if not _SAFE_NAME_RE.match(ctx.kb_name):
+        return ctx.record(
+            make_error(step, f"Invalid KB name '{ctx.kb_name}': must be 1-63 alphanumeric chars, dots, hyphens, underscores")
+        )
     if not ctx.project_id:
         return ctx.record(
             make_error(step, "project_id required -- run extract-info first")
@@ -847,6 +859,7 @@ def step_save_env(ctx: PipelineContext) -> Dict[str, Any]:
     env_file = pathlib.Path(env_path).expanduser()
     env_file.parent.mkdir(parents=True, exist_ok=True)
     env_file.write_text(env_content, encoding="utf-8")
+    env_file.chmod(0o600)
 
     return ctx.record({"step": step, "path": str(env_file)})
 

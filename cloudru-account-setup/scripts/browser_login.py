@@ -308,7 +308,6 @@ def main():
     cmd = [
         sys.executable, bootstrap_script,
         "--project-url", project_url,
-        "--token", token,
         "--service-account-name", args.service_account_name,
     ]
     if ids.get("customer_id"):
@@ -316,8 +315,11 @@ def main():
     if args.skip_access_key:
         cmd += ["--skip-access-key"]
 
-    log(f"  Command: python {os.path.basename(bootstrap_script)} --project-url '...' --token '...'")
-    proc = subprocess.run(cmd, capture_output=False)
+    env = os.environ.copy()
+    env["CLOUDRU_BOOTSTRAP_TOKEN"] = token
+
+    log(f"  Command: python {os.path.basename(bootstrap_script)} --project-url '...' (token via env)")
+    proc = subprocess.run(cmd, capture_output=False, env=env)
 
     if proc.returncode != 0:
         log(f"Bootstrap failed with exit code {proc.returncode}")

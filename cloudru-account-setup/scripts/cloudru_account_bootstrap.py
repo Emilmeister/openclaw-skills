@@ -21,7 +21,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, unquote, urlparse
 from urllib.request import Request, urlopen
 
-context = ssl._create_unverified_context()
+context = ssl.create_default_context()
 
 SERVICE_ACCOUNT_URL = "https://console.cloud.ru/u-api/bff-console/v2/service-accounts/add"
 SERVICE_ACCOUNT_LIST_URL = "https://console.cloud.ru/u-api/bff-console/v2/service-accounts"
@@ -301,6 +301,9 @@ def request_json(
         headers["Content-Type"] = "application/json"
         data = json.dumps(json_body).encode("utf-8")
 
+    parsed_url = urlparse(url)
+    if parsed_url.scheme not in ("https",):
+        raise BootstrapError(f"Only HTTPS URLs are allowed, got: {parsed_url.scheme}")
     request = Request(url=url, data=data, headers=headers, method=method)
     try:
         with urlopen(request, timeout=30, context=context) as response:
@@ -493,8 +496,10 @@ def main() -> int:
             return 0
 
         if not args.token:
+            args.token = os.environ.get("CLOUDRU_BOOTSTRAP_TOKEN", "")
+        if not args.token:
             raise BootstrapError(
-                "Missing --token. Pass the Cloud.ru console bearer token from the browser localStorage flow."
+                "Missing --token. Pass the Cloud.ru console bearer token via --token or CLOUDRU_BOOTSTRAP_TOKEN env var."
             )
 
         try:
