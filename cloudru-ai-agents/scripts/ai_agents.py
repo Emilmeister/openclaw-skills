@@ -37,6 +37,10 @@ def build_parser():
     agsub = agents.add_subparsers(dest="subcommand", required=True)
 
     p = agsub.add_parser("list", help="List agents")
+    p.add_argument("--statuses",
+        help="Comma-separated AGENT_STATUS_* to include")
+    p.add_argument("--not-in-statuses",
+        help="Comma-separated AGENT_STATUS_* to exclude")
     _add_limit_offset(p)
 
     p = agsub.add_parser("get", help="Get agent details")
@@ -87,7 +91,10 @@ def build_parser():
     mcp = top.add_parser("mcp-servers", help="Manage MCP servers")
     msub = mcp.add_subparsers(dest="subcommand", required=True)
 
-    p = msub.add_parser("list"); _add_limit_offset(p)
+    p = msub.add_parser("list")
+    p.add_argument("--not-in-statuses",
+        help="Comma-separated MCP_SERVER_STATUS_* to exclude (default: DELETED, ON_DELETION)")
+    _add_limit_offset(p)
     p = msub.add_parser("get"); p.add_argument("mcp_id")
     p = msub.add_parser("create")
     p.add_argument("--name"); p.add_argument("--description"); p.add_argument("--instance-type-id")
@@ -107,18 +114,23 @@ def build_parser():
     mp = top.add_parser("marketplace", help="Marketplace catalog")
     mpsub = mp.add_subparsers(dest="subcommand", required=True)
 
+    _sort_help = "SORT_TYPE_POPULARITY_DESC (default) | SORT_TYPE_POPULARITY_ASC | SORT_TYPE_UNKNOWN"
+
     p = mpsub.add_parser("list-agents")
-    p.add_argument("--search"); _add_limit_offset(p)
+    p.add_argument("--search"); p.add_argument("--sort-type", help=_sort_help)
+    _add_limit_offset(p)
 
     p = mpsub.add_parser("get-agent"); p.add_argument("card_id")
 
     p = mpsub.add_parser("list-mcp")
-    p.add_argument("--search"); _add_limit_offset(p)
+    p.add_argument("--search"); p.add_argument("--sort-type", help=_sort_help)
+    _add_limit_offset(p)
 
     p = mpsub.add_parser("get-mcp"); p.add_argument("card_id")
 
     p = mpsub.add_parser("list-prompts")
-    p.add_argument("--search"); _add_limit_offset(p)
+    p.add_argument("--search"); p.add_argument("--sort-type", help=_sort_help)
+    _add_limit_offset(p)
 
     p = mpsub.add_parser("get-prompt"); p.add_argument("card_id")
 
@@ -198,7 +210,11 @@ def build_parser():
     skills = top.add_parser("skills", help="Manage skills (Anthropic-style markdown skills)")
     sksub = skills.add_subparsers(dest="subcommand", required=True)
 
-    p = sksub.add_parser("list"); p.add_argument("--search"); _add_limit_offset(p)
+    p = sksub.add_parser("list")
+    p.add_argument("--search")
+    p.add_argument("--not-in-statuses",
+        help="Comma-separated SKILL_STATUS_* to exclude (default: DELETED)")
+    _add_limit_offset(p)
     p = sksub.add_parser("get"); p.add_argument("skill_id")
 
     p = sksub.add_parser("create", help="Create skill (plaintext or from git)")
@@ -221,7 +237,11 @@ def build_parser():
     # ---- workflows (Preview) ----
     workflows = top.add_parser("workflows", help="AI Workflows (low-code, read-only via CLI)")
     wsub = workflows.add_subparsers(dest="subcommand", required=True)
-    p = wsub.add_parser("list"); p.add_argument("--search"); _add_limit_offset(p)
+    p = wsub.add_parser("list")
+    p.add_argument("--search")
+    p.add_argument("--statuses",
+        help="Comma-separated WORKFLOW_* statuses to include (ACTIVE/SUSPENDED/ON_CREATION/...)")
+    _add_limit_offset(p)
     p = wsub.add_parser("get"); p.add_argument("workflow_id")
     p = wsub.add_parser("delete"); p.add_argument("workflow_id"); p.add_argument("--yes", action="store_true")
 
@@ -235,8 +255,20 @@ def build_parser():
     # ---- evo-claws (Preview) ----
     ec = top.add_parser("evo-claws", help="Evo Claw managed gateways (read-only)")
     ecsub = ec.add_subparsers(dest="subcommand", required=True)
-    p = ecsub.add_parser("list"); _add_limit_offset(p)
+    p = ecsub.add_parser("list")
+    p.add_argument("--statuses",
+        help="Comma-separated EVOCLAW_STATUS_* to include (RUNNING/ON_CREATION/FAILED/...)")
+    _add_limit_offset(p)
     p = ecsub.add_parser("get"); p.add_argument("evoclaw_id")
+
+    # ---- pricing ----
+    pricing = top.add_parser("pricing", help="Estimate instance-type cost (same endpoint UI uses)")
+    prsub = pricing.add_subparsers(dest="subcommand", required=True)
+    p = prsub.add_parser("estimate", help="Get price for an instanceType at a scale range")
+    p.add_argument("--instance-type-id", default="",
+        help="Instance type ID (empty = base quota)")
+    p.add_argument("--min-scale", type=int, default=1)
+    p.add_argument("--max-scale", type=int, default=1)
 
     return parser
 

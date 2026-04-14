@@ -11,8 +11,9 @@ from helpers import build_client, check_response, print_json
 
 def cmd_list(args):
     client, project_id = build_client()
+    statuses = args.statuses.split(",") if getattr(args, "statuses", None) else None
     resp = client.list_workflows(project_id, limit=args.limit, offset=args.offset,
-                                  search=args.search)
+                                  search=args.search, statuses=statuses)
     check_response(resp, "listing workflows")
     print_json(resp.json())
 

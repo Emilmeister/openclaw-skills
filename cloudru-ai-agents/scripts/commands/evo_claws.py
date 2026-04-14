@@ -9,7 +9,9 @@ from helpers import build_client, check_response, print_json
 
 def cmd_list(args):
     client, project_id = build_client()
-    resp = client.list_evo_claws(project_id, limit=args.limit, offset=args.offset)
+    statuses = args.statuses.split(",") if getattr(args, "statuses", None) else None
+    resp = client.list_evo_claws(project_id, limit=args.limit, offset=args.offset,
+                                  statuses=statuses)
     check_response(resp, "listing evo-claws")
     print_json(resp.json())
 

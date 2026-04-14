@@ -20,7 +20,10 @@ WAIT_POLL_INTERVAL = 15
 
 def cmd_list(args):
     client, project_id = build_client()
-    resp = client.list_agents(project_id, limit=args.limit, offset=args.offset)
+    statuses = args.statuses.split(",") if getattr(args, "statuses", None) else None
+    not_in = args.not_in_statuses.split(",") if getattr(args, "not_in_statuses", None) else None
+    resp = client.list_agents(project_id, limit=args.limit, offset=args.offset,
+                               statuses=statuses, not_in_statuses=not_in)
     check_response(resp, "listing agents")
     print_json(resp.json())
 

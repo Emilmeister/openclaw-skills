@@ -19,7 +19,9 @@ def _serialize_metadata(metadata: dict) -> dict:
 
 def cmd_list(args):
     client, project_id = build_client()
-    resp = client.list_skills(project_id, limit=args.limit, offset=args.offset, name=args.search)
+    not_in = args.not_in_statuses.split(",") if getattr(args, "not_in_statuses", None) else None
+    resp = client.list_skills(project_id, limit=args.limit, offset=args.offset,
+                               name=args.search, not_in_statuses=not_in)
     check_response(resp, "listing skills")
     print_json(resp.json())
 

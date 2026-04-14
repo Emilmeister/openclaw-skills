@@ -102,10 +102,17 @@ class CloudruAiAgentsClient:
 
     # ---- Agents ----
 
-    def list_agents(self, project_id: str, *, limit: int = 100, offset: int = 0) -> httpx.Response:
+    def list_agents(self, project_id: str, *, limit: int = 100, offset: int = 0,
+                    statuses: Optional[list] = None,
+                    not_in_statuses: Optional[list] = None) -> httpx.Response:
+        params: Dict[str, Any] = {"limit": limit, "offset": offset}
+        if statuses:
+            params["statuses"] = statuses
+        if not_in_statuses:
+            params["notInStatuses"] = not_in_statuses
         return _request_with_retry(
             self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/agents",
-            params={"limit": limit, "offset": offset}, headers=self._headers(),
+            params=params, headers=self._headers(),
         )
 
     def get_agent(self, project_id: str, agent_id: str) -> httpx.Response:
@@ -190,10 +197,14 @@ class CloudruAiAgentsClient:
 
     # ---- MCP Servers ----
 
-    def list_mcp_servers(self, project_id: str, *, limit: int = 100, offset: int = 0) -> httpx.Response:
+    def list_mcp_servers(self, project_id: str, *, limit: int = 100, offset: int = 0,
+                          not_in_statuses: Optional[list] = None) -> httpx.Response:
+        params: Dict[str, Any] = {"limit": limit, "offset": offset,
+                                   "notInStatuses": not_in_statuses or
+                                   ["MCP_SERVER_STATUS_DELETED", "MCP_SERVER_STATUS_ON_DELETION"]}
         return _request_with_retry(
             self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/mcpServers",
-            params={"limit": limit, "offset": offset}, headers=self._headers(),
+            params=params, headers=self._headers(),
         )
 
     def get_mcp_server(self, project_id: str, mcp_id: str) -> httpx.Response:
@@ -245,8 +256,10 @@ class CloudruAiAgentsClient:
     # ---- Marketplace ----
 
     def list_marketplace_agents(self, project_id: str, *, search: Optional[str] = None,
-                                 limit: int = 100, offset: int = 0) -> httpx.Response:
-        params: Dict[str, Any] = {"limit": limit, "offset": offset, "name": search or "", "source": "all"}
+                                 limit: int = 100, offset: int = 0,
+                                 sort: str = "SORT_TYPE_POPULARITY_DESC") -> httpx.Response:
+        params: Dict[str, Any] = {"limit": limit, "offset": offset, "name": search or "",
+                                   "source": "all", "sortType": sort}
         return _request_with_retry(
             self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/marketplace/agents",
             params=params, headers=self._headers(),
@@ -259,8 +272,10 @@ class CloudruAiAgentsClient:
         )
 
     def list_marketplace_mcp_servers(self, project_id: str, *, search: Optional[str] = None,
-                                      limit: int = 100, offset: int = 0) -> httpx.Response:
-        params: Dict[str, Any] = {"limit": limit, "offset": offset, "name": search or "", "source": "all"}
+                                      limit: int = 100, offset: int = 0,
+                                      sort: str = "SORT_TYPE_POPULARITY_DESC") -> httpx.Response:
+        params: Dict[str, Any] = {"limit": limit, "offset": offset, "name": search or "",
+                                   "source": "all", "sortType": sort}
         return _request_with_retry(
             self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/marketplace/mcpServers",
             params=params, headers=self._headers(),
@@ -390,9 +405,10 @@ class CloudruAiAgentsClient:
     # ---- Skills (Навыки) ----
 
     def list_skills(self, project_id: str, *, limit: int = 100, offset: int = 0,
-                    name: Optional[str] = None) -> httpx.Response:
+                    name: Optional[str] = None,
+                    not_in_statuses: Optional[list] = None) -> httpx.Response:
         params: Dict[str, Any] = {"limit": limit, "offset": offset,
-                                   "notInStatuses": ["SKILL_STATUS_DELETED"]}
+                                   "notInStatuses": not_in_statuses or ["SKILL_STATUS_DELETED"]}
         if name:
             params["name"] = name
         return _request_with_retry(
@@ -442,10 +458,13 @@ class CloudruAiAgentsClient:
     # ---- Workflows ----
 
     def list_workflows(self, project_id: str, *, limit: int = 100, offset: int = 0,
-                       search: Optional[str] = None) -> httpx.Response:
+                       search: Optional[str] = None,
+                       statuses: Optional[list] = None) -> httpx.Response:
         params: Dict[str, Any] = {"limit": limit, "offset": offset}
         if search:
             params["search"] = search
+        if statuses:
+            params["statuses"] = statuses
         return _request_with_retry(
             self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/workflows",
             params=params, headers=self._headers(),
@@ -483,14 +502,34 @@ class CloudruAiAgentsClient:
 
     # ---- EvoClaw ----
 
-    def list_evo_claws(self, project_id: str, *, limit: int = 100, offset: int = 0) -> httpx.Response:
+    def list_evo_claws(self, project_id: str, *, limit: int = 100, offset: int = 0,
+                        statuses: Optional[list] = None) -> httpx.Response:
+        params: Dict[str, Any] = {"limit": limit, "offset": offset, "projectId": project_id}
+        if statuses:
+            params["statuses"] = statuses
         return _request_with_retry(
             self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/evo-claws",
-            params={"limit": limit, "offset": offset, "projectId": project_id}, headers=self._headers(),
+            params=params, headers=self._headers(),
         )
 
     def get_evo_claw(self, project_id: str, evoclaw_id: str) -> httpx.Response:
         return _request_with_retry(
             self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/evo-claws/{evoclaw_id}",
             headers=self._headers(),
+        )
+
+    # ---- Pricing ----
+
+    def get_price(self, project_id: str, *, instance_type_id: str = "",
+                  min_scale: int = 1, max_scale: int = 1) -> httpx.Response:
+        """Pricing estimate for an instance-type at a scale range.
+
+        Same endpoint the UI calls on every create form — returns per-hour and
+        per-minute costs plus implicit GPU/CPU/RAM breakdown.
+        """
+        params: Dict[str, Any] = {"instanceTypeId": instance_type_id,
+                                   "minScale": min_scale, "maxScale": max_scale}
+        return _request_with_retry(
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/price",
+            params=params, headers=self._headers(),
         )

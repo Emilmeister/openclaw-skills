@@ -19,7 +19,9 @@ WAIT_POLL_INTERVAL = 15
 
 def cmd_list(args):
     client, project_id = build_client()
-    resp = client.list_mcp_servers(project_id, limit=args.limit, offset=args.offset)
+    not_in = args.not_in_statuses.split(",") if getattr(args, "not_in_statuses", None) else None
+    resp = client.list_mcp_servers(project_id, limit=args.limit, offset=args.offset,
+                                    not_in_statuses=not_in)
     check_response(resp, "listing mcp-servers")
     print_json(resp.json())
 

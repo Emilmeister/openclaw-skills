@@ -5,7 +5,9 @@ from helpers import build_client, check_response, print_json
 
 def cmd_list_agents(args):
     client, project_id = build_client()
-    resp = client.list_marketplace_agents(project_id, search=args.search, limit=args.limit, offset=args.offset)
+    sort = getattr(args, "sort_type", None) or "SORT_TYPE_POPULARITY_DESC"
+    resp = client.list_marketplace_agents(project_id, search=args.search,
+                                           limit=args.limit, offset=args.offset, sort=sort)
     check_response(resp, "listing marketplace agents")
     print_json(resp.json())
 
@@ -19,7 +21,9 @@ def cmd_get_agent(args):
 
 def cmd_list_mcp(args):
     client, project_id = build_client()
-    resp = client.list_marketplace_mcp_servers(project_id, search=args.search, limit=args.limit, offset=args.offset)
+    sort = getattr(args, "sort_type", None) or "SORT_TYPE_POPULARITY_DESC"
+    resp = client.list_marketplace_mcp_servers(project_id, search=args.search,
+                                                limit=args.limit, offset=args.offset, sort=sort)
     check_response(resp, "listing marketplace mcp-servers")
     print_json(resp.json())
 
@@ -33,8 +37,9 @@ def cmd_get_mcp(args):
 
 def cmd_list_prompts(args):
     client, project_id = build_client()
+    sort = getattr(args, "sort_type", None) or "SORT_TYPE_POPULARITY_DESC"
     resp = client.list_marketplace_prompts(project_id, search=args.search,
-                                            limit=args.limit, offset=args.offset)
+                                            limit=args.limit, offset=args.offset, sort=sort)
     check_response(resp, "listing marketplace prompts")
     print_json(resp.json())
 
