@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 import re
+import threading
 import time
 import uuid
 from functools import wraps
@@ -65,6 +66,11 @@ class IAMAuth(httpx.Auth):
         self.key_id = key_id
         self.key_secret = key_secret
         self._token: str | None = None
+        self._token_expires_at: float = 0.0
+        self._lock = threading.Lock()
+
+    def __getstate__(self):
+        raise TypeError("IAMAuth objects cannot be pickled (contains sensitive token)")
 
     def _fetch_token(self):
         # Use a fresh client to bypass corporate proxy
@@ -75,22 +81,31 @@ class IAMAuth(httpx.Auth):
                 timeout=30,
             )
             resp.raise_for_status()
-            self._token = resp.json()["access_token"]
+            data = resp.json()
+            self._token = data["access_token"]
+            expires_in = data.get("expires_in", 3600)
+            self._token_expires_at = time.monotonic() + expires_in - 60
+
+    def _is_token_expired(self) -> bool:
+        return not self._token or time.monotonic() >= self._token_expires_at
 
     def sync_auth_flow(self, request):
-        if not self._token:
-            self._fetch_token()
+        with self._lock:
+            if self._is_token_expired():
+                self._fetch_token()
         request.headers["Authorization"] = f"Bearer {self._token}"
         response = yield request
         if response.status_code in (401, 403):
-            self._fetch_token()
+            with self._lock:
+                self._fetch_token()
             request.headers["Authorization"] = f"Bearer {self._token}"
             yield request
 
     @property
     def token(self):
-        if not self._token:
-            self._fetch_token()
+        with self._lock:
+            if self._is_token_expired():
+                self._fetch_token()
         return self._token
 
 
@@ -109,6 +124,7 @@ class ManagedRagClient:
             transport=httpx.HTTPTransport(proxy=None),
         )
         self._search_clients: dict[str, httpx.Client] = {}
+        self._search_clients_lock = threading.Lock()
 
     def _headers(self):
         return {"X-Request-ID": str(uuid.uuid4())}
@@ -119,6 +135,8 @@ class ManagedRagClient:
         parsed = urlparse(url)
         if parsed.scheme != "https":
             raise ValueError(f"Search URL must use HTTPS, got: {parsed.scheme}")
+        if parsed.username or parsed.password:
+            raise ValueError("Search URL must not contain user credentials")
         host = parsed.hostname or ""
         if not host.endswith(f".{SEARCH_DOMAIN}") and host != SEARCH_DOMAIN:
             raise ValueError(
@@ -132,14 +150,15 @@ class ManagedRagClient:
         search_url = search_url.rstrip("/")
         self._validate_search_url(search_url)
 
-        if search_url not in self._search_clients:
-            self._search_clients[search_url] = httpx.Client(
-                base_url=search_url,
-                transport=httpx.HTTPTransport(proxy=None),
-                auth=self.auth,
-                timeout=120,
-            )
-        return self._search_clients[search_url]
+        with self._search_clients_lock:
+            if search_url not in self._search_clients:
+                self._search_clients[search_url] = httpx.Client(
+                    base_url=search_url,
+                    transport=httpx.HTTPTransport(proxy=None),
+                    auth=self.auth,
+                    timeout=120,
+                )
+            return self._search_clients[search_url]
 
     # --- Public API: Knowledge Base CRUD ---
 

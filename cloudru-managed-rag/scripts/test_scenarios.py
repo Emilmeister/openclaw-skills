@@ -19,6 +19,8 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import shlex
 import subprocess
 import sys
 
@@ -27,11 +29,22 @@ FAIL = 0
 RESULTS = []
 
 
+_SAFE_ARG_RE = re.compile(r"^[a-zA-Z0-9_./:@=,{}\[\] \"'-]+$")
+
+
+def _validate_cmd_args(cmd: list[str]) -> None:
+    """Validate CLI arguments to prevent injection."""
+    for arg in cmd:
+        if not _SAFE_ARG_RE.match(arg):
+            raise ValueError(f"Unsafe command argument detected: {arg!r}")
+
+
 def run(description: str, cmd: list[str], expect_success: bool = True,
         expect_in_output: str | None = None, expect_not_in_output: str | None = None) -> bool:
     """Run a CLI command and check expectations."""
     global PASS, FAIL
 
+    _validate_cmd_args(cmd)
     full_cmd = [sys.executable, "managed_rag.py"] + cmd
     try:
         result = subprocess.run(
@@ -125,6 +138,7 @@ def main():
 
         # Grab version_id from output for next test
         try:
+            _validate_cmd_args(["versions", "--kb-id", kb_id])
             result = subprocess.run(
                 [sys.executable, "managed_rag.py", "versions", "--kb-id", kb_id],
                 capture_output=True, text=True, timeout=30,

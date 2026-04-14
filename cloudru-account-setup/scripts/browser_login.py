@@ -23,6 +23,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import time
 
 UUID_RE = re.compile(
@@ -290,36 +291,60 @@ def main():
 
     login_result = {
         "project_url": project_url,
-        "token": token,
+        "token": token[:8] + "..." if token else None,
+        "token_length": len(token) if token else 0,
         "project_id": ids.get("project_id"),
         "customer_id": ids.get("customer_id"),
     }
 
     if args.no_bootstrap:
-        log("SUCCESS (--no-bootstrap mode, printing token JSON)")
+        log("SUCCESS (--no-bootstrap mode)")
+        log("Token is available but not printed to stdout for security.")
+        log("Use the full browser_login flow (without --no-bootstrap) to pass it to bootstrap automatically.")
         print(json.dumps(login_result, indent=2))
         return
+
+    # Validate inputs before passing to subprocess
+    if not project_url.startswith("https://console.cloud.ru"):
+        log(f"FAILED: unexpected project URL domain: {project_url[:60]}")
+        sys.exit(1)
+    sa_name = args.service_account_name
+    if not re.match(r"^[a-zA-Z0-9_-]{1,128}$", sa_name):
+        log(f"FAILED: invalid service account name: {sa_name}")
+        sys.exit(1)
 
     # Run bootstrap immediately while token is fresh (~5 min TTL)
     log("Running cloudru_account_bootstrap.py (token expires in ~5 min)...")
     script_dir = os.path.dirname(os.path.abspath(__file__))
     bootstrap_script = os.path.join(script_dir, "cloudru_account_bootstrap.py")
 
-    cmd = [
-        sys.executable, bootstrap_script,
-        "--project-url", project_url,
-        "--service-account-name", args.service_account_name,
-    ]
-    if ids.get("customer_id"):
-        cmd += ["--customer-id", ids["customer_id"]]
-    if args.skip_access_key:
-        cmd += ["--skip-access-key"]
+    # Pass token via a temp file with restricted permissions (not via env or CLI args)
+    token_fd, token_path = tempfile.mkstemp(prefix="cloudru_token_", suffix=".tmp")
+    try:
+        os.fchmod(token_fd, 0o600)
+        os.write(token_fd, token.encode("utf-8"))
+        os.close(token_fd)
 
-    env = os.environ.copy()
-    env["CLOUDRU_BOOTSTRAP_TOKEN"] = token
+        cmd = [
+            sys.executable, bootstrap_script,
+            "--project-url", project_url,
+            "--service-account-name", sa_name,
+            "--token-file", token_path,
+        ]
+        if ids.get("customer_id"):
+            cid = ids["customer_id"]
+            if re.match(r"^[a-fA-F0-9-]+$", cid):
+                cmd += ["--customer-id", cid]
+        if args.skip_access_key:
+            cmd += ["--skip-access-key"]
 
-    log(f"  Command: python {os.path.basename(bootstrap_script)} --project-url '...' (token via env)")
-    proc = subprocess.run(cmd, capture_output=False, env=env)
+        log(f"  Command: python {os.path.basename(bootstrap_script)} --project-url '...' --token-file '...'")
+        proc = subprocess.run(cmd, capture_output=False)
+    finally:
+        try:
+            os.unlink(token_path)
+        except OSError:
+            pass
 
     if proc.returncode != 0:
         log(f"Bootstrap failed with exit code {proc.returncode}")

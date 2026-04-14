@@ -23,6 +23,8 @@ from urllib.request import Request, urlopen
 
 context = ssl.create_default_context()
 
+_ALLOWED_HOSTS = frozenset({"console.cloud.ru", "iam.api.cloud.ru"})
+
 SERVICE_ACCOUNT_URL = "https://console.cloud.ru/u-api/bff-console/v2/service-accounts/add"
 SERVICE_ACCOUNT_LIST_URL = "https://console.cloud.ru/u-api/bff-console/v2/service-accounts"
 API_KEY_URL_TEMPLATE = (
@@ -140,6 +142,11 @@ def parse_args() -> argparse.Namespace:
         "--skip-access-key",
         action="store_true",
         help="Skip access key creation (only create service account and API key).",
+    )
+    parser.add_argument(
+        "--token-file",
+        default="",
+        help="Path to a file containing the bearer token (preferred over --token for security).",
     )
     parser.add_argument(
         "--dry-run",
@@ -304,9 +311,11 @@ def request_json(
     parsed_url = urlparse(url)
     if parsed_url.scheme not in ("https",):
         raise BootstrapError(f"Only HTTPS URLs are allowed, got: {parsed_url.scheme}")
+    if parsed_url.hostname not in _ALLOWED_HOSTS:
+        raise BootstrapError(f"Host '{parsed_url.hostname}' is not in the allowed list: {_ALLOWED_HOSTS}")
     request = Request(url=url, data=data, headers=headers, method=method)
     try:
-        with urlopen(request, timeout=30, context=context) as response:
+        with urlopen(request, timeout=30, context=context) as response:  # noqa: S310
             raw = response.read().decode("utf-8")
             if not raw:
                 return None
@@ -495,11 +504,16 @@ def main() -> int:
             print(json.dumps(result, ensure_ascii=False, indent=2))
             return 0
 
+        if not args.token and args.token_file:
+            token_path = args.token_file
+            if os.path.isfile(token_path):
+                with open(token_path) as f:
+                    args.token = f.read().strip()
         if not args.token:
             args.token = os.environ.get("CLOUDRU_BOOTSTRAP_TOKEN", "")
         if not args.token:
             raise BootstrapError(
-                "Missing --token. Pass the Cloud.ru console bearer token via --token or CLOUDRU_BOOTSTRAP_TOKEN env var."
+                "Missing --token. Pass the Cloud.ru console bearer token via --token, --token-file, or CLOUDRU_BOOTSTRAP_TOKEN env var."
             )
 
         try:

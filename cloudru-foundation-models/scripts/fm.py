@@ -6,6 +6,7 @@ import sys, os, json, ssl, urllib.request, urllib.parse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 API_BASE = "https://foundation-models.api.cloud.ru/v1"
+_ALLOWED_HOST = "foundation-models.api.cloud.ru"
 
 
 def load_api_key():
@@ -34,8 +35,10 @@ def api_request(path, api_key, method="GET", body=None):
     parsed = urllib.parse.urlparse(url)
     if parsed.scheme not in ("https",):
         raise ValueError(f"Only HTTPS URLs are allowed, got: {parsed.scheme}")
+    if parsed.hostname != _ALLOWED_HOST:
+        raise ValueError(f"Host '{parsed.hostname}' is not allowed (expected {_ALLOWED_HOST})")
     req = urllib.request.Request(url, data=data, headers=headers, method=method)
-    with urllib.request.urlopen(req, context=ctx, timeout=120) as resp:
+    with urllib.request.urlopen(req, context=ctx, timeout=120) as resp:  # noqa: S310
         return json.loads(resp.read().decode())
 
 

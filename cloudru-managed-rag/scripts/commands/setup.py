@@ -52,7 +52,9 @@ DEFAULT_ENV_PATH = os.path.expanduser(
     "~/.openclaw/workspace/skills/managed-rag-skill/.env"
 )
 
-_DRY_RUN_TOKEN_PLACEHOLDER = "DRY-RUN-PLACEHOLDER"
+_UUID_RE = re.compile(
+    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+)
 
 ALL_STEPS = [
     "get-iam-token",
@@ -248,8 +250,7 @@ class PipelineContext:
     def ensure_iam_token(self) -> str:
         """Fresh exchange CP_CONSOLE_KEY_ID/SECRET -> IAM bearer on each call."""
         if self.dry_run:
-            self.iam_token = "dry-run-iam-token"
-            return self.iam_token
+            return ""
         key_id = os.environ.get("CP_CONSOLE_KEY_ID")
         key_secret = os.environ.get("CP_CONSOLE_SECRET")
         if not key_id or not key_secret:
@@ -273,7 +274,7 @@ def step_get_iam_token(ctx: PipelineContext) -> Dict[str, Any]:
     """
     step = "get-iam-token"
     if ctx.dry_run:
-        ctx.iam_token = _DRY_RUN_TOKEN_PLACEHOLDER
+        ctx.iam_token = ""
         return ctx.record({"step": step, "dry_run": True})
     try:
         ctx.ensure_iam_token()
@@ -313,7 +314,11 @@ def step_get_tenant_id(ctx: PipelineContext) -> Dict[str, Any]:
     )
     if not ctx.tenant_id:
         return ctx.record(
-            make_error(step, f"tenant_id not found in response: {json.dumps(data)}")
+            make_error(step, "tenant_id not found in response")
+        )
+    if not _UUID_RE.match(ctx.tenant_id):
+        return ctx.record(
+            make_error(step, f"tenant_id has invalid format: {ctx.tenant_id}")
         )
 
     return ctx.record({"step": step, "tenant_id": ctx.tenant_id})
@@ -970,6 +975,9 @@ def _build_context(args) -> PipelineContext:
             "(usually from cloudru-account-setup).",
             file=sys.stderr,
         )
+        sys.exit(1)
+    if pid and not _UUID_RE.match(pid):
+        print(f"PROJECT_ID must be a valid UUID, got: {pid}", file=sys.stderr)
         sys.exit(1)
     return PipelineContext(
         project_id=pid,
