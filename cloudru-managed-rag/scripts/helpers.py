@@ -2,12 +2,15 @@
 
 import json
 import os
-import re
 import sys
 
 from cloudru_client import ManagedRagClient
 
-_ENV_KEY_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_ALLOWED_ENV_KEYS = frozenset({
+    "CP_CONSOLE_KEY_ID", "CP_CONSOLE_SECRET", "PROJECT_ID",
+    "CLOUD_RU_FOUNDATION_MODELS_API_KEY", "CLOUDRU_ENV_FILE",
+    "MANAGED_RAG_KB_ID", "MANAGED_RAG_SEARCH_URL",
+})
 
 
 def _load_dotenv():
@@ -33,7 +36,7 @@ def _load_dotenv():
                     value = value.strip()
                     if len(value) >= 2 and value[0] == value[-1] and value[0] in ('"', "'"):
                         value = value[1:-1]
-                    if _ENV_KEY_RE.match(key) and key not in os.environ:
+                    if key in _ALLOWED_ENV_KEYS and key not in os.environ:
                         os.environ[key] = value
             break
 
@@ -61,10 +64,6 @@ def build_client():
 def check_response(response, action: str):
     if not response.is_success:
         print(f"Error {action}: HTTP {response.status_code}", file=sys.stderr)
-        body = response.text
-        if len(body) > 500:
-            body = body[:500] + "... (truncated)"
-        print(body, file=sys.stderr)
         sys.exit(1)
 
 

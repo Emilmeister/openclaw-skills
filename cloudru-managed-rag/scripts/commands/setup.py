@@ -46,6 +46,7 @@ DEFAULT_SA_NAME = "managed-rag-sa"
 DEFAULT_FILE_EXTENSIONS = "txt,pdf"
 DEFAULT_KB_POLL_INTERVAL = 15  # seconds
 DEFAULT_KB_POLL_TIMEOUT = 600  # 10 minutes
+MAX_UPLOAD_FILE_SIZE = 100 * 1024 * 1024  # 100 MB per file
 DEFAULT_ACCESS_KEY_TTL = 365  # days (BFF expects uint32 in range [0, 10000])
 _SAFE_NAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]{0,62}$")
 DEFAULT_ENV_PATH = os.path.expanduser(
@@ -497,6 +498,9 @@ def step_upload_docs(ctx: PipelineContext) -> Dict[str, Any]:
         relative = fpath.relative_to(docs_dir)
         s3_key = str(relative)
         file_size = fpath.stat().st_size
+        if file_size > MAX_UPLOAD_FILE_SIZE:
+            emit({"step": step, "warning": f"Skipping {relative}: exceeds {MAX_UPLOAD_FILE_SIZE} byte limit ({file_size} bytes)"})
+            continue
         try:
             # ACL=bucket-owner-full-control is CRITICAL:
             # Without it, Managed RAG Search API cannot read the files

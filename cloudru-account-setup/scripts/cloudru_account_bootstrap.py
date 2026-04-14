@@ -144,9 +144,9 @@ def parse_args() -> argparse.Namespace:
         help="Skip access key creation (only create service account and API key).",
     )
     parser.add_argument(
-        "--token-file",
-        default="",
-        help="Path to a file containing the bearer token (preferred over --token for security).",
+        "--from-stdin",
+        action="store_true",
+        help="Read all parameters as JSON from stdin (used by browser_login.py).",
     )
     parser.add_argument(
         "--dry-run",
@@ -321,8 +321,7 @@ def request_json(
                 return None
             return json.loads(raw)
     except HTTPError as exc:
-        payload = exc.read().decode("utf-8", errors="replace")
-        raise BootstrapError(f"{method} {url} failed with HTTP {exc.code}: {payload}") from exc
+        raise BootstrapError(f"{method} {url} failed with HTTP {exc.code}") from exc
     except URLError as exc:
         raise BootstrapError(f"{method} {url} failed: {exc}") from exc
 
@@ -489,6 +488,19 @@ def build_result(
 
 def main() -> int:
     args = parse_args()
+
+    # --from-stdin mode: read all parameters as JSON from stdin
+    if args.from_stdin:
+        stdin_data = json.loads(sys.stdin.read())
+        args.project_url = stdin_data.get("project_url", args.project_url)
+        args.token = stdin_data.get("token", args.token)
+        if stdin_data.get("customer_id"):
+            args.customer_id = stdin_data["customer_id"]
+        if stdin_data.get("service_account_name"):
+            args.service_account_name = stdin_data["service_account_name"]
+        if stdin_data.get("skip_access_key"):
+            args.skip_access_key = True
+
     try:
         ctx = parse_project_context(
             project_url=args.project_url,
@@ -504,16 +516,11 @@ def main() -> int:
             print(json.dumps(result, ensure_ascii=False, indent=2))
             return 0
 
-        if not args.token and args.token_file:
-            token_path = args.token_file
-            if os.path.isfile(token_path):
-                with open(token_path) as f:
-                    args.token = f.read().strip()
         if not args.token:
             args.token = os.environ.get("CLOUDRU_BOOTSTRAP_TOKEN", "")
         if not args.token:
             raise BootstrapError(
-                "Missing --token. Pass the Cloud.ru console bearer token via --token, --token-file, or CLOUDRU_BOOTSTRAP_TOKEN env var."
+                "Missing --token. Pass the Cloud.ru console bearer token via --token, --from-stdin, or CLOUDRU_BOOTSTRAP_TOKEN env var."
             )
 
         try:

@@ -38,6 +38,7 @@ def with_retry(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         last_exc = None
+        response = None
         for attempt in range(MAX_RETRIES):
             try:
                 response = func(*args, **kwargs)
@@ -51,6 +52,8 @@ def with_retry(func):
             time.sleep(sleep_time)
         if last_exc:
             raise last_exc
+        if response is not None:
+            response.raise_for_status()
         return response
 
     return wrapper
@@ -129,6 +132,10 @@ class ManagedRagClient:
     def _headers(self):
         return {"X-Request-ID": str(uuid.uuid4())}
 
+    _KB_ID_RE = re.compile(
+        r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    )
+
     @staticmethod
     def _validate_search_url(url: str) -> None:
         """Validate that the search URL points to a trusted Cloud.ru domain."""
@@ -138,9 +145,15 @@ class ManagedRagClient:
         if parsed.username or parsed.password:
             raise ValueError("Search URL must not contain user credentials")
         host = parsed.hostname or ""
-        if not host.endswith(f".{SEARCH_DOMAIN}") and host != SEARCH_DOMAIN:
+        expected_suffix = f".{SEARCH_DOMAIN}"
+        if not host.endswith(expected_suffix):
             raise ValueError(
                 f"Search URL host '{host}' is not under trusted domain '{SEARCH_DOMAIN}'"
+            )
+        subdomain = host[: -len(expected_suffix)]
+        if not ManagedRagClient._KB_ID_RE.match(subdomain):
+            raise ValueError(
+                f"Search URL subdomain '{subdomain}' is not a valid KB UUID"
             )
 
     def _search_client(self, search_url: str) -> httpx.Client:

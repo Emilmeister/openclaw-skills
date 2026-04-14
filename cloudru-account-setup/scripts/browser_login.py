@@ -23,7 +23,6 @@ import os
 import re
 import subprocess
 import sys
-import tempfile
 import time
 
 UUID_RE = re.compile(
@@ -304,47 +303,23 @@ def main():
         print(json.dumps(login_result, indent=2))
         return
 
-    # Validate inputs before passing to subprocess
-    if not project_url.startswith("https://console.cloud.ru"):
-        log(f"FAILED: unexpected project URL domain: {project_url[:60]}")
-        sys.exit(1)
-    sa_name = args.service_account_name
-    if not re.match(r"^[a-zA-Z0-9_-]{1,128}$", sa_name):
-        log(f"FAILED: invalid service account name: {sa_name}")
-        sys.exit(1)
-
     # Run bootstrap immediately while token is fresh (~5 min TTL)
     log("Running cloudru_account_bootstrap.py (token expires in ~5 min)...")
     script_dir = os.path.dirname(os.path.abspath(__file__))
     bootstrap_script = os.path.join(script_dir, "cloudru_account_bootstrap.py")
 
-    # Pass token via a temp file with restricted permissions (not via env or CLI args)
-    token_fd, token_path = tempfile.mkstemp(prefix="cloudru_token_", suffix=".tmp")
-    try:
-        os.fchmod(token_fd, 0o600)
-        os.write(token_fd, token.encode("utf-8"))
-        os.close(token_fd)
+    # Pass all user-controlled data via stdin JSON to avoid leaking in process list or env
+    stdin_data = json.dumps({
+        "project_url": project_url,
+        "token": token,
+        "customer_id": ids.get("customer_id", ""),
+        "service_account_name": args.service_account_name,
+        "skip_access_key": args.skip_access_key,
+    })
 
-        cmd = [
-            sys.executable, bootstrap_script,
-            "--project-url", project_url,
-            "--service-account-name", sa_name,
-            "--token-file", token_path,
-        ]
-        if ids.get("customer_id"):
-            cid = ids["customer_id"]
-            if re.match(r"^[a-fA-F0-9-]+$", cid):
-                cmd += ["--customer-id", cid]
-        if args.skip_access_key:
-            cmd += ["--skip-access-key"]
-
-        log(f"  Command: python {os.path.basename(bootstrap_script)} --project-url '...' --token-file '...'")
-        proc = subprocess.run(cmd, capture_output=False)
-    finally:
-        try:
-            os.unlink(token_path)
-        except OSError:
-            pass
+    cmd = [sys.executable, bootstrap_script, "--from-stdin"]
+    log(f"  Command: python {os.path.basename(bootstrap_script)} --from-stdin")
+    proc = subprocess.run(cmd, input=stdin_data, text=True, capture_output=False)
 
     if proc.returncode != 0:
         log(f"Bootstrap failed with exit code {proc.returncode}")

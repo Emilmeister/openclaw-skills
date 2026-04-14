@@ -32,6 +32,7 @@ def with_retry(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         last_exc = None
+        response = None
         for attempt in range(MAX_RETRIES):
             try:
                 response = func(*args, **kwargs)
@@ -45,6 +46,8 @@ def with_retry(func):
             time.sleep(sleep)
         if last_exc:
             raise last_exc
+        if response is not None:
+            response.raise_for_status()
         return response
 
     return wrapper
