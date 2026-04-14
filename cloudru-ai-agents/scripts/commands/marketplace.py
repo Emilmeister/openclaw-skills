@@ -31,9 +31,44 @@ def cmd_get_mcp(args):
     print_json(resp.json())
 
 
+def cmd_list_prompts(args):
+    client, project_id = build_client()
+    resp = client.list_marketplace_prompts(project_id, search=args.search,
+                                            limit=args.limit, offset=args.offset)
+    check_response(resp, "listing marketplace prompts")
+    print_json(resp.json())
+
+
+def cmd_get_prompt(args):
+    client, project_id = build_client()
+    resp = client.get_marketplace_prompt(project_id, args.card_id)
+    check_response(resp, f"getting marketplace prompt {args.card_id}")
+    print_json(resp.json())
+
+
+def cmd_list_skills(args):
+    client, _ = build_client()
+    resp = client.list_marketplace_skills(search=args.search, limit=args.limit, offset=args.offset)
+    check_response(resp, "listing marketplace skills")
+    print_json(resp.json())
+
+
+def cmd_list_snippets(args):
+    client, _ = build_client()
+    block_styles = args.block_styles.split(",") if args.block_styles else None
+    resp = client.list_marketplace_snippets(search=args.search, limit=args.limit,
+                                             offset=args.offset, block_styles=block_styles)
+    check_response(resp, "listing marketplace snippets")
+    print_json(resp.json())
+
+
 COMMANDS = {
     "marketplace.list-agents": cmd_list_agents,
     "marketplace.get-agent": cmd_get_agent,
     "marketplace.list-mcp": cmd_list_mcp,
     "marketplace.get-mcp": cmd_get_mcp,
+    "marketplace.list-prompts": cmd_list_prompts,
+    "marketplace.get-prompt": cmd_get_prompt,
+    "marketplace.list-skills": cmd_list_skills,
+    "marketplace.list-snippets": cmd_list_snippets,
 }

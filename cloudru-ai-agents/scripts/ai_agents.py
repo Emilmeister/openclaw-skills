@@ -117,6 +117,127 @@ def build_parser():
 
     p = mpsub.add_parser("get-mcp"); p.add_argument("card_id")
 
+    p = mpsub.add_parser("list-prompts")
+    p.add_argument("--search"); _add_limit_offset(p)
+
+    p = mpsub.add_parser("get-prompt"); p.add_argument("card_id")
+
+    p = mpsub.add_parser("list-skills")
+    p.add_argument("--search"); _add_limit_offset(p)
+
+    p = mpsub.add_parser("list-snippets")
+    p.add_argument("--search"); p.add_argument("--block-styles",
+        help="Comma-separated PREDEFINED_SNIPPET_BLOCK_STYLE_* values")
+    _add_limit_offset(p)
+
+    # ---- prompts ----
+    prompts = top.add_parser("prompts", help="Manage prompts (system prompts library)")
+    psub = prompts.add_subparsers(dest="subcommand", required=True)
+
+    p = psub.add_parser("list", help="List prompts")
+    p.add_argument("--search", help="Filter by name substring")
+    p.add_argument("--not-in-statuses",
+        help="Comma-separated PROMPT_STATUS_* to exclude (default: DELETED, ON_DELETION)")
+    _add_limit_offset(p)
+
+    p = psub.add_parser("get"); p.add_argument("prompt_id")
+
+    p = psub.add_parser("create", help="Create prompt (manual or from marketplace card)")
+    p.add_argument("--name")
+    p.add_argument("--description")
+    p.add_argument("--prompt", help="Inline prompt text")
+    p.add_argument("--prompt-file", help="Path to file with prompt text")
+    p.add_argument("--from-marketplace", help="Marketplace prompt card ID")
+    _add_config_source(p)
+
+    p = psub.add_parser("update", help="Update prompt (full-body PATCH; merges with current state)")
+    p.add_argument("prompt_id")
+    p.add_argument("--name")
+    p.add_argument("--description")
+    p.add_argument("--prompt")
+    p.add_argument("--prompt-file")
+    _add_config_source(p)
+
+    p = psub.add_parser("delete"); p.add_argument("prompt_id"); p.add_argument("--yes", action="store_true")
+
+    p = psub.add_parser("versions", help="List prompt versions")
+    p.add_argument("prompt_id")
+    _add_limit_offset(p)
+
+    # ---- snippets (Фрагменты) ----
+    snippets = top.add_parser("snippets", help="Manage snippets (prompt fragments)")
+    snsub = snippets.add_subparsers(dest="subcommand", required=True)
+
+    p = snsub.add_parser("list", help="List snippets")
+    p.add_argument("--search")
+    p.add_argument("--block-styles",
+        help="Comma-separated SNIPPET_BLOCK_STYLE_* (PERSONALITY/TASK/CONTEXT/CONSTRAINTS/TONE_OF_VOICE/ANSWER_EXAMPLES)")
+    p.add_argument("--statuses", help="Comma-separated SNIPPET_STATUS_* values")
+    _add_limit_offset(p)
+
+    p = snsub.add_parser("get"); p.add_argument("snippet_id")
+
+    p = snsub.add_parser("create")
+    p.add_argument("--name")
+    p.add_argument("--description")
+    p.add_argument("--content", help="Inline snippet body")
+    p.add_argument("--content-file", help="Path to file with snippet body")
+    p.add_argument("--block-style", help="SNIPPET_BLOCK_STYLE_PERSONALITY|TASK|CONTEXT|CONSTRAINTS|TONE_OF_VOICE|ANSWER_EXAMPLES")
+    _add_config_source(p)
+
+    p = snsub.add_parser("update")
+    p.add_argument("snippet_id")
+    p.add_argument("--name"); p.add_argument("--description")
+    p.add_argument("--content"); p.add_argument("--content-file")
+    p.add_argument("--block-style")
+    _add_config_source(p)
+
+    p = snsub.add_parser("delete"); p.add_argument("snippet_id"); p.add_argument("--yes", action="store_true")
+
+    # ---- skills (Навыки) ----
+    skills = top.add_parser("skills", help="Manage skills (Anthropic-style markdown skills)")
+    sksub = skills.add_subparsers(dest="subcommand", required=True)
+
+    p = sksub.add_parser("list"); p.add_argument("--search"); _add_limit_offset(p)
+    p = sksub.add_parser("get"); p.add_argument("skill_id")
+
+    p = sksub.add_parser("create", help="Create skill (plaintext or from git)")
+    p.add_argument("--name")
+    p.add_argument("--description")
+    p.add_argument("--compatibility", help="Compatibility note (e.g. 'Python 3.11+')")
+    p.add_argument("--prompt", help="Inline skill body (plaintext source)")
+    p.add_argument("--prompt-file", help="Path to .md file with skill body")
+    p.add_argument("--git-url", help="Import from git URL (sets gitSource)")
+    p.add_argument("--git-token", help="Git access token if private repo")
+    p.add_argument("--git-folder-paths", help="Comma-separated paths inside repo")
+    _add_config_source(p)
+
+    p = sksub.add_parser("delete"); p.add_argument("skill_id"); p.add_argument("--yes", action="store_true")
+
+    p = sksub.add_parser("analyze", help="Analyze git source — preview fileTree before create")
+    p.add_argument("--git-url"); p.add_argument("--git-token")
+    _add_config_source(p)
+
+    # ---- workflows (Preview) ----
+    workflows = top.add_parser("workflows", help="AI Workflows (low-code, read-only via CLI)")
+    wsub = workflows.add_subparsers(dest="subcommand", required=True)
+    p = wsub.add_parser("list"); p.add_argument("--search"); _add_limit_offset(p)
+    p = wsub.add_parser("get"); p.add_argument("workflow_id")
+    p = wsub.add_parser("delete"); p.add_argument("workflow_id"); p.add_argument("--yes", action="store_true")
+
+    # ---- triggers ----
+    triggers = top.add_parser("triggers", help="Agent triggers (Telegram/Email/Schedule)")
+    tsub = triggers.add_subparsers(dest="subcommand", required=True)
+    p = tsub.add_parser("list", help="List triggers attached to an agent")
+    p.add_argument("agent_id")
+    _add_limit_offset(p)
+
+    # ---- evo-claws (Preview) ----
+    ec = top.add_parser("evo-claws", help="Evo Claw managed gateways (read-only)")
+    ecsub = ec.add_subparsers(dest="subcommand", required=True)
+    p = ecsub.add_parser("list"); _add_limit_offset(p)
+    p = ecsub.add_parser("get"); p.add_argument("evoclaw_id")
+
     return parser
 
 

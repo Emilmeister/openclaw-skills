@@ -271,3 +271,226 @@ class CloudruAiAgentsClient:
             self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/marketplace/mcpServers/{card_id}",
             headers=self._headers(),
         )
+
+    # ---- Prompts ----
+
+    def list_prompts(self, project_id: str, *, limit: int = 100, offset: int = 0,
+                     name: Optional[str] = None,
+                     not_in_statuses: Optional[list] = None) -> httpx.Response:
+        params: Dict[str, Any] = {"limit": limit, "offset": offset,
+                                   "notInStatuses": not_in_statuses or
+                                   ["PROMPT_STATUS_DELETED", "PROMPT_STATUS_ON_DELETION"]}
+        if name:
+            params["name"] = name
+        return _request_with_retry(
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/prompts",
+            params=params, headers=self._headers(),
+        )
+
+    def get_prompt(self, project_id: str, prompt_id: str) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/prompts/{prompt_id}",
+            headers=self._headers(),
+        )
+
+    def create_prompt(self, project_id: str, body: Dict[str, Any]) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "POST", f"/u-api/ai-agents/v1/{project_id}/prompts",
+            json=body, headers=self._headers(), timeout=60.0,
+        )
+
+    def update_prompt(self, project_id: str, prompt_id: str, body: Dict[str, Any]) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "PATCH", f"/u-api/ai-agents/v1/{project_id}/prompts/{prompt_id}",
+            json=body, headers=self._headers(), timeout=60.0,
+        )
+
+    def delete_prompt(self, project_id: str, prompt_id: str) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "DELETE", f"/u-api/ai-agents/v1/{project_id}/prompts/{prompt_id}",
+            headers=self._headers(),
+        )
+
+    def list_prompt_versions(self, project_id: str, prompt_id: str, *,
+                             limit: int = 100, offset: int = 0) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/prompts/{prompt_id}/versions",
+            params={"limit": limit, "offset": offset}, headers=self._headers(),
+        )
+
+    def list_marketplace_prompts(self, project_id: str, *, search: Optional[str] = None,
+                                  limit: int = 100, offset: int = 0,
+                                  sort: str = "SORT_TYPE_POPULARITY_DESC") -> httpx.Response:
+        params: Dict[str, Any] = {"limit": limit, "offset": offset, "name": search or "",
+                                   "sortType": sort}
+        return _request_with_retry(
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/marketplace/prompts",
+            params=params, headers=self._headers(),
+        )
+
+    def get_marketplace_prompt(self, project_id: str, card_id: str) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/marketplace/prompts/{card_id}",
+            headers=self._headers(),
+        )
+
+    # ---- Snippets (Фрагменты) ----
+
+    def list_snippets(self, project_id: str, *, limit: int = 100, offset: int = 0,
+                      name: Optional[str] = None,
+                      block_styles: Optional[list] = None,
+                      statuses: Optional[list] = None) -> httpx.Response:
+        params: Dict[str, Any] = {"limit": limit, "offset": offset}
+        if name:
+            params["name"] = name
+        if block_styles:
+            params["blockStyles"] = block_styles
+        if statuses:
+            params["statuses"] = statuses
+        return _request_with_retry(
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/snippets",
+            params=params, headers=self._headers(),
+        )
+
+    def get_snippet(self, project_id: str, snippet_id: str) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/snippets/{snippet_id}",
+            headers=self._headers(),
+        )
+
+    def create_snippet(self, project_id: str, body: Dict[str, Any]) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "POST", f"/u-api/ai-agents/v1/{project_id}/snippets",
+            json=body, headers=self._headers(), timeout=60.0,
+        )
+
+    def update_snippet(self, project_id: str, snippet_id: str, body: Dict[str, Any]) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "PATCH", f"/u-api/ai-agents/v1/{project_id}/snippets/{snippet_id}",
+            json=body, headers=self._headers(), timeout=60.0,
+        )
+
+    def delete_snippet(self, project_id: str, snippet_id: str) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "DELETE", f"/u-api/ai-agents/v1/{project_id}/snippets/{snippet_id}",
+            headers=self._headers(),
+        )
+
+    def list_marketplace_snippets(self, *, search: Optional[str] = None,
+                                   limit: int = 100, offset: int = 0,
+                                   block_styles: Optional[list] = None) -> httpx.Response:
+        params: Dict[str, Any] = {"limit": limit, "offset": offset, "search": search or ""}
+        if block_styles:
+            params["blockStyles"] = block_styles
+        return _request_with_retry(
+            self._client, "GET", "/u-api/ai-agents/v1/marketplace/snippets",
+            params=params, headers=self._headers(),
+        )
+
+    # ---- Skills (Навыки) ----
+
+    def list_skills(self, project_id: str, *, limit: int = 100, offset: int = 0,
+                    name: Optional[str] = None) -> httpx.Response:
+        params: Dict[str, Any] = {"limit": limit, "offset": offset,
+                                   "notInStatuses": ["SKILL_STATUS_DELETED"]}
+        if name:
+            params["name"] = name
+        return _request_with_retry(
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/skills",
+            params=params, headers=self._headers(),
+        )
+
+    def get_skill(self, project_id: str, skill_id: str) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/skills/{skill_id}",
+            headers=self._headers(),
+        )
+
+    def create_skill(self, project_id: str, body: Dict[str, Any]) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "POST", f"/u-api/ai-agents/v1/{project_id}/skills",
+            json=body, headers=self._headers(), timeout=60.0,
+        )
+
+    def update_skill(self, project_id: str, skill_id: str, body: Dict[str, Any]) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "PATCH", f"/u-api/ai-agents/v1/{project_id}/skills/{skill_id}",
+            json=body, headers=self._headers(), timeout=60.0,
+        )
+
+    def delete_skill(self, project_id: str, skill_id: str) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "DELETE", f"/u-api/ai-agents/v1/{project_id}/skills/{skill_id}",
+            headers=self._headers(),
+        )
+
+    def analyze_skill_source(self, project_id: str, body: Dict[str, Any]) -> httpx.Response:
+        """Probe git/file source — returns fileTree + skillFolderPaths preview."""
+        return _request_with_retry(
+            self._client, "POST", f"/u-api/ai-agents/v1/{project_id}/skills/analyze-source",
+            json=body, headers=self._headers(), timeout=60.0,
+        )
+
+    def list_marketplace_skills(self, *, search: Optional[str] = None,
+                                 limit: int = 100, offset: int = 0) -> httpx.Response:
+        params: Dict[str, Any] = {"limit": limit, "offset": offset, "search": search or ""}
+        return _request_with_retry(
+            self._client, "GET", "/u-api/ai-agents/v1/marketplace/skills",
+            params=params, headers=self._headers(),
+        )
+
+    # ---- Workflows ----
+
+    def list_workflows(self, project_id: str, *, limit: int = 100, offset: int = 0,
+                       search: Optional[str] = None) -> httpx.Response:
+        params: Dict[str, Any] = {"limit": limit, "offset": offset}
+        if search:
+            params["search"] = search
+        return _request_with_retry(
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/workflows",
+            params=params, headers=self._headers(),
+        )
+
+    def get_workflow(self, project_id: str, workflow_id: str) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/workflows/{workflow_id}",
+            headers=self._headers(),
+        )
+
+    def delete_workflow(self, project_id: str, workflow_id: str) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "DELETE", f"/u-api/ai-agents/v1/{project_id}/workflows/{workflow_id}",
+            headers=self._headers(),
+        )
+
+    # ---- Triggers ----
+
+    def list_agent_triggers(self, project_id: str, agent_id: str, *,
+                            limit: int = 100, offset: int = 0) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/agents/{agent_id}/triggers",
+            params={"limit": limit, "offset": offset}, headers=self._headers(),
+        )
+
+    # ---- History (audit log) ----
+
+    def get_agent_history(self, project_id: str, agent_id: str, *,
+                          limit: int = 100, offset: int = 0) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/agents/{agent_id}/history",
+            params={"limit": limit, "offset": offset}, headers=self._headers(),
+        )
+
+    # ---- EvoClaw ----
+
+    def list_evo_claws(self, project_id: str, *, limit: int = 100, offset: int = 0) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/evo-claws",
+            params={"limit": limit, "offset": offset, "projectId": project_id}, headers=self._headers(),
+        )
+
+    def get_evo_claw(self, project_id: str, evoclaw_id: str) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/evo-claws/{evoclaw_id}",
+            headers=self._headers(),
+        )
