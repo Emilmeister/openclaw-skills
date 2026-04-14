@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Cloud.ru Foundation Models CLI — list models and call completions."""
 
-import http.client
-import sys, os, json, ssl
+import sys, os, json
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-_API_HOST = "foundation-models.api.cloud.ru"
-_API_PATH_PREFIX = "/v1"
+import httpx
+
+_API_BASE = "https://foundation-models.api.cloud.ru/v1"
 
 
 def load_api_key():
@@ -33,19 +33,12 @@ def load_api_key():
 
 
 def api_request(path, api_key, method="GET", body=None):
-    ctx = ssl.create_default_context()
-    headers = {"Authorization": f"Bearer {api_key}", "Accept": "application/json", "Host": _API_HOST}
-    data = None
-    if body is not None:
-        headers["Content-Type"] = "application/json"
-        data = json.dumps(body).encode()
-    conn = http.client.HTTPSConnection(_API_HOST, context=ctx, timeout=120)
-    try:
-        conn.request(method, f"{_API_PATH_PREFIX}{path}", body=data, headers=headers)
-        resp = conn.getresponse()
-        return json.loads(resp.read().decode())
-    finally:
-        conn.close()
+    headers = {"Authorization": f"Bearer {api_key}", "Accept": "application/json"}
+    url = f"{_API_BASE}{path}"
+    with httpx.Client(verify=True, timeout=120) as client:
+        resp = client.request(method, url, headers=headers, json=body if body else None)
+        resp.raise_for_status()
+        return resp.json()
 
 
 def cmd_models(raw_json=False):

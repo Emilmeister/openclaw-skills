@@ -3,6 +3,7 @@
 > **Name:** cloudru-account-setup
 > **Description:** Create a Cloud.ru service account, Foundation Models API key, and IAM access key (CP_CONSOLE_KEY_ID/CP_CONSOLE_SECRET). Use when the user needs to bootstrap Cloud.ru API access from scratch.
 > **Required tools:** `python3`
+> **Required pip:** `httpx`
 > **Required pip (browser flow):** `playwright`
 
 ## What this skill does

@@ -4,24 +4,22 @@
 Creates a service account, creates an API key for Foundation Models,
 and prints a JSON summary with the credentials.
 
-This script intentionally uses only the Python standard library.
+Requires: httpx
 """
 
 from __future__ import annotations
 
 import argparse
-import http.client
 import json
 import os
 import re
-import ssl
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 from urllib.parse import parse_qs, unquote, urlencode, urlparse
 
-_ssl_context = ssl.create_default_context()
+import httpx
 
 _ALLOWED_HOSTS = frozenset({"console.cloud.ru", "iam.api.cloud.ru"})
 
@@ -313,26 +311,18 @@ def request_json(
     hostname = parsed_url.hostname or ""
     if hostname not in _ALLOWED_HOSTS:
         raise BootstrapError(f"Host '{hostname}' is not in the allowed list: {_ALLOWED_HOSTS}")
-    path = parsed_url.path or "/"
-    if parsed_url.query:
-        path = f"{path}?{parsed_url.query}"
 
-    conn = http.client.HTTPSConnection(hostname, context=_ssl_context, timeout=30)
     try:
-        conn.request(method, path, body=data, headers=headers)
-        resp = conn.getresponse()
-        status = resp.status
-        raw = resp.read().decode("utf-8")
-    except Exception as exc:
+        with httpx.Client(verify=True, timeout=30) as client:
+            resp = client.request(method, url, headers=headers, content=data)
+            if resp.status_code >= 400:
+                raise BootstrapError(f"{method} {url} failed with HTTP {resp.status_code}")
+            raw = resp.text
+            if not raw:
+                return None
+            return json.loads(raw)
+    except httpx.HTTPError as exc:
         raise BootstrapError(f"{method} {url} failed: {exc}") from exc
-    finally:
-        conn.close()
-
-    if status >= 400:
-        raise BootstrapError(f"{method} {url} failed with HTTP {status}")
-    if not raw:
-        return None
-    return json.loads(raw)
 
 
 def service_account_payload(args: argparse.Namespace, ctx: ProjectContext) -> Dict[str, Any]:
