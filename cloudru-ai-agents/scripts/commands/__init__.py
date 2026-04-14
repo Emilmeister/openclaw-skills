@@ -12,6 +12,7 @@ from commands.workflows import COMMANDS as WORKFLOWS_COMMANDS
 from commands.triggers import COMMANDS as TRIGGERS_COMMANDS
 from commands.evo_claws import COMMANDS as EVOCLAW_COMMANDS
 from commands.pricing import COMMANDS as PRICING_COMMANDS
+from commands.chat import COMMANDS as CHAT_COMMANDS
 
 
 COMMANDS = {}
@@ -27,3 +28,4 @@ COMMANDS.update(WORKFLOWS_COMMANDS)
 COMMANDS.update(TRIGGERS_COMMANDS)
 COMMANDS.update(EVOCLAW_COMMANDS)
 COMMANDS.update(PRICING_COMMANDS)
+COMMANDS.update(CHAT_COMMANDS)

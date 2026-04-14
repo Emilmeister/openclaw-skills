@@ -36,6 +36,32 @@ def cmd_get(args):
 def cmd_create(args):
     client, project_id = build_client()
     body: dict = load_config_from_args(args)
+    # Install from marketplace: reuse name/description/compatibility/metadata from card,
+    # build gitSource from metadata.repo/branch/path.
+    if getattr(args, "from_marketplace", None):
+        card_resp = client.get_marketplace_skill(args.from_marketplace)
+        check_response(card_resp, f"fetching marketplace skill {args.from_marketplace}")
+        card = card_resp.json().get("skill", card_resp.json())
+        body.setdefault("name", card.get("name"))
+        body.setdefault("description", card.get("description", ""))
+        body.setdefault("compatibility", card.get("compatibility", ""))
+        md = card.get("metadata") or {}
+        repo = md.get("upstream") or (f"https://github.com/{md['repo']}" if md.get("repo") else None)
+        if repo and not body.get("skillSource"):
+            gs: dict = {"gitUrl": repo}
+            if args.git_token:
+                gs["accessToken"] = args.git_token
+            if md.get("path"):
+                gs["skillFolderPaths"] = [md["path"]]
+            body["skillSource"] = {"gitSource": gs}
+        # Preserve metadata (branch, version, ...) from marketplace card
+        if md:
+            body.setdefault("metadata", {}).update({k: v for k, v in md.items()
+                                                     if isinstance(v, str)})
+        # Preserve allowedTools from card
+        at = card.get("allowedTools")
+        if at and not body.get("allowedTools"):
+            body["allowedTools"] = at
     if args.name:
         body["name"] = args.name
     if args.description is not None:
@@ -61,10 +87,12 @@ def cmd_create(args):
     body.setdefault("allowedTools", body.get("allowedTools") or [])
     if not body.get("skillSource"):
         if args.git_url:
-            body["skillSource"] = {"gitSource": {"gitUrl": args.git_url,
-                                                  "accessToken": args.git_token or "",
-                                                  "skillFolderPaths": (args.git_folder_paths.split(",") if args.git_folder_paths else []),
-                                                  "paths": []}}
+            gs: dict = {"gitUrl": args.git_url}
+            if args.git_token:
+                gs["accessToken"] = args.git_token
+            if args.git_folder_paths:
+                gs["skillFolderPaths"] = args.git_folder_paths.split(",")
+            body["skillSource"] = {"gitSource": gs}
         else:
             body["skillSource"] = {"plaintext": {}}
 
@@ -81,10 +109,10 @@ def cmd_analyze(args):
     client, project_id = build_client()
     body: dict = load_config_from_args(args)
     if args.git_url:
-        body = {"gitSource": {"gitUrl": args.git_url,
-                               "accessToken": args.git_token or "",
-                               "skillFolderPaths": [],
-                               "paths": []}}
+        gs: dict = {"gitUrl": args.git_url}
+        if args.git_token:
+            gs["accessToken"] = args.git_token
+        body = {"gitSource": gs}
     if not body:
         print("Error: --git-url or --config-json required", file=sys.stderr)
         sys.exit(1)

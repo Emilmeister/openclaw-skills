@@ -36,6 +36,17 @@ def cmd_get(args):
 def cmd_create(args):
     client, project_id = build_client()
     body: dict = load_config_from_args(args)
+    # Copy fields from marketplace card (name/blockStyle/content/description)
+    if getattr(args, "from_marketplace", None):
+        card_resp = client.get_marketplace_snippet(args.from_marketplace)
+        check_response(card_resp, f"fetching marketplace snippet {args.from_marketplace}")
+        card = card_resp.json().get("snippet", card_resp.json())
+        body.setdefault("name", card.get("name"))
+        body.setdefault("description", card.get("description", ""))
+        body.setdefault("content", card.get("content", ""))
+        # Marketplace blockStyle has PREDEFINED_ prefix — strip to get SNIPPET_BLOCK_STYLE_*
+        raw_style = card.get("blockStyle", "")
+        body.setdefault("blockStyle", raw_style.replace("PREDEFINED_", ""))
     if args.name:
         body["name"] = args.name
     if args.description is not None:

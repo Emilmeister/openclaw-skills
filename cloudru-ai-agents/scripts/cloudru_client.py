@@ -455,6 +455,18 @@ class CloudruAiAgentsClient:
             params=params, headers=self._headers(),
         )
 
+    def get_marketplace_skill(self, card_id: str) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "GET", f"/u-api/ai-agents/v1/marketplace/skills/{card_id}",
+            headers=self._headers(),
+        )
+
+    def get_marketplace_snippet(self, card_id: str) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "GET", f"/u-api/ai-agents/v1/marketplace/snippets/{card_id}",
+            headers=self._headers(),
+        )
+
     # ---- Workflows ----
 
     def list_workflows(self, project_id: str, *, limit: int = 100, offset: int = 0,
@@ -485,10 +497,13 @@ class CloudruAiAgentsClient:
     # ---- Triggers ----
 
     def list_agent_triggers(self, project_id: str, agent_id: str, *,
-                            limit: int = 100, offset: int = 0) -> httpx.Response:
+                            limit: int = 100, offset: int = 0,
+                            not_in_statuses: Optional[list] = None) -> httpx.Response:
+        params: Dict[str, Any] = {"limit": limit, "offset": offset,
+                                   "notInStatuses": not_in_statuses or ["TRIGGER_STATUS_DELETED"]}
         return _request_with_retry(
             self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/agents/{agent_id}/triggers",
-            params={"limit": limit, "offset": offset}, headers=self._headers(),
+            params=params, headers=self._headers(),
         )
 
     # ---- History (audit log) ----
@@ -515,6 +530,63 @@ class CloudruAiAgentsClient:
     def get_evo_claw(self, project_id: str, evoclaw_id: str) -> httpx.Response:
         return _request_with_retry(
             self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/evo-claws/{evoclaw_id}",
+            headers=self._headers(),
+        )
+
+    # ---- A2A Chat (JSON-RPC protocol) ----
+
+    def a2a_agent_card(self, project_id: str, agent_id: str) -> httpx.Response:
+        """Fetch agent card — capabilities, inputModes, description (A2A spec)."""
+        return _request_with_retry(
+            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/a2a/.well-known/agent.json",
+            params={"agentId": agent_id}, headers=self._headers(),
+        )
+
+    def a2a_call(self, project_id: str, agent_id: str, body: Dict[str, Any]) -> httpx.Response:
+        """Raw JSON-RPC call to agent A2A endpoint (method can be message/send,
+        message/stream, tasks/get, tasks/cancel)."""
+        return _request_with_retry(
+            self._client, "POST", f"/u-api/ai-agents/v1/{project_id}/a2a",
+            params={"agentId": agent_id}, json=body, headers=self._headers(),
+            timeout=300.0,
+        )
+
+    # ---- Triggers (full CRUD) ----
+
+    def check_trigger_name(self, project_id: str, agent_id: str, name: str) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "GET",
+            f"/u-api/ai-agents/v1/{project_id}/agents/{agent_id}/triggers/check-exists",
+            params={"name": name}, headers=self._headers(),
+        )
+
+    def get_agent_trigger(self, project_id: str, agent_id: str, trigger_id: str) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "GET",
+            f"/u-api/ai-agents/v1/{project_id}/agents/{agent_id}/triggers/{trigger_id}",
+            headers=self._headers(),
+        )
+
+    def create_agent_trigger(self, project_id: str, agent_id: str,
+                              body: Dict[str, Any]) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "POST",
+            f"/u-api/ai-agents/v1/{project_id}/agents/{agent_id}/triggers",
+            json=body, headers=self._headers(), timeout=60.0,
+        )
+
+    def update_agent_trigger(self, project_id: str, agent_id: str, trigger_id: str,
+                              body: Dict[str, Any]) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "PATCH",
+            f"/u-api/ai-agents/v1/{project_id}/agents/{agent_id}/triggers/{trigger_id}",
+            json=body, headers=self._headers(), timeout=60.0,
+        )
+
+    def delete_agent_trigger(self, project_id: str, agent_id: str, trigger_id: str) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "DELETE",
+            f"/u-api/ai-agents/v1/{project_id}/agents/{agent_id}/triggers/{trigger_id}",
             headers=self._headers(),
         )
 

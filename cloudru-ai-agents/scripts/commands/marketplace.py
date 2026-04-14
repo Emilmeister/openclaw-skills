@@ -58,6 +58,20 @@ def cmd_list_skills(args):
     print_json(resp.json())
 
 
+def cmd_get_skill(args):
+    client, _ = build_client()
+    resp = client.get_marketplace_skill(args.card_id)
+    check_response(resp, f"getting marketplace skill {args.card_id}")
+    print_json(resp.json())
+
+
+def cmd_get_snippet(args):
+    client, _ = build_client()
+    resp = client.get_marketplace_snippet(args.card_id)
+    check_response(resp, f"getting marketplace snippet {args.card_id}")
+    print_json(resp.json())
+
+
 def cmd_list_snippets(args):
     client, _ = build_client()
     block_styles = args.block_styles.split(",") if args.block_styles else None
@@ -75,5 +89,7 @@ COMMANDS = {
     "marketplace.list-prompts": cmd_list_prompts,
     "marketplace.get-prompt": cmd_get_prompt,
     "marketplace.list-skills": cmd_list_skills,
+    "marketplace.get-skill": cmd_get_skill,
     "marketplace.list-snippets": cmd_list_snippets,
+    "marketplace.get-snippet": cmd_get_snippet,
 }

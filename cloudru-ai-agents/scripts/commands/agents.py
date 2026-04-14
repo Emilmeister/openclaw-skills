@@ -148,6 +148,14 @@ def cmd_wait(args):
     sys.exit(1)
 
 
+def cmd_history(args):
+    client, project_id = build_client()
+    resp = client.get_agent_history(project_id, args.agent_id,
+                                     limit=args.limit, offset=args.offset)
+    check_response(resp, f"fetching history for agent {args.agent_id}")
+    print_json(resp.json())
+
+
 COMMANDS = {
     "agents.list": cmd_list,
     "agents.get": cmd_get,
@@ -157,4 +165,5 @@ COMMANDS = {
     "agents.suspend": cmd_suspend,
     "agents.resume": cmd_resume,
     "agents.wait": cmd_wait,
+    "agents.history": cmd_history,
 }

@@ -72,6 +72,10 @@ def build_parser():
     p.add_argument("agent_id")
     p.add_argument("--timeout", type=int, default=600)
 
+    p = agsub.add_parser("history", help="List agent edit history")
+    p.add_argument("agent_id")
+    _add_limit_offset(p)
+
     # ---- systems ----
     systems = top.add_parser("systems", help="Manage agent systems")
     ssub = systems.add_subparsers(dest="subcommand", required=True)
@@ -137,10 +141,14 @@ def build_parser():
     p = mpsub.add_parser("list-skills")
     p.add_argument("--search"); _add_limit_offset(p)
 
+    p = mpsub.add_parser("get-skill"); p.add_argument("card_id")
+
     p = mpsub.add_parser("list-snippets")
     p.add_argument("--search"); p.add_argument("--block-styles",
         help="Comma-separated PREDEFINED_SNIPPET_BLOCK_STYLE_* values")
     _add_limit_offset(p)
+
+    p = mpsub.add_parser("get-snippet"); p.add_argument("card_id")
 
     # ---- prompts ----
     prompts = top.add_parser("prompts", help="Manage prompts (system prompts library)")
@@ -195,6 +203,7 @@ def build_parser():
     p.add_argument("--content", help="Inline snippet body")
     p.add_argument("--content-file", help="Path to file with snippet body")
     p.add_argument("--block-style", help="SNIPPET_BLOCK_STYLE_PERSONALITY|TASK|CONTEXT|CONSTRAINTS|TONE_OF_VOICE|ANSWER_EXAMPLES")
+    p.add_argument("--from-marketplace", help="Marketplace snippet card ID — clones name/content/blockStyle")
     _add_config_source(p)
 
     p = snsub.add_parser("update")
@@ -226,6 +235,8 @@ def build_parser():
     p.add_argument("--git-url", help="Import from git URL (sets gitSource)")
     p.add_argument("--git-token", help="Git access token if private repo")
     p.add_argument("--git-folder-paths", help="Comma-separated paths inside repo")
+    p.add_argument("--from-marketplace",
+        help="Marketplace skill card ID — auto-fills gitSource from card metadata")
     _add_config_source(p)
 
     p = sksub.add_parser("delete"); p.add_argument("skill_id"); p.add_argument("--yes", action="store_true")
@@ -246,11 +257,33 @@ def build_parser():
     p = wsub.add_parser("delete"); p.add_argument("workflow_id"); p.add_argument("--yes", action="store_true")
 
     # ---- triggers ----
-    triggers = top.add_parser("triggers", help="Agent triggers (Telegram/Email/Schedule)")
+    triggers = top.add_parser("triggers", help="Agent triggers (Telegram/Schedule)")
     tsub = triggers.add_subparsers(dest="subcommand", required=True)
+
     p = tsub.add_parser("list", help="List triggers attached to an agent")
     p.add_argument("agent_id")
+    p.add_argument("--not-in-statuses",
+        help="Comma-separated TRIGGER_STATUS_* to exclude (default: DELETED)")
     _add_limit_offset(p)
+
+    p = tsub.add_parser("get")
+    p.add_argument("agent_id"); p.add_argument("trigger_id")
+
+    p = tsub.add_parser("check-name", help="Check if a trigger name is free")
+    p.add_argument("agent_id"); p.add_argument("--name", required=True)
+
+    p = tsub.add_parser("create", help="Create trigger (pass --config-json with full body)")
+    p.add_argument("agent_id")
+    p.add_argument("--name", help="Trigger name (letters+digits+hyphen, 5-50 chars)")
+    _add_config_source(p)
+
+    p = tsub.add_parser("update")
+    p.add_argument("agent_id"); p.add_argument("trigger_id")
+    _add_config_source(p)
+
+    p = tsub.add_parser("delete")
+    p.add_argument("agent_id"); p.add_argument("trigger_id")
+    p.add_argument("--yes", action="store_true")
 
     # ---- evo-claws (Preview) ----
     ec = top.add_parser("evo-claws", help="Evo Claw managed gateways (read-only)")
@@ -260,6 +293,28 @@ def build_parser():
         help="Comma-separated EVOCLAW_STATUS_* to include (RUNNING/ON_CREATION/FAILED/...)")
     _add_limit_offset(p)
     p = ecsub.add_parser("get"); p.add_argument("evoclaw_id")
+
+    # ---- chat (A2A JSON-RPC) ----
+    chat = top.add_parser("chat", help="Chat with an agent via A2A protocol")
+    chsub = chat.add_subparsers(dest="subcommand", required=True)
+
+    p = chsub.add_parser("card", help="Get A2A agent card (capabilities, inputModes)")
+    p.add_argument("agent_id")
+
+    p = chsub.add_parser("send", help="Send a user message to the agent, print reply")
+    p.add_argument("agent_id")
+    p.add_argument("--message", help="Message text")
+    p.add_argument("--message-file", help="Read message from file")
+    p.add_argument("--context-id", help="Continue an existing conversation (reuse from previous reply)")
+    p.add_argument("--task-id", help="Reply into existing task")
+    p.add_argument("--raw", action="store_true", help="Print full JSON-RPC response instead of just text")
+
+    p = chsub.add_parser("raw", help="Raw JSON-RPC call to /a2a")
+    p.add_argument("agent_id")
+    p.add_argument("--method", required=True,
+        help="agent/card | message/send | message/stream | tasks/get | tasks/cancel")
+    p.add_argument("--params-json", help="JSON for params field")
+    p.add_argument("--context-id")
 
     # ---- pricing ----
     pricing = top.add_parser("pricing", help="Estimate instance-type cost (same endpoint UI uses)")
