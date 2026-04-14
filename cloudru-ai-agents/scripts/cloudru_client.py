@@ -533,6 +533,43 @@ class CloudruAiAgentsClient:
             headers=self._headers(),
         )
 
+    def create_evo_claw(self, project_id: str, body: Dict[str, Any]) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "POST", f"/u-api/ai-agents/v1/{project_id}/evo-claws",
+            json=body, headers=self._headers(), timeout=60.0,
+        )
+
+    def update_evo_claw(self, project_id: str, evoclaw_id: str,
+                        body: Dict[str, Any]) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "PATCH", f"/u-api/ai-agents/v1/{project_id}/evo-claws/{evoclaw_id}",
+            json=body, headers=self._headers(), timeout=60.0,
+        )
+
+    def delete_evo_claw(self, project_id: str, evoclaw_id: str) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "DELETE", f"/u-api/ai-agents/v1/{project_id}/evo-claws/{evoclaw_id}",
+            headers=self._headers(),
+        )
+
+    def list_evo_claw_workers(self, project_id: str, evoclaw_id: str) -> httpx.Response:
+        """List sub-agents (workers) configured inside an EvoClaw managed gateway."""
+        return _request_with_retry(
+            self._client, "GET",
+            f"/u-api/ai-agents/v1/{project_id}/evo-claws/{evoclaw_id}/options/agents",
+            headers=self._headers(),
+        )
+
+    def set_evo_claw_workers(self, project_id: str, evoclaw_id: str,
+                              workers: list) -> httpx.Response:
+        """Replace the full list of workers (PUT — not merge). Send all existing
+        workers plus/minus the ones you want to change."""
+        return _request_with_retry(
+            self._client, "PUT",
+            f"/u-api/ai-agents/v1/{project_id}/evo-claws/{evoclaw_id}/options/agents",
+            json={"agents": workers}, headers=self._headers(), timeout=60.0,
+        )
+
     # ---- A2A Chat (JSON-RPC protocol) ----
 
     def a2a_agent_card(self, project_id: str, agent_id: str) -> httpx.Response:

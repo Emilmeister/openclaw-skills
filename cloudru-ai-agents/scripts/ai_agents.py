@@ -286,13 +286,58 @@ def build_parser():
     p.add_argument("--yes", action="store_true")
 
     # ---- evo-claws (Preview) ----
-    ec = top.add_parser("evo-claws", help="Evo Claw managed gateways (read-only)")
+    ec = top.add_parser("evo-claws", help="Evo Claw managed OpenClaw gateways")
     ecsub = ec.add_subparsers(dest="subcommand", required=True)
+
     p = ecsub.add_parser("list")
     p.add_argument("--statuses",
         help="Comma-separated EVOCLAW_STATUS_* to include (RUNNING/ON_CREATION/FAILED/...)")
     _add_limit_offset(p)
+
     p = ecsub.add_parser("get"); p.add_argument("evoclaw_id")
+
+    p = ecsub.add_parser("create", help="Create an EvoClaw gateway")
+    p.add_argument("--name")
+    p.add_argument("--instance-type-id", help="Instance type UUID")
+    p.add_argument("--model-name", help="Default LLM model name (e.g. zai-org/GLM-4.7)")
+    p.add_argument("--log-group-id", help="Cloud Logging group ID (empty string disables)")
+    p.add_argument("--enable-tracing", action="store_true")
+    _add_config_source(p)
+
+    p = ecsub.add_parser("update")
+    p.add_argument("evoclaw_id")
+    p.add_argument("--description")
+    p.add_argument("--instance-type-id")
+    p.add_argument("--model-name")
+    _add_config_source(p)
+
+    p = ecsub.add_parser("delete")
+    p.add_argument("evoclaw_id"); p.add_argument("--yes", action="store_true")
+
+    p = ecsub.add_parser("wait", help="Poll until RUNNING")
+    p.add_argument("evoclaw_id"); p.add_argument("--timeout", type=int, default=600)
+
+    # Workers (sub-agents inside the claw)
+    p = ecsub.add_parser("list-workers", help="List sub-agents (workers) inside the claw")
+    p.add_argument("evoclaw_id")
+
+    p = ecsub.add_parser("set-workers",
+        help="Replace full workers list (PUT — send {\"agents\":[...]} via --config-json)")
+    p.add_argument("evoclaw_id")
+    _add_config_source(p)
+
+    p = ecsub.add_parser("add-worker",
+        help="Fetch current workers, append one with sensible defaults, PUT back")
+    p.add_argument("evoclaw_id")
+    p.add_argument("--name", help="Worker name (unique inside the claw)")
+    p.add_argument("--description")
+    p.add_argument("--system-prompt")
+    p.add_argument("--workspace", help="Workspace folder (default ./workspace/{name})")
+    p.add_argument("--model-name", help="LLM model for this worker")
+    _add_config_source(p)
+
+    p = ecsub.add_parser("remove-worker", help="Remove worker by name (GET + PUT)")
+    p.add_argument("evoclaw_id"); p.add_argument("--name", required=True)
 
     # ---- chat (A2A JSON-RPC) ----
     chat = top.add_parser("chat", help="Chat with an agent via A2A protocol")
