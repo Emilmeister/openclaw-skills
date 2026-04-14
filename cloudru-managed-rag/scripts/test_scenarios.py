@@ -137,11 +137,13 @@ def main():
 
         # Grab version_id from output for next test
         try:
-            _validate_cmd_args(["versions", "--kb-id", kb_id])
+            env = os.environ.copy()
+            env["MANAGED_RAG_KB_ID"] = kb_id
             result = subprocess.run(
-                [sys.executable, "managed_rag.py", "versions", "--kb-id", kb_id],
+                [sys.executable, "managed_rag.py", "versions"],
                 capture_output=True, text=True, timeout=30,
                 cwd=os.path.dirname(os.path.abspath(__file__)),
+                env=env,
             )
             data = json.loads(result.stdout)
             versions = data.get("versions", [])

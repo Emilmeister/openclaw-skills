@@ -10,18 +10,18 @@ This script intentionally uses only the Python standard library.
 from __future__ import annotations
 
 import argparse
+import http.client
 import json
+import os
 import re
-import sys
 import ssl
+import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
-from urllib.error import HTTPError, URLError
-from urllib.parse import parse_qs, unquote, urlparse
-from urllib.request import Request, urlopen
+from urllib.parse import parse_qs, unquote, urlencode, urlparse
 
-context = ssl.create_default_context()
+_ssl_context = ssl.create_default_context()
 
 _ALLOWED_HOSTS = frozenset({"console.cloud.ru", "iam.api.cloud.ru"})
 
@@ -295,9 +295,8 @@ def request_json(
     query_params: Optional[Dict[str, str]] = None,
 ) -> Any:
     if query_params:
-        from urllib.parse import urlencode
         url = f"{url}?{urlencode(query_params)}"
-    headers = {
+    headers: Dict[str, str] = {
         "Accept": "application/json",
         "User-Agent": "PostmanRuntime/7.48.0",
     }
@@ -311,19 +310,29 @@ def request_json(
     parsed_url = urlparse(url)
     if parsed_url.scheme not in ("https",):
         raise BootstrapError(f"Only HTTPS URLs are allowed, got: {parsed_url.scheme}")
-    if parsed_url.hostname not in _ALLOWED_HOSTS:
-        raise BootstrapError(f"Host '{parsed_url.hostname}' is not in the allowed list: {_ALLOWED_HOSTS}")
-    request = Request(url=url, data=data, headers=headers, method=method)
+    hostname = parsed_url.hostname or ""
+    if hostname not in _ALLOWED_HOSTS:
+        raise BootstrapError(f"Host '{hostname}' is not in the allowed list: {_ALLOWED_HOSTS}")
+    path = parsed_url.path or "/"
+    if parsed_url.query:
+        path = f"{path}?{parsed_url.query}"
+
+    conn = http.client.HTTPSConnection(hostname, context=_ssl_context, timeout=30)
     try:
-        with urlopen(request, timeout=30, context=context) as response:  # noqa: S310
-            raw = response.read().decode("utf-8")
-            if not raw:
-                return None
-            return json.loads(raw)
-    except HTTPError as exc:
-        raise BootstrapError(f"{method} {url} failed with HTTP {exc.code}") from exc
-    except URLError as exc:
+        conn.request(method, path, body=data, headers=headers)
+        resp = conn.getresponse()
+        status = resp.status
+        raw = resp.read().decode("utf-8")
+    except Exception as exc:
         raise BootstrapError(f"{method} {url} failed: {exc}") from exc
+    finally:
+        conn.close()
+
+    if status >= 400:
+        raise BootstrapError(f"{method} {url} failed with HTTP {status}")
+    if not raw:
+        return None
+    return json.loads(raw)
 
 
 def service_account_payload(args: argparse.Namespace, ctx: ProjectContext) -> Dict[str, Any]:

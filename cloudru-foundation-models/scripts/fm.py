@@ -1,21 +1,29 @@
 #!/usr/bin/env python3
 """Cloud.ru Foundation Models CLI — list models and call completions."""
 
-import sys, os, json, ssl, urllib.request, urllib.parse
+import http.client
+import sys, os, json, ssl
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-API_BASE = "https://foundation-models.api.cloud.ru/v1"
-_ALLOWED_HOST = "foundation-models.api.cloud.ru"
+_API_HOST = "foundation-models.api.cloud.ru"
+_API_PATH_PREFIX = "/v1"
 
 
 def load_api_key():
     key = os.environ.get("CLOUD_RU_FOUNDATION_MODELS_API_KEY")
     if key:
         return key
-    env_path = os.environ.get("CLOUDRU_ENV_FILE") or os.path.join(os.getcwd(), ".env")
-    if os.path.isfile(env_path):
-        with open(env_path) as f:
+    env_path = os.environ.get("CLOUDRU_ENV_FILE")
+    if env_path:
+        resolved = os.path.realpath(env_path)
+        if not os.path.isfile(resolved):
+            print(f"Error: CLOUDRU_ENV_FILE does not exist: {env_path}", file=sys.stderr)
+            sys.exit(1)
+    else:
+        resolved = os.path.join(os.getcwd(), ".env")
+    if os.path.isfile(resolved):
+        with open(resolved) as f:
             for line in f:
                 line = line.strip()
                 if line.startswith("CLOUD_RU_FOUNDATION_MODELS_API_KEY="):
@@ -26,20 +34,18 @@ def load_api_key():
 
 def api_request(path, api_key, method="GET", body=None):
     ctx = ssl.create_default_context()
-    headers = {"Authorization": f"Bearer {api_key}", "Accept": "application/json"}
+    headers = {"Authorization": f"Bearer {api_key}", "Accept": "application/json", "Host": _API_HOST}
     data = None
     if body is not None:
         headers["Content-Type"] = "application/json"
         data = json.dumps(body).encode()
-    url = f"{API_BASE}{path}"
-    parsed = urllib.parse.urlparse(url)
-    if parsed.scheme not in ("https",):
-        raise ValueError(f"Only HTTPS URLs are allowed, got: {parsed.scheme}")
-    if parsed.hostname != _ALLOWED_HOST:
-        raise ValueError(f"Host '{parsed.hostname}' is not allowed (expected {_ALLOWED_HOST})")
-    req = urllib.request.Request(url, data=data, headers=headers, method=method)
-    with urllib.request.urlopen(req, context=ctx, timeout=120) as resp:  # noqa: S310
+    conn = http.client.HTTPSConnection(_API_HOST, context=ctx, timeout=120)
+    try:
+        conn.request(method, f"{_API_PATH_PREFIX}{path}", body=data, headers=headers)
+        resp = conn.getresponse()
         return json.loads(resp.read().decode())
+    finally:
+        conn.close()
 
 
 def cmd_models(raw_json=False):
