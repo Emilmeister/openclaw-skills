@@ -127,6 +127,42 @@ def apply_bff_agent_defaults(body: dict) -> None:
     ig.setdefault("logging", {"isEnabledLogging": False, "logGroupId": ""})
 
 
+def apply_bff_system_defaults(body: dict) -> None:
+    """BFF defaults for POST /agentSystems. Same nil-deref class as agents —
+    BFF expects full orchestratorOptions + options + integrationOptions shape.
+    """
+    body.setdefault("agents", [])
+    body.setdefault("childAgentSystems", [])
+    orch = body.setdefault("orchestratorOptions", {})
+    scaling = orch.setdefault("scaling", {})
+    scaling.setdefault("_meta", {"scalingRulesType": "rps"})
+    dig(scaling, "scalingRules", "rps").setdefault("value", 150)
+    scaling.setdefault("minScale", 1)
+    scaling.setdefault("maxScale", 1)
+    scaling.setdefault("isScaleUpAllSystem", False)
+    scaling.setdefault("isKeepAlive", True)
+    scaling.setdefault("keepAliveDuration", {"hours": 0, "minutes": 5, "seconds": 0})
+    orch.setdefault("env", {"rawEnvs": {}, "secretEnvs": {}})
+    orch.setdefault("systemPrompt", {"systemPrompt": ""})
+    opts = body.setdefault("options", {})
+    opts.setdefault("observability", {"isEnabled": False})
+    opts.setdefault("contextStorage", {"isEnabled": False})
+    ig = body.setdefault("integrationOptions", {})
+    ig.setdefault("authOptions", {
+        "isEnabled": False,
+        "type": "AUTHENTICATION_TYPE_TOKEN_BASED",
+        "serviceAccountId": "00000000-0000-0000-0000-000000000000",
+    })
+    ig.setdefault("logging", {
+        "isEnabledLogging": False,
+        "logGroupId": "00000000-0000-0000-0000-000000000000",
+    })
+    ig.setdefault("autoUpdateOptions", {
+        "imageOptions": {"isEnabled": False, "tagMask": ""},
+        "promptOptions": {"isEnabled": False},
+    })
+
+
 def apply_integration(body: dict, args) -> None:
     """Populate body.integrationOptions.{logging,authOptions}."""
     if getattr(args, "log_group_id", None):

@@ -4,7 +4,8 @@ import sys
 
 from helpers import (build_client, check_response, print_json, load_config_from_args,
                      confirm_destructive)
-from commands._shared import dig, apply_scaling, apply_integration, wait_for_status
+from commands._shared import (dig, apply_scaling, apply_integration, wait_for_status,
+                               apply_bff_system_defaults)
 
 
 WAIT_FINAL_SUCCESS = {"AGENT_SYSTEM_STATUS_RUNNING", "AGENT_SYSTEM_STATUS_COOLED"}
@@ -84,6 +85,7 @@ def _build_create_body(args) -> dict:
     if args.instance_type_id:
         body["instanceTypeId"] = args.instance_type_id
     _apply_system_flags(body, args)
+    apply_bff_system_defaults(body)
     return body
 
 
