@@ -4,7 +4,8 @@ import sys
 
 from helpers import (build_client, check_response, print_json, load_config_from_args,
                      confirm_destructive)
-from commands._shared import dig, apply_scaling, apply_integration, wait_for_status
+from commands._shared import (dig, apply_scaling, apply_integration, wait_for_status,
+                               apply_bff_agent_defaults)
 
 
 WAIT_FINAL_SUCCESS = {"AGENT_STATUS_RUNNING", "AGENT_STATUS_COOLED"}
@@ -155,6 +156,7 @@ def _build_create_body(args, client, project_id) -> dict:
                 existing.append({"mcpServerId": mid})
         body["mcpServers"] = existing
     _apply_agent_option_flags(body, args)
+    apply_bff_agent_defaults(body)
     return body
 
 

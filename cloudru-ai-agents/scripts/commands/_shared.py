@@ -56,12 +56,19 @@ def dig(d: dict, *keys: str) -> dict:
 
 
 def apply_scaling(scaling: dict, args) -> None:
-    """Populate a scaling{} dict with minScale/maxScale/keepAlive/rps.
+    """Populate a scaling{} dict. BFF requires all fields explicitly — it does
+    not inject defaults server-side — so we seed everything the UI sends.
 
-    Server requires `_meta.scalingRulesType` and a matching rule when any
-    scaling field is set, so we always include them with RPS defaults."""
+    Defaults mirror UI: minScale=1, maxScale=1, keepAlive 5 min, rps=200,
+    scaleUpAllSystem=true.
+    """
     scaling.setdefault("_meta", {"scalingRulesType": "rps"})
     dig(scaling, "scalingRules", "rps").setdefault("value", 200)
+    scaling.setdefault("minScale", 1)
+    scaling.setdefault("maxScale", 1)
+    scaling.setdefault("isScaleUpAllSystem", True)
+    scaling.setdefault("isKeepAlive", True)
+    scaling.setdefault("keepAliveDuration", {"hours": 0, "minutes": 5, "seconds": 0})
     if getattr(args, "min_scale", None) is not None:
         scaling["minScale"] = args.min_scale
     if getattr(args, "max_scale", None) is not None:
@@ -73,6 +80,51 @@ def apply_scaling(scaling: dict, args) -> None:
         }
     if getattr(args, "rps", None) is not None:
         scaling["scalingRules"]["rps"]["value"] = args.rps
+
+
+def apply_bff_agent_defaults(body: dict) -> None:
+    """Seed the defaults BFF requires on POST /agents when the user didn't
+    supply them via flags or --config-json. Without these BFF nil-derefs with
+    HTTP 500 because server-side code path assumes every optional field is
+    present with a concrete value (not null).
+
+    Reverse-engineered from UI's POST payload. Safe to call multiple times —
+    uses setdefault so explicit values are preserved.
+    """
+    body.setdefault("neighbors", [])
+    body.setdefault("mcpServers", [])
+    opts = body.setdefault("options", {})
+    # scaling block — always ensure minimum shape (apply_scaling may have set more)
+    scaling = opts.setdefault("scaling", {})
+    scaling.setdefault("_meta", {"scalingRulesType": "rps"})
+    dig(scaling, "scalingRules", "rps").setdefault("value", 200)
+    scaling.setdefault("minScale", 1)
+    scaling.setdefault("maxScale", 1)
+    scaling.setdefault("isScaleUpAllSystem", True)
+    scaling.setdefault("isKeepAlive", True)
+    scaling.setdefault("keepAliveDuration", {"hours": 0, "minutes": 5, "seconds": 0})
+    # runtimeOptions
+    rt = opts.setdefault("runtimeOptions", {})
+    rt.setdefault("maxLlmCalls", 10)
+    rt.setdefault("reflectAndRetry", {"enabled": True, "maxRetries": 10})
+    rt.setdefault("eventsCompaction", {"enabled": True, "interval": 10, "overlapSize": 3})
+    rt.setdefault("contextCache", {"enabled": True, "intervals": 5, "ttlSeconds": 10})
+    rt.setdefault("isSaveBlobFilesAsArtifacts", True)
+    # memoryOptions
+    mem = opts.setdefault("memoryOptions", {})
+    mem.setdefault("memory", {"isEnabled": True, "embedding": {"foundationModels": {}}})
+    mem.setdefault("session", {"isEnabled": True})
+    mem.setdefault("artifact",
+                   {"isEnabled": True,
+                    "s3": {"bucketId": "00000000-0000-0000-0000-000000000000"}})
+    # integrationOptions
+    ig = body.setdefault("integrationOptions", {})
+    ig.setdefault("authOptions", {
+        "isEnabled": False,
+        "serviceAccountId": "00000000-0000-0000-0000-000000000000",
+        "type": "AUTHENTICATION_TYPE_TOKEN_BASED",
+    })
+    ig.setdefault("logging", {"isEnabledLogging": False, "logGroupId": ""})
 
 
 def apply_integration(body: dict, args) -> None:
