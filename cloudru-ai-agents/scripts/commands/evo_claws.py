@@ -9,9 +9,10 @@ EvoClawOptions.agents, управляемые PUT (не POST/PATCH).
 import copy
 import json
 import sys
-import time
 
-from helpers import build_client, check_response, print_json, load_config_from_args
+from helpers import (build_client, check_response, print_json, load_config_from_args,
+                     confirm_destructive)
+from commands._shared import wait_for_status
 
 
 WAIT_SUCCESS = {"EVOCLAW_STATUS_RUNNING"}
@@ -91,15 +92,8 @@ def cmd_update(args):
     print_json(resp.json() if resp.text else {})
 
 
-def _confirm(action, target, auto_yes):
-    if auto_yes:
-        return
-    if input(f"Confirm {action} on {target}? [y/N] ").strip().lower() not in ("y", "yes"):
-        print("Aborted.", file=sys.stderr); sys.exit(1)
-
-
 def cmd_delete(args):
-    _confirm("delete", f"evo-claw {args.evoclaw_id}", args.yes)
+    confirm_destructive("delete", f"evo-claw {args.evoclaw_id}", args.yes)
     client, project_id = build_client()
     resp = client.delete_evo_claw(project_id, args.evoclaw_id)
     check_response(resp, f"deleting evo-claw {args.evoclaw_id}")
@@ -108,22 +102,11 @@ def cmd_delete(args):
 
 def cmd_wait(args):
     client, project_id = build_client()
-    deadline = time.time() + args.timeout
-    last = None
-    while time.time() < deadline:
-        resp = client.get_evo_claw(project_id, args.evoclaw_id)
-        check_response(resp, f"polling evo-claw {args.evoclaw_id}")
-        data = resp.json().get("evoClaw", resp.json())
-        status = data.get("status")
-        if status != last:
-            print(f"status={status}", file=sys.stderr)
-            last = status
-        if status in WAIT_SUCCESS:
-            print_json(data); return
-        if status in WAIT_FAIL:
-            print(f"Reached failure: {status}", file=sys.stderr); sys.exit(1)
-        time.sleep(10)
-    print(f"Timeout. Last: {last}", file=sys.stderr); sys.exit(1)
+    wait_for_status(lambda: client.get_evo_claw(project_id, args.evoclaw_id),
+                     resource_key="evoClaw",
+                     resource_label=f"evo-claw {args.evoclaw_id}",
+                     success_statuses=WAIT_SUCCESS, fail_statuses=WAIT_FAIL,
+                     timeout=args.timeout, poll=10)
 
 
 def cmd_list_workers(args):

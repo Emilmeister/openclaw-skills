@@ -1,11 +1,11 @@
 """CLI handlers for `mcp-servers` subcommand."""
 
 import sys
-import time
 
-from helpers import build_client, check_response, print_json, load_config_from_args
+from helpers import (build_client, check_response, print_json, load_config_from_args,
+                     confirm_destructive)
 from commands._shared import (apply_scaling, apply_integration, apply_environment,
-                               parse_ports)
+                               parse_ports, wait_for_status)
 
 
 WAIT_FINAL_SUCCESS = {"MCP_SERVER_STATUS_RUNNING", "MCP_SERVER_STATUS_COOLED"}
@@ -16,7 +16,6 @@ WAIT_FINAL_FAIL = {
     "MCP_SERVER_STATUS_DELETED",
     "MCP_SERVER_STATUS_WAITING_FOR_SCRAPPING",
 }
-WAIT_POLL_INTERVAL = 15
 
 
 def cmd_list(args):
@@ -99,17 +98,8 @@ def cmd_update(args):
     print_json(resp.json() if resp.text else {})
 
 
-def _confirm_destructive(action: str, target: str, auto_yes: bool) -> None:
-    if auto_yes:
-        return
-    answer = input(f"Confirm {action} on {target}? [y/N] ")
-    if answer.strip().lower() not in ("y", "yes"):
-        print("Aborted.", file=sys.stderr)
-        sys.exit(1)
-
-
 def cmd_delete(args):
-    _confirm_destructive("delete", f"mcp-server {args.mcp_id}", args.yes)
+    confirm_destructive("delete", f"mcp-server {args.mcp_id}", args.yes)
     client, project_id = build_client()
     resp = client.delete_mcp_server(project_id, args.mcp_id)
     if resp.status_code == 404:
@@ -135,29 +125,10 @@ def cmd_resume(args):
 
 def cmd_wait(args):
     client, project_id = build_client()
-    deadline = time.time() + args.timeout
-    last_status = None
-    while time.time() < deadline:
-        resp = client.get_mcp_server(project_id, args.mcp_id)
-        check_response(resp, f"polling mcp-server {args.mcp_id}")
-        raw = resp.json()
-        data = raw.get("mcpServer", raw)
-        status = data.get("status")
-        if status != last_status:
-            print(f"status={status}", file=sys.stderr)
-            last_status = status
-        if status in WAIT_FINAL_SUCCESS:
-            print_json(data)
-            return
-        if status in WAIT_FINAL_FAIL:
-            print(f"MCP server reached failure state: {status}", file=sys.stderr)
-            reason = data.get("statusReason")
-            if reason:
-                print(f"statusReason: {reason}", file=sys.stderr)
-            sys.exit(1)
-        time.sleep(WAIT_POLL_INTERVAL)
-    print(f"Timeout after {args.timeout}s. Last status: {last_status}", file=sys.stderr)
-    sys.exit(1)
+    wait_for_status(lambda: client.get_mcp_server(project_id, args.mcp_id),
+                     resource_key="mcpServer", resource_label=f"mcp-server {args.mcp_id}",
+                     success_statuses=WAIT_FINAL_SUCCESS, fail_statuses=WAIT_FINAL_FAIL,
+                     timeout=args.timeout)
 
 
 COMMANDS = {

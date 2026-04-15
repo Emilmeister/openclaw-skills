@@ -85,3 +85,12 @@ def load_config_from_args(args) -> dict:
         with open(args.config_file) as f:
             return json.load(f)
     return {}
+
+
+def confirm_destructive(action: str, target: str, auto_yes: bool) -> None:
+    """Prompt the user to confirm a destructive action; exit 1 if declined."""
+    if auto_yes:
+        return
+    if input(f"Confirm {action} on {target}? [y/N] ").strip().lower() not in ("y", "yes"):
+        print("Aborted.", file=sys.stderr)
+        sys.exit(1)

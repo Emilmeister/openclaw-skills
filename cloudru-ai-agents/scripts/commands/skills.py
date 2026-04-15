@@ -3,7 +3,8 @@
 import json
 import sys
 
-from helpers import build_client, check_response, print_json, load_config_from_args
+from helpers import (build_client, check_response, print_json, load_config_from_args,
+                     confirm_destructive)
 
 
 def _serialize_metadata(metadata: dict) -> dict:
@@ -135,17 +136,8 @@ def cmd_analyze(args):
     print_json(resp.json())
 
 
-def _confirm(action: str, target: str, auto_yes: bool):
-    if auto_yes:
-        return
-    answer = input(f"Confirm {action} on {target}? [y/N] ")
-    if answer.strip().lower() not in ("y", "yes"):
-        print("Aborted.", file=sys.stderr)
-        sys.exit(1)
-
-
 def cmd_delete(args):
-    _confirm("delete", f"skill {args.skill_id}", args.yes)
+    confirm_destructive("delete", f"skill {args.skill_id}", args.yes)
     client, project_id = build_client()
     resp = client.delete_skill(project_id, args.skill_id)
     check_response(resp, f"deleting skill {args.skill_id}")

@@ -4,7 +4,48 @@ the target dict, but only when user explicitly set them (so we don't clobber
 server defaults or values supplied via --config-json).
 """
 
-from typing import Any
+import sys
+import time
+from typing import Any, Callable, Iterable
+
+from helpers import check_response, print_json
+
+
+def wait_for_status(getter: Callable, *, resource_key: str, resource_label: str,
+                    success_statuses: Iterable[str], fail_statuses: Iterable[str],
+                    timeout: int, poll: int = 15) -> None:
+    """Poll `getter()` until status falls into success/fail/timeout.
+
+    getter: zero-arg callable returning httpx.Response
+    resource_key: field name under which the resource sits in the response JSON
+        (e.g. "agent", "mcpServer", "agentSystem", "evoClaw") — falls back to
+        the whole body if that key is absent.
+    """
+    success_statuses = set(success_statuses)
+    fail_statuses = set(fail_statuses)
+    deadline = time.time() + timeout
+    last_status = None
+    while time.time() < deadline:
+        resp = getter()
+        check_response(resp, f"polling {resource_label}")
+        raw = resp.json()
+        data = raw.get(resource_key, raw)
+        status = data.get("status")
+        if status != last_status:
+            print(f"status={status}", file=sys.stderr)
+            last_status = status
+        if status in success_statuses:
+            print_json(data)
+            return
+        if status in fail_statuses:
+            print(f"{resource_label} reached failure state: {status}", file=sys.stderr)
+            reason = data.get("statusReason")
+            if reason:
+                print(f"statusReason: {reason}", file=sys.stderr)
+            sys.exit(1)
+        time.sleep(poll)
+    print(f"Timeout after {timeout}s. Last status: {last_status}", file=sys.stderr)
+    sys.exit(1)
 
 
 def dig(d: dict, *keys: str) -> dict:

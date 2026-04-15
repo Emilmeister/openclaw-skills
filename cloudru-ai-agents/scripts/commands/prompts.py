@@ -2,7 +2,8 @@
 
 import sys
 
-from helpers import build_client, check_response, print_json, load_config_from_args
+from helpers import (build_client, check_response, print_json, load_config_from_args,
+                     confirm_destructive)
 
 
 def _build_create_body(args, client, project_id) -> dict:
@@ -84,17 +85,8 @@ def cmd_update(args):
     print_json(resp.json())
 
 
-def _confirm(action: str, target: str, auto_yes: bool):
-    if auto_yes:
-        return
-    answer = input(f"Confirm {action} on {target}? [y/N] ")
-    if answer.strip().lower() not in ("y", "yes"):
-        print("Aborted.", file=sys.stderr)
-        sys.exit(1)
-
-
 def cmd_delete(args):
-    _confirm("delete", f"prompt {args.prompt_id}", args.yes)
+    confirm_destructive("delete", f"prompt {args.prompt_id}", args.yes)
     client, project_id = build_client()
     resp = client.delete_prompt(project_id, args.prompt_id)
     check_response(resp, f"deleting prompt {args.prompt_id}")

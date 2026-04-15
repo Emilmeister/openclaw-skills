@@ -11,7 +11,8 @@ name is taken.
 
 import sys
 
-from helpers import build_client, check_response, print_json, load_config_from_args
+from helpers import (build_client, check_response, print_json, load_config_from_args,
+                     confirm_destructive)
 
 
 def cmd_list(args):
@@ -202,16 +203,8 @@ def cmd_update(args):
     print_json(resp.json() if resp.text else {})
 
 
-def _confirm(action, target, auto_yes):
-    if auto_yes:
-        return
-    if input(f"Confirm {action} on {target}? [y/N] ").strip().lower() not in ("y", "yes"):
-        print("Aborted.", file=sys.stderr)
-        sys.exit(1)
-
-
 def cmd_delete(args):
-    _confirm("delete", f"trigger {args.trigger_id}", args.yes)
+    confirm_destructive("delete", f"trigger {args.trigger_id}", args.yes)
     client, project_id = build_client()
     resp = client.delete_agent_trigger(project_id, args.agent_id, args.trigger_id)
     check_response(resp, f"deleting trigger {args.trigger_id}")

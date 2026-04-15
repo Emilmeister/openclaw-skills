@@ -1,10 +1,10 @@
 """CLI handlers for `systems` (agent-systems) subcommand."""
 
 import sys
-import time
 
-from helpers import build_client, check_response, print_json, load_config_from_args
-from commands._shared import dig, apply_scaling, apply_integration
+from helpers import (build_client, check_response, print_json, load_config_from_args,
+                     confirm_destructive)
+from commands._shared import dig, apply_scaling, apply_integration, wait_for_status
 
 
 WAIT_FINAL_SUCCESS = {"AGENT_SYSTEM_STATUS_RUNNING", "AGENT_SYSTEM_STATUS_COOLED"}
@@ -15,7 +15,6 @@ WAIT_FINAL_FAIL = {
     "AGENT_SYSTEM_STATUS_ON_DELETION",
     "AGENT_SYSTEM_STATUS_DELETED",
 }
-WAIT_POLL_INTERVAL = 15
 
 
 def cmd_list(args):
@@ -114,17 +113,8 @@ def cmd_update(args):
     print_json(resp.json() if resp.text else {})
 
 
-def _confirm_destructive(action: str, target: str, auto_yes: bool) -> None:
-    if auto_yes:
-        return
-    answer = input(f"Confirm {action} on {target}? [y/N] ")
-    if answer.strip().lower() not in ("y", "yes"):
-        print("Aborted.", file=sys.stderr)
-        sys.exit(1)
-
-
 def cmd_delete(args):
-    _confirm_destructive("delete", f"system {args.system_id}", args.yes)
+    confirm_destructive("delete", f"system {args.system_id}", args.yes)
     client, project_id = build_client()
     resp = client.delete_system(project_id, args.system_id)
     if resp.status_code == 404:
@@ -150,29 +140,11 @@ def cmd_resume(args):
 
 def cmd_wait(args):
     client, project_id = build_client()
-    deadline = time.time() + args.timeout
-    last_status = None
-    while time.time() < deadline:
-        resp = client.get_system(project_id, args.system_id)
-        check_response(resp, f"polling system {args.system_id}")
-        raw = resp.json()
-        data = raw.get("agentSystem", raw)
-        status = data.get("status")
-        if status != last_status:
-            print(f"status={status}", file=sys.stderr)
-            last_status = status
-        if status in WAIT_FINAL_SUCCESS:
-            print_json(data)
-            return
-        if status in WAIT_FINAL_FAIL:
-            print(f"System reached failure state: {status}", file=sys.stderr)
-            reason = data.get("statusReason")
-            if reason:
-                print(f"statusReason: {reason}", file=sys.stderr)
-            sys.exit(1)
-        time.sleep(WAIT_POLL_INTERVAL)
-    print(f"Timeout after {args.timeout}s. Last status: {last_status}", file=sys.stderr)
-    sys.exit(1)
+    wait_for_status(lambda: client.get_system(project_id, args.system_id),
+                     resource_key="agentSystem",
+                     resource_label=f"system {args.system_id}",
+                     success_statuses=WAIT_FINAL_SUCCESS, fail_statuses=WAIT_FINAL_FAIL,
+                     timeout=args.timeout)
 
 
 COMMANDS = {
