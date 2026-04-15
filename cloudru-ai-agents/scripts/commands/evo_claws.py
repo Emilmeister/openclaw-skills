@@ -178,7 +178,7 @@ def cmd_remove_worker(args):
     workers = _load_workers(client, project_id, args.evoclaw_id)
     new = [w for w in workers if w.get("name") != args.name]
     if len(new) == len(workers):
-        print(f"No worker named {args.name!r}", file=sys.stderr); sys.exit(1)
+        print(f"Error: no worker named {args.name!r}", file=sys.stderr); sys.exit(1)
     resp = client.set_evo_claw_workers(project_id, args.evoclaw_id, new)
     check_response(resp, f"removing worker {args.name}")
     print_json(resp.json() if resp.text else {"agents": new})

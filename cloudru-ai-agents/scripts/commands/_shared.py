@@ -38,13 +38,13 @@ def wait_for_status(getter: Callable, *, resource_key: str, resource_label: str,
             print_json(data)
             return
         if status in fail_statuses:
-            print(f"{resource_label} reached failure state: {status}", file=sys.stderr)
+            print(f"Error: {resource_label} reached failure state: {status}", file=sys.stderr)
             reason = data.get("statusReason")
             if reason:
                 print(f"statusReason: {reason}", file=sys.stderr)
             sys.exit(1)
         time.sleep(poll)
-    print(f"Timeout after {timeout}s. Last status: {last_status}", file=sys.stderr)
+    print(f"Error: timeout after {timeout}s. Last status: {last_status}", file=sys.stderr)
     sys.exit(1)
 
 

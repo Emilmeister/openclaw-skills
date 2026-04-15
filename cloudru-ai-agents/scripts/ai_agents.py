@@ -61,6 +61,8 @@ def _add_agent_option_flags(p):
 
 def build_parser():
     parser = argparse.ArgumentParser(prog="ai_agents", description="Cloud.ru AI Agents CLI")
+    parser.add_argument("--project-id",
+        help="Project UUID; overrides PROJECT_ID env var for this invocation")
     top = parser.add_subparsers(dest="group", required=True)
 
     # ---- agents ----
@@ -498,10 +500,12 @@ def build_parser():
 def main():
     parser = build_parser()
     args = parser.parse_args()
+    if args.project_id:
+        os.environ["PROJECT_ID"] = args.project_id
     key = f"{args.group}.{args.subcommand}"
     handler = COMMANDS.get(key)
     if handler is None:
-        print(f"Unknown command: {key}", file=sys.stderr)
+        print(f"Error: unknown command: {key}", file=sys.stderr)
         sys.exit(1)
     handler(args)
 
