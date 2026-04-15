@@ -237,6 +237,8 @@ def build_parser():
     p.add_argument("--description")
     p.add_argument("--prompt", help="Inline prompt text")
     p.add_argument("--prompt-file", help="Path to file with prompt text")
+    p.add_argument("--target", choices=["agent", "mcp", "agentSystem"], default="agent",
+        help="Prompt target — controls promptOptions.{agent|mcp|agentSystem}")
     p.add_argument("--from-marketplace", help="Marketplace prompt card ID")
     _add_config_source(p)
 
@@ -246,6 +248,8 @@ def build_parser():
     p.add_argument("--description")
     p.add_argument("--prompt")
     p.add_argument("--prompt-file")
+    p.add_argument("--target", choices=["agent", "mcp", "agentSystem"],
+        help="Prompt target (agent|mcp|agentSystem)")
     _add_config_source(p)
 
     p = psub.add_parser("delete"); p.add_argument("prompt_id"); p.add_argument("--yes", action="store_true")
@@ -307,6 +311,16 @@ def build_parser():
     p.add_argument("--git-folder-paths", help="Comma-separated paths inside repo")
     p.add_argument("--from-marketplace",
         help="Marketplace skill card ID — auto-fills gitSource from card metadata")
+    # Requirements & artifacts (UI's "Добавить ограничения и требования" block)
+    p.add_argument("--requirements-os", help="OS/runtime requirements (e.g. 'Python 3.11')")
+    p.add_argument("--requirements-apps", help="Required apps/tools (free-form text)")
+    p.add_argument("--requirements-secrets",
+        help="JSON array of required secret IDs, e.g. '[\"API_KEY\"]'")
+    p.add_argument("--artifact-paths",
+        help="JSON array of output artifact paths, e.g. '[\"out/\"]'")
+    p.add_argument("--resources-url", help="Git URL for resources (objectStorage source)")
+    p.add_argument("--allowed-tools",
+        help="Comma-separated tool names agent can invoke (read_file,grep,run_terminal_cmd,...)")
     _add_config_source(p)
 
     p = sksub.add_parser("delete"); p.add_argument("skill_id"); p.add_argument("--yes", action="store_true")

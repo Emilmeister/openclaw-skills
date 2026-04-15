@@ -58,8 +58,9 @@ def cmd_create(args):
             body["content"] = f.read()
     if args.block_style:
         body["blockStyle"] = args.block_style
-    if not body.get("name") or not body.get("content") or not body.get("blockStyle"):
-        print("Error: --name, --content (or --content-file), and --block-style required",
+    body.setdefault("blockStyle", "SNIPPET_BLOCK_STYLE_UNSPECIFIED")
+    if not body.get("name") or not body.get("content"):
+        print("Error: --name and --content (or --content-file) required",
               file=sys.stderr)
         sys.exit(1)
     resp = client.create_snippet(project_id, body)

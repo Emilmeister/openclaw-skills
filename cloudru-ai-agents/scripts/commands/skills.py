@@ -75,6 +75,17 @@ def cmd_create(args):
     if args.prompt_file:
         with open(args.prompt_file) as f:
             metadata["prompt"] = f.read()
+    # Requirements & artifacts (the UI's "Добавить ограничения и требования" block)
+    if getattr(args, "requirements_os", None):
+        metadata["requirementsOsEnvironment"] = args.requirements_os
+    if getattr(args, "requirements_apps", None):
+        metadata["requirementsAppsAndTools"] = args.requirements_apps
+    if getattr(args, "requirements_secrets", None):
+        metadata["requirementsSecrets"] = args.requirements_secrets
+    if getattr(args, "artifact_paths", None):
+        metadata["artifactPaths"] = args.artifact_paths
+    if getattr(args, "resources_url", None):
+        metadata["resourcesRepositoryUrl"] = args.resources_url
     metadata.setdefault("resourcesSourceType", "objectStorage")
     metadata.setdefault("resourcesRepositoryUrl", "")
     metadata.setdefault("resourcesRepositorySecrets", "[]")
@@ -84,6 +95,9 @@ def cmd_create(args):
     metadata.setdefault("artifactPaths", "[]")
     body["metadata"] = _serialize_metadata(metadata)
 
+    # allowedTools — UI lets user pick tool names (read_file/grep/run_terminal_cmd/...)
+    if getattr(args, "allowed_tools", None):
+        body["allowedTools"] = [t.strip() for t in args.allowed_tools.split(",") if t.strip()]
     body.setdefault("allowedTools", body.get("allowedTools") or [])
     if not body.get("skillSource"):
         if args.git_url:

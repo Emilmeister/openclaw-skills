@@ -18,14 +18,12 @@ def _build_create_body(args, client, project_id) -> dict:
         body["name"] = args.name
     if args.description:
         body["description"] = args.description
+    target = getattr(args, "target", None) or "agent"  # agent | mcp | agentSystem
     if args.prompt:
-        opts = body.setdefault("promptOptions", {})
-        opts.setdefault("agent", {})["prompt"] = args.prompt
+        body.setdefault("promptOptions", {}).setdefault(target, {})["prompt"] = args.prompt
     if args.prompt_file:
         with open(args.prompt_file) as f:
-            text = f.read()
-        opts = body.setdefault("promptOptions", {})
-        opts.setdefault("agent", {})["prompt"] = text
+            body.setdefault("promptOptions", {}).setdefault(target, {})["prompt"] = f.read()
     return body
 
 
@@ -75,11 +73,12 @@ def cmd_update(args):
         body["name"] = args.name
     if args.description is not None:
         body["description"] = args.description
+    target = getattr(args, "target", None) or "agent"
     if args.prompt:
-        body.setdefault("promptOptions", {}).setdefault("agent", {})["prompt"] = args.prompt
+        body.setdefault("promptOptions", {}).setdefault(target, {})["prompt"] = args.prompt
     if args.prompt_file:
         with open(args.prompt_file) as f:
-            body.setdefault("promptOptions", {}).setdefault("agent", {})["prompt"] = f.read()
+            body.setdefault("promptOptions", {}).setdefault(target, {})["prompt"] = f.read()
     resp = client.update_prompt(project_id, args.prompt_id, body)
     check_response(resp, f"updating prompt {args.prompt_id}")
     print_json(resp.json())
