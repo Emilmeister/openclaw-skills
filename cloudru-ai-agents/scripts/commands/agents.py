@@ -35,6 +35,70 @@ def cmd_get(args):
     print_json(resp.json())
 
 
+def _dig(d: dict, *keys: str) -> dict:
+    """Walk/create nested dicts so `d[k0][k1]...` is returned (ready to mutate)."""
+    for k in keys:
+        d = d.setdefault(k, {})
+    return d
+
+
+def _apply_agent_option_flags(body: dict, args) -> None:
+    """Apply high-level flags that mirror what the UI create-form sends.
+
+    Covers options.prompt, options.llm (model/params/thinking), options.scaling
+    (min/max/keepAlive/rps), options.runtimeOptions (maxLlmCalls),
+    options.memoryOptions (memory/session), neighbors, integrationOptions.logging.
+    Each flag is optional; omit to leave server defaults.
+    """
+    if getattr(args, "system_prompt", None):
+        _dig(body, "options", "prompt")["systemPrompt"] = args.system_prompt
+    if getattr(args, "system_prompt_file", None):
+        with open(args.system_prompt_file) as f:
+            _dig(body, "options", "prompt")["systemPrompt"] = f.read()
+    if getattr(args, "model_name", None):
+        _dig(body, "options", "llm", "foundationModels")["modelName"] = args.model_name
+    if getattr(args, "temperature", None) is not None:
+        _dig(body, "options", "llm", "modelParameters")["temperature"] = args.temperature
+    if getattr(args, "max_tokens", None) is not None:
+        _dig(body, "options", "llm", "modelParameters")["maxTokens"] = args.max_tokens
+    if getattr(args, "thinking", None):
+        thinking = _dig(body, "options", "llm", "modelParameters", "thinking")
+        if args.thinking == "off":
+            thinking["enabled"] = False
+        else:
+            thinking["enabled"] = True
+            thinking["level"] = f"THINKING_LEVEL_{args.thinking.upper()}"
+    if getattr(args, "thinking_budget", None) is not None:
+        _dig(body, "options", "llm", "modelParameters", "thinking")["budget"] = args.thinking_budget
+    if getattr(args, "min_scale", None) is not None:
+        _dig(body, "options", "scaling")["minScale"] = args.min_scale
+    if getattr(args, "max_scale", None) is not None:
+        _dig(body, "options", "scaling")["maxScale"] = args.max_scale
+    if getattr(args, "keep_alive_min", None) is not None:
+        scaling = _dig(body, "options", "scaling")
+        scaling["isKeepAlive"] = args.keep_alive_min > 0
+        scaling["keepAliveDuration"] = {"hours": 0, "minutes": args.keep_alive_min, "seconds": 0}
+    if getattr(args, "rps", None) is not None:
+        _dig(body, "options", "scaling", "scalingRules", "rps")["value"] = args.rps
+    if getattr(args, "max_llm_calls", None) is not None:
+        _dig(body, "options", "runtimeOptions")["maxLlmCalls"] = args.max_llm_calls
+    if getattr(args, "memory_enabled", None) is not None:
+        _dig(body, "options", "memoryOptions", "memory")["isEnabled"] = args.memory_enabled
+    if getattr(args, "session_enabled", None) is not None:
+        _dig(body, "options", "memoryOptions", "session")["isEnabled"] = args.session_enabled
+    if getattr(args, "log_group_id", None):
+        _dig(body, "integrationOptions", "logging").update({
+            "isEnabledLogging": True, "logGroupId": args.log_group_id,
+        })
+    if getattr(args, "neighbors", None):
+        nbrs = body.get("neighbors") or []
+        for nid in args.neighbors.split(","):
+            nid = nid.strip()
+            if nid and not any(n.get("agentId") == nid for n in nbrs):
+                nbrs.append({"agentId": nid})
+        body["neighbors"] = nbrs
+
+
 def _build_create_body(args, client, project_id) -> dict:
     """Combine --from-marketplace card + --config-json/file + simple flags into create body."""
     body: dict = load_config_from_args(args)
@@ -48,10 +112,7 @@ def _build_create_body(args, client, project_id) -> dict:
         body.setdefault("agentType", "AGENT_TYPE_FROM_HUB")
         model_id = card.get("modelId")
         if model_id:
-            options = body.setdefault("options", {})
-            llm = options.setdefault("llm", {})
-            fm = llm.setdefault("foundationModels", {})
-            fm.setdefault("modelName", model_id)
+            _dig(body, "options", "llm", "foundationModels").setdefault("modelName", model_id)
     else:
         body.setdefault("agentType", "AGENT_TYPE_CUSTOM")
     if args.name:
@@ -60,11 +121,19 @@ def _build_create_body(args, client, project_id) -> dict:
         body["description"] = args.description
     if args.instance_type_id:
         body["instanceTypeId"] = args.instance_type_id
+    # MCP: single (legacy) or multiple via --mcp-servers
+    mcp_ids: list = []
     if args.mcp_server_id:
+        mcp_ids.append(args.mcp_server_id)
+    if getattr(args, "mcp_servers", None):
+        mcp_ids.extend(x.strip() for x in args.mcp_servers.split(",") if x.strip())
+    if mcp_ids:
         existing = body.get("mcpServers") or []
-        if not any(m.get("mcpServerId") == args.mcp_server_id for m in existing):
-            existing.append({"mcpServerId": args.mcp_server_id})
+        for mid in mcp_ids:
+            if not any(m.get("mcpServerId") == mid for m in existing):
+                existing.append({"mcpServerId": mid})
         body["mcpServers"] = existing
+    _apply_agent_option_flags(body, args)
     return body
 
 
@@ -79,12 +148,19 @@ def cmd_create(args):
 def cmd_update(args):
     client, project_id = build_client()
     body = load_config_from_args(args)
+    if args.name:
+        body["name"] = args.name
+    if args.description is not None:
+        body["description"] = args.description
+    if args.instance_type_id:
+        body["instanceTypeId"] = args.instance_type_id
+    _apply_agent_option_flags(body, args)
     if not body:
-        print("Error: --config-json or --config-file required for update", file=sys.stderr)
+        print("Error: nothing to update (no flags, no --config-json)", file=sys.stderr)
         sys.exit(1)
     resp = client.update_agent(project_id, args.agent_id, body)
     check_response(resp, f"updating agent {args.agent_id}")
-    print_json(resp.json())
+    print_json(resp.json() if resp.text else {})
 
 
 def _confirm_destructive(action: str, target: str, auto_yes: bool) -> None:

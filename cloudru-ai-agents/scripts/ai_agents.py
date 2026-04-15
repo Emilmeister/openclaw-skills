@@ -28,6 +28,35 @@ def _add_config_source(p):
     p.add_argument("--config-file", help="Path to JSON file with body")
 
 
+def _add_agent_option_flags(p):
+    """Register high-level flags that mirror UI's Create Agent form.
+    Used by `agents create`, `agents update`, `systems create`, `systems update`.
+    """
+    p.add_argument("--system-prompt", help="Inline system prompt text")
+    p.add_argument("--system-prompt-file", help="Path to file with system prompt")
+    p.add_argument("--model-name", help="FM model name (e.g. zai-org/GLM-4.7)")
+    p.add_argument("--temperature", type=float, help="LLM temperature (0..2)")
+    p.add_argument("--max-tokens", type=int, help="Max tokens per reply")
+    p.add_argument("--thinking", choices=["off", "low", "medium", "high"],
+                    help="Extended thinking mode")
+    p.add_argument("--thinking-budget", type=int, help="Thinking token budget")
+    p.add_argument("--min-scale", type=int, help="Minimum replicas")
+    p.add_argument("--max-scale", type=int, help="Maximum replicas")
+    p.add_argument("--keep-alive-min", type=int,
+                    help="Keep warm N minutes after last request (0 disables)")
+    p.add_argument("--rps", type=int, help="RPS scaling threshold per replica")
+    p.add_argument("--max-llm-calls", type=int, help="Max LLM calls per task")
+    p.add_argument("--memory-enabled", type=lambda v: v.lower() == "true",
+                    help="true|false — agent memory")
+    p.add_argument("--session-enabled", type=lambda v: v.lower() == "true",
+                    help="true|false — conversation sessions")
+    p.add_argument("--log-group-id", help="Cloud Logging group ID")
+    p.add_argument("--neighbors",
+                    help="Comma-separated agent IDs to link as neighbors (related agents)")
+    p.add_argument("--mcp-servers",
+                    help="Comma-separated MCP server IDs to attach")
+
+
 def build_parser():
     parser = argparse.ArgumentParser(prog="ai_agents", description="Cloud.ru AI Agents CLI")
     top = parser.add_subparsers(dest="group", required=True)
@@ -50,12 +79,17 @@ def build_parser():
     p.add_argument("--name")
     p.add_argument("--description")
     p.add_argument("--instance-type-id")
-    p.add_argument("--mcp-server-id")
+    p.add_argument("--mcp-server-id", help="Single MCP id to attach (see also --mcp-servers)")
     p.add_argument("--from-marketplace", help="Create from marketplace card ID")
+    _add_agent_option_flags(p)
     _add_config_source(p)
 
     p = agsub.add_parser("update", help="Update agent")
     p.add_argument("agent_id")
+    p.add_argument("--name")
+    p.add_argument("--description")
+    p.add_argument("--instance-type-id")
+    _add_agent_option_flags(p)
     _add_config_source(p)
 
     p = agsub.add_parser("delete", help="Delete agent")
