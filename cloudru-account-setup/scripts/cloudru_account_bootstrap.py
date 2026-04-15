@@ -338,10 +338,7 @@ def service_account_payload(args: argparse.Namespace, ctx: ProjectContext) -> Di
         "customerId": ctx.customer_id,
         "serviceRoles": [
             "managed_rag.admin",
-            "ai-agents.agents.admin",
-            "ai-agents.systems.admin",
-            "ai-agents.mcp-servers.admin",
-            "ai-agents.prompts.admin",
+            "ai-agents.admin",
         ],
         "projectId": ctx.project_id,
         "projectRole": args.project_role,
@@ -465,8 +462,7 @@ def build_result(
         notes.append("days-valid is greater than 365; Cloud.ru documentation says one year is the maximum.")
     if service_account:
         notes.append(
-            "Service roles assigned to the SA: managed_rag.admin, "
-            "ai-agents.{agents,systems,mcp-servers,prompts}.admin."
+            "Service roles assigned to the SA: managed_rag.admin, ai-agents.admin."
         )
     result: Dict[str, Any] = {
         "project": {
@@ -553,10 +549,7 @@ def main() -> int:
                 print(f"Found existing service account: {service_account.get('id')}", file=sys.stderr)
                 ai_agents_roles = [
                     "managed_rag.admin",
-                    "ai-agents.agents.admin",
-                    "ai-agents.systems.admin",
-                    "ai-agents.mcp-servers.admin",
-                    "ai-agents.prompts.admin",
+                    "ai-agents.admin",
                 ]
                 try:
                     ensure_service_roles(

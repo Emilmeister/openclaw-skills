@@ -43,7 +43,7 @@ export CP_CONSOLE_SECRET=...
 export PROJECT_ID=...                # or use --project-id on every call
 ```
 
-Credentials come from Cloud.ru service account with `ai-agents.*.admin` roles. If missing, refer the user to the `cloudru-account-setup` skill.
+Credentials come from Cloud.ru service account with the `ai-agents.admin` umbrella role (covers agents/systems/mcp-servers/prompts/workflows). If missing, refer the user to the `cloudru-account-setup` skill — it attaches the role automatically.
 
 ## Command shape
 
