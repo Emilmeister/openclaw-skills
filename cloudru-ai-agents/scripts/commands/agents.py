@@ -77,9 +77,14 @@ def _apply_agent_option_flags(body: dict, args) -> None:
         body["neighbors"] = nbrs
 
 
-def _ensure_mcp_from_marketplace(client, project_id: str, marketplace_mcp_id: str) -> str:
+def _ensure_mcp_from_marketplace(client, project_id: str, marketplace_mcp_id: str,
+                                  instance_type_id: str = None) -> str:
     """Return project MCP ID for a given marketplace card. Reuse existing if any,
-    otherwise create a fresh installation and return new ID."""
+    otherwise create a fresh installation and return new ID.
+
+    Name is deterministic (`cascade-mcp-<uuid8>`) so repeat cascades recognise an
+    existing install and don't try to create a name-clashing resource.
+    """
     # Try to reuse: list project MCPs and match by marketplaceMcpServerId
     resp = client.list_mcp_servers(project_id, limit=100, offset=0)
     if resp.status_code == 200:
@@ -92,9 +97,12 @@ def _ensure_mcp_from_marketplace(client, project_id: str, marketplace_mcp_id: st
     check_response(card_resp, f"fetching marketplace MCP card {marketplace_mcp_id}")
     card = card_resp.json().get("predefinedMcpServer", card_resp.json())
     body = {
+        "name": f"cascade-mcp-{marketplace_mcp_id[:8]}",   # matches ^[a-z][a-z0-9-]{3,48}[a-z0-9]$
         "imageSource": {"marketplaceMcpServerId": marketplace_mcp_id},
         "description": card.get("description", ""),
     }
+    if instance_type_id:
+        body["instanceTypeId"] = instance_type_id
     if card.get("exposedPorts"):
         body["exposedPorts"] = card["exposedPorts"]
     resp = client.create_mcp_server(project_id, body)
@@ -120,7 +128,9 @@ def _build_create_body(args, client, project_id) -> dict:
         # Cascade install of MCP servers referenced by the agent card
         if getattr(args, "cascade_mcp", False):
             for mp_mcp_id in card.get("suitableCatalogMcpServersIds") or []:
-                project_mcp_id = _ensure_mcp_from_marketplace(client, project_id, mp_mcp_id)
+                project_mcp_id = _ensure_mcp_from_marketplace(
+                    client, project_id, mp_mcp_id,
+                    instance_type_id=args.instance_type_id)
                 cascade_mcp_ids.append(project_mcp_id)
                 print(f"cascade: MCP {mp_mcp_id} -> project MCP {project_mcp_id}",
                       file=sys.stderr)
