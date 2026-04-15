@@ -627,18 +627,3 @@ class CloudruAiAgentsClient:
             headers=self._headers(),
         )
 
-    # ---- Pricing ----
-
-    def get_price(self, project_id: str, *, instance_type_id: str = "",
-                  min_scale: int = 1, max_scale: int = 1) -> httpx.Response:
-        """Pricing estimate for an instance-type at a scale range.
-
-        Same endpoint the UI calls on every create form — returns per-hour and
-        per-minute costs plus implicit GPU/CPU/RAM breakdown.
-        """
-        params: Dict[str, Any] = {"instanceTypeId": instance_type_id,
-                                   "minScale": min_scale, "maxScale": max_scale}
-        return _request_with_retry(
-            self._client, "GET", f"/u-api/ai-agents/v1/{project_id}/price",
-            params=params, headers=self._headers(),
-        )

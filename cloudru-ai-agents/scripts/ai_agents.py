@@ -361,15 +361,6 @@ def build_parser():
     p.add_argument("--params-json", help="JSON for params field")
     p.add_argument("--context-id")
 
-    # ---- pricing ----
-    pricing = top.add_parser("pricing", help="Estimate instance-type cost (same endpoint UI uses)")
-    prsub = pricing.add_subparsers(dest="subcommand", required=True)
-    p = prsub.add_parser("estimate", help="Get price for an instanceType at a scale range")
-    p.add_argument("--instance-type-id", default="",
-        help="Instance type ID (empty = base quota)")
-    p.add_argument("--min-scale", type=int, default=1)
-    p.add_argument("--max-scale", type=int, default=1)
-
     return parser
 
 
