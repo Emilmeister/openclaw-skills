@@ -3,7 +3,7 @@
 ## Base URLs
 
 - **BFF (used by this skill):** `https://console.cloud.ru/u-api/ai-agents/v1`
-- Raw public API: `https://ai-agents.api.cloud.ru/api/v1` — **has server-side bugs on POST /agents** (nil pointer / invalid UUID on missing defaults). Skill uses BFF; same IAM bearer works for both.
+- Raw public API: `https://ai-agents.api.cloud.ru/api/v1` — also accepts the IAM bearer but has the same nil-deref class on create endpoints (expects a full-shaped body). Skill uses BFF.
 - IAM auth: `https://iam.api.cloud.ru/api/v1/auth/token`
 - A2A (agent runtime): `https://{agent_id}-agent.ai-agent.inference.cloud.ru/a2a/...`
 
@@ -317,7 +317,8 @@ Worker list is replaced via `PUT /evo-claws/{e}/options/agents` with body `{"age
 - **Project info returns quotas under key `quotes`** (typo preserved).
 - **Empty strings break proto decoder**: `accessToken: ""`, empty arrays on required fields → 400 `unexpected token`. Omit the field entirely.
 - **Scaling `_meta.scalingRulesType="rps"` is required** when any scaling block is present (even with just minScale/maxScale); server rejects otherwise with "unexpected scaling rule".
-- **Raw `/api/v1/` on `ai-agents.api.cloud.ru` returns nil pointer on POST /agents.** Use BFF at `console.cloud.ru` — same bearer, BFF injects required defaults (`serviceAccountId`, `logGroupId`).
+- **BFF returns HTTP 500 `nil pointer dereference` on any create with a minimal body.** `POST /agents`, `/agentSystems`, `/mcpServers` all require the full UI-shaped payload (scaling / runtimeOptions / memoryOptions / integrationOptions / authOptions / logging / autoUpdateOptions). BFF does NOT inject defaults server-side — the CLI does, via `apply_bff_*_defaults` helpers. If you send raw requests, mirror the UI payload (see `examples.md`).
+- **Raw `/api/v1/` at `ai-agents.api.cloud.ru` is broken on POST /agents** (same nil-deref class). Use BFF at `console.cloud.ru/u-api/ai-agents/v1/`.
 - **instanceTypes returns `[]` without `?isActive=true`.**
 - **`createdBy` is an IAM SA UUID** — UI shows "неизвестный пользователь" because it resolves users only.
 - **GET `/evo-claws/{e}/options/agents` returns 500** `unknown field OpenClawGatewayToken` (BFF bug, server-side). Read the full claw object instead.

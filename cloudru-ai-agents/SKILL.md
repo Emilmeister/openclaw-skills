@@ -8,7 +8,7 @@ description: Manage Cloud.ru AI Agents platform — CRUD, lifecycle, triggers, w
 
 ## What this skill does
 
-Full CLI for Cloud.ru Evolution AI Agents BFF (`console.cloud.ru/u-api/ai-agents/v1`). Parity with the web UI across **all 11 resource types**:
+Full CLI for Cloud.ru Evolution AI Agents BFF (`console.cloud.ru/u-api/ai-agents/v1`). Parity with the web UI across **all 12 command groups**:
 
 | Group | Purpose |
 |---|---|
@@ -74,7 +74,7 @@ python scripts/ai_agents.py agents create \
 python scripts/ai_agents.py agents wait <agent_id>
 ```
 
-`--cascade-mcp` auto-installs any MCPs referenced in `card.suitableCatalogMcpServersIds`, reusing existing project MCPs by card id.
+`--cascade-mcp` auto-installs any MCPs referenced in `card.suitableCatalogMcpServersIds`, reusing existing project MCPs by card id. Installed MCPs get a deterministic name `cascade-mcp-<first-8-chars-of-card-uuid>` so repeat runs are idempotent.
 
 ### Custom agent with system prompt, model, scaling, MCPs
 
@@ -94,10 +94,10 @@ python scripts/ai_agents.py agents create \
 ### Lifecycle
 
 ```bash
-python scripts/ai_agents.py agents suspend <id>       # остановить (сохраняет состояние)
+python scripts/ai_agents.py agents suspend <id>       # pause (state preserved)
 python scripts/ai_agents.py agents resume <id>
-python scripts/ai_agents.py agents delete <id> --yes  # безвозвратно
-python scripts/ai_agents.py agents history <id>       # лог правок
+python scripts/ai_agents.py agents delete <id> --yes  # permanent (soft-delete, then GC)
+python scripts/ai_agents.py agents history <id>       # audit log of edits
 ```
 
 ### Attach a cron trigger
@@ -219,7 +219,8 @@ python scripts/ai_agents.py marketplace get-agent <card_id>
 
 ## Important behaviors and gotchas
 
-- **Empty fields break protobuf:** never send `""` for optional string fields (e.g. `accessToken`); either set or omit. CLI handles this for flag-driven inputs; if you use `--config-json`, mind it.
+- **Empty strings on required *string* fields break protobuf** (e.g. `skillSource.gitSource.accessToken: ""` → 400 unexpected token). Omit the key instead. Fields that the server treats as optional *flags* (e.g. `logging.logGroupId: ""` with `isEnabledLogging=false`) are accepted — the CLI defaults follow this pattern.
+- **BFF does NOT inject defaults on create.** `POST /agents`, `POST /agentSystems`, `POST /mcpServers` all nil-deref with HTTP 500 on a minimal body. The CLI seeds the full UI-shaped body (scaling / runtimeOptions / memoryOptions / integrationOptions) automatically via `apply_bff_*_defaults`. If you build a body yourself via `--config-json`, include the same structure.
 - **`metadata` is `map<string,string>`:** list/dict values must be JSON-serialized strings. Skills CLI auto-serializes these.
 - **Scaling requires `_meta.scalingRulesType="rps"` and a matching rule** — CLI's `--min-scale/--max-scale/--rps` seed this automatically.
 - **Deploy vs orchestrator scaling nesting differs:** agents → `options.scaling`, MCP → top-level `scaling`, systems → `orchestratorOptions.scaling`. CLI hides this.
