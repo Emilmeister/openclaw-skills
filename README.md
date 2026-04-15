@@ -1,57 +1,80 @@
-# Cloud.ru Skills for AI Agents
+# Cloud.ru Skills для AI-агентов
 
-Universal skills for working with [Cloud.ru](https://cloud.ru) services from any AI coding agent.
+Универсальные скиллы для работы с сервисами [Cloud.ru](https://cloud.ru) из любого AI-агента для разработки.
 
-## Available skills
+## Доступные скиллы
 
-| Skill | Description |
-|-------|-------------|
-| **cloudru-account-setup** | Create a Cloud.ru service account, Foundation Models API key, and IAM access key |
-| **cloudru-foundation-models** | Work with Cloud.ru Foundation Models API: list models, call completions |
-| **cloudru-ml-inference** | Deploy and manage ML models on Cloud.ru ML Inference (GPU) |
-| **cloudru-vm** | Create and manage Cloud.ru virtual machines |
+| Скилл | Описание |
+|-------|----------|
+| **cloudru-account-setup** | Создание сервисного аккаунта, API-ключа Foundation Models и IAM access key |
+| **cloudru-foundation-models** | Работа с Foundation Models API: список моделей, вызов completions |
+| **cloudru-ml-inference** | Деплой и управление ML-моделями на Cloud.ru ML Inference (GPU) |
+| **cloudru-vm** | Создание и управление виртуальными машинами Cloud.ru |
+| **cloudru-managed-rag** | RAG-пайплайн: базы знаний, семантический поиск, Q&A с LLM |
 
-## Quick start
+## Быстрый старт
 
-### 1. Set up credentials
+### 1. Настройка креденшалов
 
-Use the `cloudru-account-setup` skill (browser-assisted) or set environment variables manually:
-
-```bash
-export CP_CONSOLE_KEY_ID="<your-key-id>"
-export CP_CONSOLE_SECRET="<your-secret>"
-export PROJECT_ID="<your-project-uuid>"
-export CLOUD_RU_FOUNDATION_MODELS_API_KEY="<your-fm-api-key>"
-```
-
-### 2. Install dependencies
-
-ML Inference and VM skills require only `httpx`:
+Используйте скилл `cloudru-account-setup` (через браузер) или задайте переменные окружения вручную:
 
 ```bash
-pip install httpx
+export CP_CONSOLE_KEY_ID="<ваш-key-id>"
+export CP_CONSOLE_SECRET="<ваш-secret>"
+export PROJECT_ID="<uuid-проекта>"
+export CLOUD_RU_FOUNDATION_MODELS_API_KEY="<ваш-fm-api-key>"
 ```
 
-### 3. Deploy a model (ML Inference)
+### 2. Установка зависимостей
+
+```bash
+pip install httpx                # все скиллы
+pip install boto3                # managed-rag (загрузка в S3)
+pip install playwright           # account-setup (логин через браузер)
+playwright install chromium      # account-setup (однократно)
+```
+
+### 3. Вызов Foundation Model
+
+```bash
+python cloudru-foundation-models/scripts/fm.py models
+python cloudru-foundation-models/scripts/fm.py call "t-tech/T-lite-it-1.0" --prompt "Привет!"
+```
+
+### 4. Деплой модели (ML Inference)
 
 ```bash
 python cloudru-ml-inference/scripts/ml_inference.py catalog
-python cloudru-ml-inference/scripts/ml_inference.py deploy <model_card_id> --name "my-model"
-python cloudru-ml-inference/scripts/ml_inference.py call <model_run_id> --prompt "Hello!"
+python cloudru-ml-inference/scripts/ml_inference.py deploy <model_card_id> --name "my-model" --wait
+python cloudru-ml-inference/scripts/ml_inference.py call <model_run_id> --prompt "Привет!" --with-auth
 ```
 
-### 4. Create a virtual machine
+### 5. Создание виртуальной машины
 
 ```bash
 python cloudru-vm/scripts/vm.py flavors
 python cloudru-vm/scripts/vm.py create \
   --name my-vm --flavor-name lowcost10-2-4 --image-name ubuntu-22.04 \
   --zone-name ru.AZ-1 --disk-size 20 --disk-type-name SSD \
-  --login user1 --ssh-key-file ~/.ssh/id_ed25519.pub
+  --login user1 --ssh-key-file ~/.ssh/id_ed25519.pub \
+  --wait --floating-ip
 ```
 
-## Usage with AI agents
+### 6. RAG-пайплайн
 
-Each skill folder contains a `SKILL.md` file that serves as the entry point. Point your agent to the relevant `SKILL.md` and it will have all the instructions it needs.
+```bash
+python cloudru-managed-rag/scripts/managed_rag.py setup \
+  --docs-path ./docs --kb-name "my-kb" --bucket-name "my-bucket"
+python cloudru-managed-rag/scripts/managed_rag.py search --query "ваш вопрос"
+python cloudru-managed-rag/scripts/managed_rag.py ask --query "ваш вопрос"
+```
 
-The skills are designed to be agent-agnostic — they work with Claude Code, Cursor, Windsurf, Cline, Aider, and any other agent that can read markdown instructions and run Python scripts.
+## Кросс-скилловые сценарии
+
+См. [WORKFLOW.md](WORKFLOW.md) — матрица выбора FM API vs ML Inference и пошаговый гайд: креденшалы → деплой модели → VM → хостинг приложения.
+
+## Использование с AI-агентами
+
+В каждой папке скилла есть файл `SKILL.md` — точка входа для агента. Укажите агенту на нужный `SKILL.md`, и он получит все необходимые инструкции.
+
+Скиллы агент-агностичны — работают с Claude Code, Cursor, Windsurf, Cline, Aider и любым другим агентом, который умеет читать markdown и запускать Python-скрипты.

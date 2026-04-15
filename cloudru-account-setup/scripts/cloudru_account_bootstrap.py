@@ -4,24 +4,24 @@
 Creates a service account, creates an API key for Foundation Models,
 and prints a JSON summary with the credentials.
 
-This script intentionally uses only the Python standard library.
+Requires: httpx
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
-import ssl
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
-from urllib.error import HTTPError, URLError
-from urllib.parse import parse_qs, unquote, urlparse
-from urllib.request import Request, urlopen
+from urllib.parse import parse_qs, unquote, urlencode, urlparse
 
-context = ssl._create_unverified_context()
+import httpx
+
+_ALLOWED_HOSTS = frozenset({"console.cloud.ru", "iam.api.cloud.ru"})
 
 SERVICE_ACCOUNT_URL = "https://console.cloud.ru/u-api/bff-console/v2/service-accounts/add"
 SERVICE_ACCOUNT_LIST_URL = "https://console.cloud.ru/u-api/bff-console/v2/service-accounts"
@@ -140,6 +140,11 @@ def parse_args() -> argparse.Namespace:
         "--skip-access-key",
         action="store_true",
         help="Skip access key creation (only create service account and API key).",
+    )
+    parser.add_argument(
+        "--from-stdin",
+        action="store_true",
+        help="Read all parameters as JSON from stdin (used by browser_login.py).",
     )
     parser.add_argument(
         "--dry-run",
@@ -288,9 +293,8 @@ def request_json(
     query_params: Optional[Dict[str, str]] = None,
 ) -> Any:
     if query_params:
-        from urllib.parse import urlencode
         url = f"{url}?{urlencode(query_params)}"
-    headers = {
+    headers: Dict[str, str] = {
         "Accept": "application/json",
         "User-Agent": "PostmanRuntime/7.48.0",
     }
@@ -301,17 +305,23 @@ def request_json(
         headers["Content-Type"] = "application/json"
         data = json.dumps(json_body).encode("utf-8")
 
-    request = Request(url=url, data=data, headers=headers, method=method)
+    parsed_url = urlparse(url)
+    if parsed_url.scheme not in ("https",):
+        raise BootstrapError(f"Only HTTPS URLs are allowed, got: {parsed_url.scheme}")
+    hostname = parsed_url.hostname or ""
+    if hostname not in _ALLOWED_HOSTS:
+        raise BootstrapError(f"Host '{hostname}' is not in the allowed list: {_ALLOWED_HOSTS}")
+
     try:
-        with urlopen(request, timeout=30, context=context) as response:
-            raw = response.read().decode("utf-8")
+        with httpx.Client(verify=True, timeout=30) as client:
+            resp = client.request(method, url, headers=headers, content=data)
+            if resp.status_code >= 400:
+                raise BootstrapError(f"{method} {url} failed with HTTP {resp.status_code}")
+            raw = resp.text
             if not raw:
                 return None
             return json.loads(raw)
-    except HTTPError as exc:
-        payload = exc.read().decode("utf-8", errors="replace")
-        raise BootstrapError(f"{method} {url} failed with HTTP {exc.code}: {payload}") from exc
-    except URLError as exc:
+    except httpx.HTTPError as exc:
         raise BootstrapError(f"{method} {url} failed: {exc}") from exc
 
 
@@ -431,7 +441,7 @@ def ensure_service_roles(token: str, sa_id: str, project_id: str, roles: List[st
 
     PATCH /u-api/bff-console/v2/service-accounts/{sa_id}
     Body: {"projectId": "...", "serviceRoles": {"adds": [...], "removes": []}}
-    Accepts IAM bearer or console OIDC bearer.
+    Accepts an IAM bearer OR a console OIDC bearer.
     """
     url = f"https://console.cloud.ru/u-api/bff-console/v2/service-accounts/{sa_id}"
     body = {
@@ -486,6 +496,19 @@ def build_result(
 
 def main() -> int:
     args = parse_args()
+
+    # --from-stdin mode: read all parameters as JSON from stdin
+    if args.from_stdin:
+        stdin_data = json.loads(sys.stdin.read())
+        args.project_url = stdin_data.get("project_url", args.project_url)
+        args.token = stdin_data.get("token", args.token)
+        if stdin_data.get("customer_id"):
+            args.customer_id = stdin_data["customer_id"]
+        if stdin_data.get("service_account_name"):
+            args.service_account_name = stdin_data["service_account_name"]
+        if stdin_data.get("skip_access_key"):
+            args.skip_access_key = True
+
     try:
         ctx = parse_project_context(
             project_url=args.project_url,
@@ -502,8 +525,10 @@ def main() -> int:
             return 0
 
         if not args.token:
+            args.token = os.environ.get("CLOUDRU_BOOTSTRAP_TOKEN", "")
+        if not args.token:
             raise BootstrapError(
-                "Missing --token. Pass the Cloud.ru console bearer token from the browser localStorage flow."
+                "Missing --token. Pass the Cloud.ru console bearer token via --token, --from-stdin, or CLOUDRU_BOOTSTRAP_TOKEN env var."
             )
 
         try:

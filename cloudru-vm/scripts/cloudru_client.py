@@ -3,6 +3,7 @@
 Only requires: httpx.
 """
 
+import re
 import time
 import uuid
 from functools import wraps
@@ -70,6 +71,17 @@ class IAMAuth(httpx.Auth):
             yield request
 
 
+_UUID_RE = re.compile(
+    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+)
+
+
+def _validate_uuid(value: str, label: str) -> str:
+    if not _UUID_RE.match(value):
+        raise ValueError(f"{label} must be a valid UUID, got: {value}")
+    return value
+
+
 class CloudruComputeClient:
     """Client for Cloud.ru Compute API (Virtual Machines service)."""
 
@@ -93,6 +105,7 @@ class CloudruComputeClient:
 
     @with_retry
     def get_vm(self, vm_id: str):
+        _validate_uuid(vm_id, "vm_id")
         return self._client.get(f"{API_PREFIX}/vms/{vm_id}", headers=self._headers())
 
     @with_retry
@@ -101,14 +114,17 @@ class CloudruComputeClient:
 
     @with_retry
     def update_vm(self, vm_id: str, payload: dict):
+        _validate_uuid(vm_id, "vm_id")
         return self._client.put(f"{API_PREFIX}/vms/{vm_id}", json=payload, headers=self._headers())
 
     @with_retry
     def delete_vm(self, vm_id: str):
+        _validate_uuid(vm_id, "vm_id")
         return self._client.delete(f"{API_PREFIX}/vms/{vm_id}", headers=self._headers())
 
     @with_retry
     def set_power(self, vm_id: str, state: str):
+        _validate_uuid(vm_id, "vm_id")
         return self._client.post(
             f"{API_PREFIX}/vms/{vm_id}/set-power",
             json={"state": state},
@@ -117,10 +133,12 @@ class CloudruComputeClient:
 
     @with_retry
     def get_vnc(self, vm_id: str):
+        _validate_uuid(vm_id, "vm_id")
         return self._client.post(f"{API_PREFIX}/vms/{vm_id}/get-vnc", headers=self._headers())
 
     @with_retry
     def remote_console(self, vm_id: str, protocol: str = "vnc"):
+        _validate_uuid(vm_id, "vm_id")
         return self._client.post(
             f"{API_PREFIX}/vms/{vm_id}/remote-console",
             json={"protocol": protocol},
@@ -136,6 +154,7 @@ class CloudruComputeClient:
 
     @with_retry
     def get_disk(self, disk_id: str):
+        _validate_uuid(disk_id, "disk_id")
         return self._client.get(f"{API_PREFIX}/disks/{disk_id}", headers=self._headers())
 
     @with_retry
@@ -144,14 +163,17 @@ class CloudruComputeClient:
 
     @with_retry
     def delete_disk(self, disk_id: str):
+        _validate_uuid(disk_id, "disk_id")
         return self._client.delete(f"{API_PREFIX}/disks/{disk_id}", headers=self._headers())
 
     @with_retry
     def attach_disk(self, disk_id: str, payload: dict):
+        _validate_uuid(disk_id, "disk_id")
         return self._client.post(f"{API_PREFIX}/disks/{disk_id}/attach", json=payload, headers=self._headers())
 
     @with_retry
     def detach_disk(self, disk_id: str, payload: dict):
+        _validate_uuid(disk_id, "disk_id")
         return self._client.post(f"{API_PREFIX}/disks/{disk_id}/detach", json=payload, headers=self._headers())
 
     # --- Flavors ---

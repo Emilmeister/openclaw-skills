@@ -6,6 +6,12 @@ import sys
 
 from cloudru_client import ManagedRagClient
 
+_ALLOWED_ENV_KEYS = frozenset({
+    "CP_CONSOLE_KEY_ID", "CP_CONSOLE_SECRET", "PROJECT_ID",
+    "CLOUD_RU_FOUNDATION_MODELS_API_KEY", "CLOUDRU_ENV_FILE",
+    "MANAGED_RAG_KB_ID", "MANAGED_RAG_SEARCH_URL",
+})
+
 
 def _load_dotenv():
     """Read .env file (key=value lines) into os.environ if keys not already set.
@@ -25,15 +31,12 @@ def _load_dotenv():
                         continue
                     if "=" not in line:
                         continue
-                    # Strip "export " prefix if present
-                    if line.startswith("export "):
-                        line = line[7:]
                     key, _, value = line.partition("=")
                     key = key.strip()
                     value = value.strip()
                     if len(value) >= 2 and value[0] == value[-1] and value[0] in ('"', "'"):
                         value = value[1:-1]
-                    if key not in os.environ:
+                    if key in _ALLOWED_ENV_KEYS and key not in os.environ:
                         os.environ[key] = value
             break
 
@@ -61,7 +64,6 @@ def build_client():
 def check_response(response, action: str):
     if not response.is_success:
         print(f"Error {action}: HTTP {response.status_code}", file=sys.stderr)
-        print(response.text, file=sys.stderr)
         sys.exit(1)
 
 

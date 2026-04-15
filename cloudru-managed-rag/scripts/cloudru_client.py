@@ -7,9 +7,12 @@ Only requires: httpx.
 from __future__ import annotations
 
 import os
+import re
+import threading
 import time
 import uuid
 from functools import wraps
+from urllib.parse import urlparse
 
 import httpx
 
@@ -35,6 +38,7 @@ def with_retry(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         last_exc = None
+        response = None
         for attempt in range(MAX_RETRIES):
             try:
                 response = func(*args, **kwargs)
@@ -48,6 +52,8 @@ def with_retry(func):
             time.sleep(sleep_time)
         if last_exc:
             raise last_exc
+        if response is not None:
+            response.raise_for_status()
         return response
 
     return wrapper
@@ -63,6 +69,11 @@ class IAMAuth(httpx.Auth):
         self.key_id = key_id
         self.key_secret = key_secret
         self._token: str | None = None
+        self._token_expires_at: float = 0.0
+        self._lock = threading.Lock()
+
+    def __getstate__(self):
+        raise TypeError("IAMAuth objects cannot be pickled (contains sensitive token)")
 
     def _fetch_token(self):
         # Use a fresh client to bypass corporate proxy
@@ -73,22 +84,31 @@ class IAMAuth(httpx.Auth):
                 timeout=30,
             )
             resp.raise_for_status()
-            self._token = resp.json()["access_token"]
+            data = resp.json()
+            self._token = data["access_token"]
+            expires_in = data.get("expires_in", 3600)
+            self._token_expires_at = time.monotonic() + expires_in - 60
+
+    def _is_token_expired(self) -> bool:
+        return not self._token or time.monotonic() >= self._token_expires_at
 
     def sync_auth_flow(self, request):
-        if not self._token:
-            self._fetch_token()
+        with self._lock:
+            if self._is_token_expired():
+                self._fetch_token()
         request.headers["Authorization"] = f"Bearer {self._token}"
         response = yield request
         if response.status_code in (401, 403):
-            self._fetch_token()
+            with self._lock:
+                self._fetch_token()
             request.headers["Authorization"] = f"Bearer {self._token}"
             yield request
 
     @property
     def token(self):
-        if not self._token:
-            self._fetch_token()
+        with self._lock:
+            if self._is_token_expired():
+                self._fetch_token()
         return self._token
 
 
@@ -107,24 +127,51 @@ class ManagedRagClient:
             transport=httpx.HTTPTransport(proxy=None),
         )
         self._search_clients: dict[str, httpx.Client] = {}
+        self._search_clients_lock = threading.Lock()
 
     def _headers(self):
         return {"X-Request-ID": str(uuid.uuid4())}
+
+    _KB_ID_RE = re.compile(
+        r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    )
+
+    @staticmethod
+    def _validate_search_url(url: str) -> None:
+        """Validate that the search URL points to a trusted Cloud.ru domain."""
+        parsed = urlparse(url)
+        if parsed.scheme != "https":
+            raise ValueError(f"Search URL must use HTTPS, got: {parsed.scheme}")
+        if parsed.username or parsed.password:
+            raise ValueError("Search URL must not contain user credentials")
+        host = parsed.hostname or ""
+        expected_suffix = f".{SEARCH_DOMAIN}"
+        if not host.endswith(expected_suffix):
+            raise ValueError(
+                f"Search URL host '{host}' is not under trusted domain '{SEARCH_DOMAIN}'"
+            )
+        subdomain = host[: -len(expected_suffix)]
+        if not ManagedRagClient._KB_ID_RE.match(subdomain):
+            raise ValueError(
+                f"Search URL subdomain '{subdomain}' is not a valid KB UUID"
+            )
 
     def _search_client(self, search_url: str) -> httpx.Client:
         """Get or create a search client for a specific KB search URL."""
         if not search_url.startswith("https://"):
             search_url = f"https://{search_url}"
         search_url = search_url.rstrip("/")
+        self._validate_search_url(search_url)
 
-        if search_url not in self._search_clients:
-            self._search_clients[search_url] = httpx.Client(
-                base_url=search_url,
-                transport=httpx.HTTPTransport(proxy=None),
-                auth=self.auth,
-                timeout=120,
-            )
-        return self._search_clients[search_url]
+        with self._search_clients_lock:
+            if search_url not in self._search_clients:
+                self._search_clients[search_url] = httpx.Client(
+                    base_url=search_url,
+                    transport=httpx.HTTPTransport(proxy=None),
+                    auth=self.auth,
+                    timeout=120,
+                )
+            return self._search_clients[search_url]
 
     # --- Public API: Knowledge Base CRUD ---
 

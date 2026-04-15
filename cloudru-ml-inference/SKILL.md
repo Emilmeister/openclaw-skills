@@ -138,7 +138,7 @@ This means you can use it as a drop-in replacement for OpenAI in any tool:
 from openai import OpenAI
 client = OpenAI(
     base_url="https://<model_run_id>.modelrun.inference.cloud.ru/v1",
-    api_key="not-needed",  # unless isEnabledAuth: true
+    api_key="<IAM_TOKEN>",  # required — isEnabledAuth is true by default
 )
 response = client.chat.completions.create(
     model="model-name",
@@ -161,8 +161,8 @@ export OPENAI_API_KEYS="$CLOUD_RU_FOUNDATION_MODELS_API_KEY;not-needed"
 
 ### Auth: off vs on (`isEnabledAuth`)
 
-- **`isEnabledAuth: false`** (default from catalog deploy) — the model endpoint is publicly accessible, no API key or token needed. Anyone with the URL can call it. Good for development and internal use.
-- **`isEnabledAuth: true`** — every request must include `Authorization: Bearer <IAM_TOKEN>`. The IAM token is obtained from `https://iam.api.cloud.ru/api/v1/auth/token` using `CP_CONSOLE_KEY_ID` + `CP_CONSOLE_SECRET`. The `CloudruInferenceClient` handles this automatically when you pass `use_auth=True`.
+- **`isEnabledAuth: true`** (default) — every request must include `Authorization: Bearer <IAM_TOKEN>`. The IAM token is obtained from `https://iam.api.cloud.ru/api/v1/auth/token` using `CP_CONSOLE_KEY_ID` + `CP_CONSOLE_SECRET`. The `CloudruInferenceClient` handles this automatically when you pass `use_auth=True`. **Always use this for production deployments.**
+- **`isEnabledAuth: false`** — the model endpoint is publicly accessible, no API key or token needed. Anyone with the URL can call it. **Security warning:** only use this in isolated development environments; never in production.
 - To call with auth via CLI: add `--with-auth` flag to `call`, `embed`, `rerank`, `ping` commands.
 
 ### Building custom Python code

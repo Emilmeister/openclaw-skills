@@ -4,6 +4,8 @@ Replaces the inference-clients SDK and all pkg.sbercloud.tech dependencies.
 Only requires: httpx.
 """
 
+import re
+import threading
 import time
 import uuid
 from functools import wraps
@@ -14,6 +16,7 @@ IAM_URL = "https://iam.api.cloud.ru"
 BFF_URL = "https://console.cloud.ru"
 BFF_PREFIX = "/u-api/inference/model-run/v1"
 INFERENCE_DOMAIN = "modelrun.inference.cloud.ru"
+_MODEL_RUN_ID_RE = re.compile(r"^[a-zA-Z0-9-]+$")
 
 MAX_RETRIES = 3
 RETRY_STATUSES = (502, 503, 504)
@@ -29,6 +32,7 @@ def with_retry(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         last_exc = None
+        response = None
         for attempt in range(MAX_RETRIES):
             try:
                 response = func(*args, **kwargs)
@@ -42,6 +46,8 @@ def with_retry(func):
             time.sleep(sleep)
         if last_exc:
             raise last_exc
+        if response is not None:
+            response.raise_for_status()
         return response
 
     return wrapper
@@ -57,6 +63,8 @@ class IAMAuth(httpx.Auth):
         self.key_id = key_id
         self.key_secret = key_secret
         self._token: str | None = None
+        self._token_expires_at: float = 0.0
+        self._lock = threading.Lock()
 
     def _fetch_token(self):
         resp = httpx.post(
@@ -65,22 +73,31 @@ class IAMAuth(httpx.Auth):
             timeout=30,
         )
         resp.raise_for_status()
-        self._token = resp.json()["access_token"]
+        data = resp.json()
+        self._token = data["access_token"]
+        expires_in = data.get("expires_in", 3600)
+        self._token_expires_at = time.monotonic() + expires_in - 60
+
+    def _is_token_expired(self) -> bool:
+        return not self._token or time.monotonic() >= self._token_expires_at
 
     def sync_auth_flow(self, request):
-        if not self._token:
-            self._fetch_token()
+        with self._lock:
+            if self._is_token_expired():
+                self._fetch_token()
         request.headers["Authorization"] = f"Bearer {self._token}"
         response = yield request
         if response.status_code in (401, 403):
-            self._fetch_token()
+            with self._lock:
+                self._fetch_token()
             request.headers["Authorization"] = f"Bearer {self._token}"
             yield request
 
     @property
     def token(self):
-        if not self._token:
-            self._fetch_token()
+        with self._lock:
+            if self._is_token_expired():
+                self._fetch_token()
         return self._token
 
 
@@ -199,6 +216,8 @@ class CloudruInferenceClient:
     # --- Inference: call deployed models ---
 
     def _inference_url(self, model_run_id: str, path: str) -> str:
+        if not _MODEL_RUN_ID_RE.match(model_run_id):
+            raise ValueError(f"Invalid model_run_id: must be alphanumeric/hyphens only, got '{model_run_id}'")
         return f"https://{model_run_id}.{INFERENCE_DOMAIN}{path}"
 
     @with_retry

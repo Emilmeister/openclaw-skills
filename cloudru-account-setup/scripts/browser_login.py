@@ -290,13 +290,16 @@ def main():
 
     login_result = {
         "project_url": project_url,
-        "token": token,
+        "token": token[:8] + "..." if token else None,
+        "token_length": len(token) if token else 0,
         "project_id": ids.get("project_id"),
         "customer_id": ids.get("customer_id"),
     }
 
     if args.no_bootstrap:
-        log("SUCCESS (--no-bootstrap mode, printing token JSON)")
+        log("SUCCESS (--no-bootstrap mode)")
+        log("Token is available but not printed to stdout for security.")
+        log("Use the full browser_login flow (without --no-bootstrap) to pass it to bootstrap automatically.")
         print(json.dumps(login_result, indent=2))
         return
 
@@ -305,19 +308,18 @@ def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     bootstrap_script = os.path.join(script_dir, "cloudru_account_bootstrap.py")
 
-    cmd = [
-        sys.executable, bootstrap_script,
-        "--project-url", project_url,
-        "--token", token,
-        "--service-account-name", args.service_account_name,
-    ]
-    if ids.get("customer_id"):
-        cmd += ["--customer-id", ids["customer_id"]]
-    if args.skip_access_key:
-        cmd += ["--skip-access-key"]
+    # Pass all user-controlled data via stdin JSON to avoid leaking in process list or env
+    stdin_data = json.dumps({
+        "project_url": project_url,
+        "token": token,
+        "customer_id": ids.get("customer_id", ""),
+        "service_account_name": args.service_account_name,
+        "skip_access_key": args.skip_access_key,
+    })
 
-    log(f"  Command: python {os.path.basename(bootstrap_script)} --project-url '...' --token '...'")
-    proc = subprocess.run(cmd, capture_output=False)
+    cmd = [sys.executable, bootstrap_script, "--from-stdin"]
+    log(f"  Command: python {os.path.basename(bootstrap_script)} --from-stdin")
+    proc = subprocess.run(cmd, input=stdin_data, text=True, capture_output=False)
 
     if proc.returncode != 0:
         log(f"Bootstrap failed with exit code {proc.returncode}")

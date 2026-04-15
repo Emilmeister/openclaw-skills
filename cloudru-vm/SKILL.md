@@ -55,18 +55,7 @@ python vm.py list --state running
 # Get VM details
 python vm.py get <vm_id>
 
-# Create VM with password auth
-python vm.py create \
-  --name my-vm \
-  --flavor-name lowcost10-2-4 \
-  --image-name ubuntu-22.04 \
-  --zone-name ru.AZ-1 \
-  --disk-size 20 \
-  --disk-type-name SSD \
-  --login user1 \
-  --password 'MySecurePass123!'
-
-# Create VM with SSH key auth (recommended for agent use)
+# Create VM with SSH key auth (recommended — avoids exposing secrets in process list)
 python vm.py create \
   --name my-vm \
   --flavor-name lowcost10-2-4 \
