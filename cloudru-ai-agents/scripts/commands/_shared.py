@@ -15,7 +15,12 @@ def dig(d: dict, *keys: str) -> dict:
 
 
 def apply_scaling(scaling: dict, args) -> None:
-    """Populate a scaling{} dict with minScale/maxScale/keepAlive/rps."""
+    """Populate a scaling{} dict with minScale/maxScale/keepAlive/rps.
+
+    Server requires `_meta.scalingRulesType` and a matching rule when any
+    scaling field is set, so we always include them with RPS defaults."""
+    scaling.setdefault("_meta", {"scalingRulesType": "rps"})
+    dig(scaling, "scalingRules", "rps").setdefault("value", 200)
     if getattr(args, "min_scale", None) is not None:
         scaling["minScale"] = args.min_scale
     if getattr(args, "max_scale", None) is not None:
@@ -26,7 +31,7 @@ def apply_scaling(scaling: dict, args) -> None:
             "hours": 0, "minutes": args.keep_alive_min, "seconds": 0,
         }
     if getattr(args, "rps", None) is not None:
-        dig(scaling, "scalingRules", "rps")["value"] = args.rps
+        scaling["scalingRules"]["rps"]["value"] = args.rps
 
 
 def apply_integration(body: dict, args) -> None:

@@ -118,10 +118,31 @@ def build_parser():
 
     p = ssub.add_parser("list"); _add_limit_offset(p)
     p = ssub.add_parser("get"); p.add_argument("system_id")
+    def _system_flags(p):
+        p.add_argument("--system-prompt", help="Orchestrator system prompt")
+        p.add_argument("--system-prompt-file")
+        p.add_argument("--model-name", help="Orchestrator LLM model")
+        p.add_argument("--temperature", type=float)
+        p.add_argument("--max-tokens", type=int)
+        p.add_argument("--agent-ids", help="Comma-separated agent UUIDs to include as members")
+        p.add_argument("--child-system-ids",
+            help="Comma-separated child agent-system UUIDs (nested systems)")
+        p.add_argument("--context-storage", type=lambda v: v.lower() == "true",
+            help="true|false — persistent context storage")
+        p.add_argument("--observability", type=lambda v: v.lower() == "true",
+            help="true|false — observability tracing")
+        add_common_scaling_flags(p)
+        add_common_integration_flags(p)
+
     p = ssub.add_parser("create")
     p.add_argument("--name"); p.add_argument("--description"); p.add_argument("--instance-type-id")
+    _system_flags(p)
     _add_config_source(p)
-    p = ssub.add_parser("update"); p.add_argument("system_id"); _add_config_source(p)
+
+    p = ssub.add_parser("update"); p.add_argument("system_id")
+    p.add_argument("--name"); p.add_argument("--description"); p.add_argument("--instance-type-id")
+    _system_flags(p)
+    _add_config_source(p)
     p = ssub.add_parser("delete"); p.add_argument("system_id"); p.add_argument("--yes", action="store_true")
     p = ssub.add_parser("suspend"); p.add_argument("system_id")
     p = ssub.add_parser("resume"); p.add_argument("system_id")
