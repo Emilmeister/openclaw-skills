@@ -38,18 +38,49 @@ def cmd_check_name(args):
     print_json(resp.json() if resp.text else {"available": True})
 
 
+def _build_schedule_body(args) -> dict:
+    """Build options.providerOptions.schedule from --cron/--timezone/--message-template."""
+    template = args.message_template or "Пользователь прислал сообщение: {{textMessage}}"
+    return {
+        "schedule": {
+            "config": {
+                "cronExpression": args.cron,
+                "timezone": args.timezone or "Europe/Moscow",
+            },
+            "events": {
+                "scheduleTriggered": {
+                    "eventLabel": "scheduleTriggered",
+                    "isEnabled": True,
+                    "messageRenderTemplate": template,
+                    "messageVariables": [
+                        {"variableLabel": "textMessage",
+                         "description": "Текст сообщения"},
+                    ],
+                },
+            },
+        }
+    }
+
+
 def cmd_create(args):
     body = load_config_from_args(args)
-    if not body:
-        print("Error: --config-json or --config-file required. Trigger body "
-              "schema is complex (externalTriggerOptions variant). See docs.",
-              file=sys.stderr)
-        sys.exit(1)
     if args.name:
         body["name"] = args.name
+    # High-level schedule flags
+    if getattr(args, "trigger_type", None) == "schedule" or getattr(args, "cron", None):
+        if not args.cron:
+            print("Error: --cron required for schedule trigger (e.g. '0 10 * * 2,4')",
+                  file=sys.stderr)
+            sys.exit(1)
+        body.setdefault("options", {}).setdefault("providerOptions", {}).update(
+            _build_schedule_body(args))
     if "name" not in body:
         print("Error: 'name' is required (letters+digits+hyphen, 5-50 chars)",
               file=sys.stderr)
+        sys.exit(1)
+    if not body.get("options", {}).get("providerOptions"):
+        print("Error: trigger options required — pass --trigger-type schedule "
+              "(+--cron) or full body via --config-json", file=sys.stderr)
         sys.exit(1)
     client, project_id = build_client()
     resp = client.create_agent_trigger(project_id, args.agent_id, body)

@@ -356,9 +356,16 @@ def build_parser():
     p = tsub.add_parser("check-name", help="Check if a trigger name is free")
     p.add_argument("agent_id"); p.add_argument("--name", required=True)
 
-    p = tsub.add_parser("create", help="Create trigger (pass --config-json with full body)")
+    p = tsub.add_parser("create",
+        help="Create trigger (schedule via flags, telegram via --config-json)")
     p.add_argument("agent_id")
     p.add_argument("--name", help="Trigger name (letters+digits+hyphen, 5-50 chars)")
+    p.add_argument("--trigger-type", choices=["schedule", "telegram"],
+        help="Schedule (cron) or Telegram (requires --config-json for secret refs)")
+    p.add_argument("--cron", help="Cron expression, e.g. '0 10 * * 2,4' (Tue,Thu at 10:00)")
+    p.add_argument("--timezone", help="Timezone for cron (default: Europe/Moscow)")
+    p.add_argument("--message-template",
+        help="Message template with {{textMessage}} placeholder")
     _add_config_source(p)
 
     p = tsub.add_parser("update")
