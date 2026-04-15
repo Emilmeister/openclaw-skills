@@ -38,6 +38,29 @@ def cmd_check_name(args):
     print_json(resp.json() if resp.text else {"available": True})
 
 
+TELEGRAM_EVENTS = [
+    "messageReceived", "messageDeleted", "messageEdited", "newChatCreated",
+    "userJoined", "userLeft", "callbackQuery", "channelPost", "editedChannelPost",
+]
+EMAIL_EVENTS = [
+    "emailReceived", "emailRead", "emailDeleted", "emailReplied",
+    "emailForwarded", "emailMarkedImportant", "emailMoved",
+]
+
+
+def _event_block(event_name: str, template: str, enabled: bool) -> dict:
+    if enabled:
+        return {
+            "eventLabel": event_name, "isEnabled": True,
+            "messageRenderTemplate": template,
+            "messageVariables": [
+                {"variableLabel": "textMessage", "description": "Текст сообщения"},
+            ],
+        }
+    return {"eventLabel": "", "isEnabled": False,
+            "messageRenderTemplate": "", "messageVariables": []}
+
+
 def _build_schedule_body(args) -> dict:
     """Build options.providerOptions.schedule from --cron/--timezone/--message-template."""
     template = args.message_template or "Пользователь прислал сообщение: {{textMessage}}"
@@ -62,25 +85,105 @@ def _build_schedule_body(args) -> dict:
     }
 
 
+def _build_telegram_body(args) -> dict:
+    """Build options.providerOptions.telegram from --bot-name/--bot-token-secret-id/--events.
+
+    Shape captured from UI POST: credentials.{botName, botToken.{id,version}} +
+    events.{messageReceived, messageDeleted, ...} where each unchecked event still
+    appears with isEnabled=false (server rejects missing event keys). Only one
+    event — messageReceived — is enabled by default, mirroring the UI.
+    """
+    template = args.message_template or "Пользователь прислал сообщение: {{textMessage}}"
+    enabled = {e.strip() for e in (args.tg_events or "messageReceived").split(",") if e.strip()}
+    for e in enabled:
+        if e not in TELEGRAM_EVENTS:
+            print(f"Error: unknown telegram event '{e}'. Valid: {','.join(TELEGRAM_EVENTS)}",
+                  file=sys.stderr)
+            sys.exit(1)
+    events = {e: _event_block(e, template, e in enabled) for e in TELEGRAM_EVENTS}
+    return {
+        "telegram": {
+            "events": events,
+            "credentials": {
+                "botName": args.bot_name,
+                "botToken": {
+                    "id": args.bot_token_secret_id,
+                    "version": args.bot_token_secret_version or 1,
+                },
+            },
+        }
+    }
+
+
+def _build_email_body(args) -> dict:
+    """Build options.providerOptions.email from --email-server/--email-port/--email-user/
+    --email-password-secret-id/--email-events.
+
+    Shape: credentials.{serverAddress, port, securityCertificate, username,
+    password.{id,version}} + events.{emailReceived, emailRead, ...}.
+    """
+    template = args.message_template or "Пользователь прислал сообщение: {{textMessage}}"
+    enabled = {e.strip() for e in (args.email_events or "emailReceived").split(",") if e.strip()}
+    for e in enabled:
+        if e not in EMAIL_EVENTS:
+            print(f"Error: unknown email event '{e}'. Valid: {','.join(EMAIL_EVENTS)}",
+                  file=sys.stderr)
+            sys.exit(1)
+    events = {e: _event_block(e, template, e in enabled) for e in EMAIL_EVENTS}
+    return {
+        "email": {
+            "events": events,
+            "credentials": {
+                "serverAddress": args.email_server,
+                "port": args.email_port or 993,
+                "securityCertificate": args.email_security or "SSL/TLS",
+                "username": args.email_user,
+                "password": {
+                    "id": args.email_password_secret_id,
+                    "version": args.email_password_secret_version or 1,
+                },
+            },
+        }
+    }
+
+
 def cmd_create(args):
     body = load_config_from_args(args)
     if args.name:
         body["name"] = args.name
+    trig_type = getattr(args, "trigger_type", None)
     # High-level schedule flags
-    if getattr(args, "trigger_type", None) == "schedule" or getattr(args, "cron", None):
+    if trig_type == "schedule" or getattr(args, "cron", None):
         if not args.cron:
             print("Error: --cron required for schedule trigger (e.g. '0 10 * * 2,4')",
                   file=sys.stderr)
             sys.exit(1)
         body.setdefault("options", {}).setdefault("providerOptions", {}).update(
             _build_schedule_body(args))
+    # High-level telegram flags
+    elif trig_type == "telegram":
+        if not args.bot_name or not args.bot_token_secret_id:
+            print("Error: --bot-name and --bot-token-secret-id required for telegram trigger",
+                  file=sys.stderr)
+            sys.exit(1)
+        body.setdefault("options", {}).setdefault("providerOptions", {}).update(
+            _build_telegram_body(args))
+    # High-level email flags
+    elif trig_type == "email":
+        required = ["email_server", "email_user", "email_password_secret_id"]
+        missing = [f"--{r.replace('_', '-')}" for r in required if not getattr(args, r, None)]
+        if missing:
+            print(f"Error: {', '.join(missing)} required for email trigger", file=sys.stderr)
+            sys.exit(1)
+        body.setdefault("options", {}).setdefault("providerOptions", {}).update(
+            _build_email_body(args))
     if "name" not in body:
         print("Error: 'name' is required (letters+digits+hyphen, 5-50 chars)",
               file=sys.stderr)
         sys.exit(1)
     if not body.get("options", {}).get("providerOptions"):
-        print("Error: trigger options required — pass --trigger-type schedule "
-              "(+--cron) or full body via --config-json", file=sys.stderr)
+        print("Error: trigger options required — pass --trigger-type schedule|telegram|email "
+              "(+flags) or full body via --config-json", file=sys.stderr)
         sys.exit(1)
     client, project_id = build_client()
     resp = client.create_agent_trigger(project_id, args.agent_id, body)

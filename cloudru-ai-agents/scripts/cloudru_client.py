@@ -494,6 +494,18 @@ class CloudruAiAgentsClient:
             headers=self._headers(),
         )
 
+    def create_workflow(self, project_id: str, body: dict) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "POST", f"/u-api/ai-agents/v1/{project_id}/workflows",
+            json=body, headers=self._headers(),
+        )
+
+    def update_workflow(self, project_id: str, workflow_id: str, body: dict) -> httpx.Response:
+        return _request_with_retry(
+            self._client, "PATCH", f"/u-api/ai-agents/v1/{project_id}/workflows/{workflow_id}",
+            json=body, headers=self._headers(),
+        )
+
     # ---- Triggers ----
 
     def list_agent_triggers(self, project_id: str, agent_id: str, *,

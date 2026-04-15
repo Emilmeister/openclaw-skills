@@ -78,9 +78,35 @@ def _apply_agent_option_flags(body: dict, args) -> None:
         body["neighbors"] = nbrs
 
 
+def _ensure_mcp_from_marketplace(client, project_id: str, marketplace_mcp_id: str) -> str:
+    """Return project MCP ID for a given marketplace card. Reuse existing if any,
+    otherwise create a fresh installation and return new ID."""
+    # Try to reuse: list project MCPs and match by marketplaceMcpServerId
+    resp = client.list_mcp_servers(project_id, limit=100, offset=0)
+    if resp.status_code == 200:
+        for m in resp.json().get("data", []):
+            src = m.get("imageSource") or {}
+            if src.get("marketplaceMcpServerId") == marketplace_mcp_id:
+                return m["id"]
+    # Create fresh
+    card_resp = client.get_marketplace_mcp_server(project_id, marketplace_mcp_id)
+    check_response(card_resp, f"fetching marketplace MCP card {marketplace_mcp_id}")
+    card = card_resp.json().get("predefinedMcpServer", card_resp.json())
+    body = {
+        "imageSource": {"marketplaceMcpServerId": marketplace_mcp_id},
+        "description": card.get("description", ""),
+    }
+    if card.get("exposedPorts"):
+        body["exposedPorts"] = card["exposedPorts"]
+    resp = client.create_mcp_server(project_id, body)
+    check_response(resp, f"cascade-creating MCP from marketplace {marketplace_mcp_id}")
+    return resp.json()["mcpServerId"]
+
+
 def _build_create_body(args, client, project_id) -> dict:
     """Combine --from-marketplace card + --config-json/file + simple flags into create body."""
     body: dict = load_config_from_args(args)
+    cascade_mcp_ids: list = []
     if args.from_marketplace:
         card_resp = client.get_marketplace_agent(project_id, args.from_marketplace)
         check_response(card_resp, f"fetching marketplace card {args.from_marketplace}")
@@ -92,6 +118,13 @@ def _build_create_body(args, client, project_id) -> dict:
         model_id = card.get("modelId")
         if model_id:
             dig(body, "options", "llm", "foundationModels").setdefault("modelName", model_id)
+        # Cascade install of MCP servers referenced by the agent card
+        if getattr(args, "cascade_mcp", False):
+            for mp_mcp_id in card.get("suitableCatalogMcpServersIds") or []:
+                project_mcp_id = _ensure_mcp_from_marketplace(client, project_id, mp_mcp_id)
+                cascade_mcp_ids.append(project_mcp_id)
+                print(f"cascade: MCP {mp_mcp_id} -> project MCP {project_mcp_id}",
+                      file=sys.stderr)
     else:
         body.setdefault("agentType", "AGENT_TYPE_CUSTOM")
     if args.name:
@@ -100,8 +133,8 @@ def _build_create_body(args, client, project_id) -> dict:
         body["description"] = args.description
     if args.instance_type_id:
         body["instanceTypeId"] = args.instance_type_id
-    # MCP: single (legacy) or multiple via --mcp-servers
-    mcp_ids: list = []
+    # MCP: single (legacy) or multiple via --mcp-servers, plus cascade-installed
+    mcp_ids: list = list(cascade_mcp_ids)
     if args.mcp_server_id:
         mcp_ids.append(args.mcp_server_id)
     if getattr(args, "mcp_servers", None):

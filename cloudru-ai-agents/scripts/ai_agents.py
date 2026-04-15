@@ -83,6 +83,9 @@ def build_parser():
     p.add_argument("--instance-type-id")
     p.add_argument("--mcp-server-id", help="Single MCP id to attach (see also --mcp-servers)")
     p.add_argument("--from-marketplace", help="Create from marketplace card ID")
+    p.add_argument("--cascade-mcp", action="store_true",
+        help="When used with --from-marketplace: auto-install MCP servers referenced "
+             "in card.suitableCatalogMcpServersIds (reusing existing project MCPs by card id)")
     _add_agent_option_flags(p)
     _add_config_source(p)
 
@@ -330,7 +333,8 @@ def build_parser():
     _add_config_source(p)
 
     # ---- workflows (Preview) ----
-    workflows = top.add_parser("workflows", help="AI Workflows (low-code, read-only via CLI)")
+    workflows = top.add_parser("workflows",
+        help="AI Workflows (low-code) — create-container/delete here, edit graph in IDE")
     wsub = workflows.add_subparsers(dest="subcommand", required=True)
     p = wsub.add_parser("list")
     p.add_argument("--search")
@@ -338,6 +342,16 @@ def build_parser():
         help="Comma-separated WORKFLOW_* statuses to include (ACTIVE/SUSPENDED/ON_CREATION/...)")
     _add_limit_offset(p)
     p = wsub.add_parser("get"); p.add_argument("workflow_id")
+    p = wsub.add_parser("create",
+        help="Create empty workflow container (edit graph afterwards in IDE)")
+    p.add_argument("--name", help="Workflow name")
+    p.add_argument("--description")
+    p.add_argument("--log-group-id", help="Cloud Logging group ID (default: project default)")
+    _add_config_source(p)
+    p = wsub.add_parser("update"); p.add_argument("workflow_id")
+    p.add_argument("--name"); p.add_argument("--description")
+    p.add_argument("--log-group-id")
+    _add_config_source(p)
     p = wsub.add_parser("delete"); p.add_argument("workflow_id"); p.add_argument("--yes", action="store_true")
 
     # ---- triggers ----
@@ -357,15 +371,41 @@ def build_parser():
     p.add_argument("agent_id"); p.add_argument("--name", required=True)
 
     p = tsub.add_parser("create",
-        help="Create trigger (schedule via flags, telegram via --config-json)")
+        help="Create trigger (schedule and telegram via flags; email via --config-json)")
     p.add_argument("agent_id")
     p.add_argument("--name", help="Trigger name (letters+digits+hyphen, 5-50 chars)")
-    p.add_argument("--trigger-type", choices=["schedule", "telegram"],
-        help="Schedule (cron) or Telegram (requires --config-json for secret refs)")
+    p.add_argument("--trigger-type", choices=["schedule", "telegram", "email"],
+        help="Schedule (cron), Telegram (bot token) or Email (IMAP credentials)")
+    # Schedule flags
     p.add_argument("--cron", help="Cron expression, e.g. '0 10 * * 2,4' (Tue,Thu at 10:00)")
     p.add_argument("--timezone", help="Timezone for cron (default: Europe/Moscow)")
     p.add_argument("--message-template",
         help="Message template with {{textMessage}} placeholder")
+    # Telegram flags
+    p.add_argument("--bot-name",
+        help="Telegram bot username (5-32 chars, e.g. 'my_bot')")
+    p.add_argument("--bot-token-secret-id",
+        help="Secret Manager secret UUID that stores @BotFather token")
+    p.add_argument("--bot-token-secret-version", type=int, default=1,
+        help="Secret version (default: 1)")
+    p.add_argument("--tg-events",
+        help="Comma-separated enabled events (default: messageReceived). "
+             "Valid: messageReceived,messageDeleted,messageEdited,newChatCreated,"
+             "userJoined,userLeft,callbackQuery,channelPost,editedChannelPost")
+    # Email flags
+    p.add_argument("--email-server", help="IMAP server address (e.g. imap.mail.ru)")
+    p.add_argument("--email-port", type=int, help="IMAP port (default: 993)")
+    p.add_argument("--email-security",
+        help="Security: SSL/TLS (default), STARTTLS, или без шифрования")
+    p.add_argument("--email-user", help="Mailbox username/email")
+    p.add_argument("--email-password-secret-id",
+        help="Secret Manager UUID holding mailbox password")
+    p.add_argument("--email-password-secret-version", type=int, default=1,
+        help="Password secret version (default: 1)")
+    p.add_argument("--email-events",
+        help="Comma-separated enabled events (default: emailReceived). "
+             "Valid: emailReceived,emailRead,emailDeleted,emailReplied,"
+             "emailForwarded,emailMarkedImportant,emailMoved")
     _add_config_source(p)
 
     p = tsub.add_parser("update")
