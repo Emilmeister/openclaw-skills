@@ -5,7 +5,7 @@ import sys
 from helpers import (build_client, check_response, print_json, load_config_from_args,
                      confirm_destructive)
 from commands._shared import (apply_scaling, apply_integration, apply_environment,
-                               parse_ports, wait_for_status)
+                               parse_ports, wait_for_status, apply_bff_mcp_defaults)
 
 
 WAIT_FINAL_SUCCESS = {"MCP_SERVER_STATUS_RUNNING", "MCP_SERVER_STATUS_COOLED"}
@@ -69,6 +69,7 @@ def _build_create_body(args, client, project_id) -> dict:
     if args.instance_type_id:
         body["instanceTypeId"] = args.instance_type_id
     _apply_mcp_flags(body, args)
+    apply_bff_mcp_defaults(body)
     return body
 
 

@@ -6,7 +6,6 @@ EvoClaw — это managed gateway, в котором развёрнуты sub-a
 EvoClawOptions.agents, управляемые PUT (не POST/PATCH).
 """
 
-import copy
 import json
 import sys
 

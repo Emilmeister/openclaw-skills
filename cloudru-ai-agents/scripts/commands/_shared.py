@@ -163,6 +163,37 @@ def apply_bff_system_defaults(body: dict) -> None:
     })
 
 
+def apply_bff_mcp_defaults(body: dict) -> None:
+    """BFF defaults for POST /mcpServers. Marketplace path tolerates minimal
+    body; --image-uri path has not been verified end-to-end, so we seed the
+    same shape the UI sends (reverse-engineered from a running project MCP).
+    """
+    body.setdefault("environmentOptions", {"rawEnvs": {}, "secretEnvs": {}})
+    body.setdefault("exposedPorts", [])
+    scaling = body.setdefault("scaling", {})
+    scaling.setdefault("_meta", {"scalingRulesType": "rps"})
+    dig(scaling, "scalingRules", "rps").setdefault("value", 150)
+    scaling.setdefault("minScale", 1)
+    scaling.setdefault("maxScale", 1)
+    scaling.setdefault("isScaleUpAllSystem", False)
+    scaling.setdefault("isKeepAlive", True)
+    scaling.setdefault("keepAliveDuration", {"hours": 0, "minutes": 5, "seconds": 0})
+    ig = body.setdefault("integrationOptions", {})
+    ig.setdefault("authOptions", {
+        "isEnabled": False,
+        "type": "AUTHENTICATION_TYPE_TOKEN_BASED",
+        "serviceAccountId": "00000000-0000-0000-0000-000000000000",
+    })
+    ig.setdefault("logging", {
+        "isEnabledLogging": False,
+        "logGroupId": "00000000-0000-0000-0000-000000000000",
+    })
+    ig.setdefault("autoUpdateOptions", {
+        "imageOptions": {"isEnabled": False, "tagMask": ""},
+        "promptOptions": {"isEnabled": False},
+    })
+
+
 def apply_integration(body: dict, args) -> None:
     """Populate body.integrationOptions.{logging,authOptions}."""
     if getattr(args, "log_group_id", None):

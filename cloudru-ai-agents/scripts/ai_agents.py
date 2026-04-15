@@ -83,7 +83,8 @@ def build_parser():
     p.add_argument("--name")
     p.add_argument("--description")
     p.add_argument("--instance-type-id")
-    p.add_argument("--mcp-server-id", help="Single MCP id to attach (see also --mcp-servers)")
+    p.add_argument("--mcp-server-id",
+        help="[deprecated, use --mcp-servers] single MCP id to attach")
     p.add_argument("--from-marketplace", help="Create from marketplace card ID")
     p.add_argument("--cascade-mcp", action="store_true",
         help="When used with --from-marketplace: auto-install MCP servers referenced "
@@ -398,7 +399,7 @@ def build_parser():
     p.add_argument("--email-server", help="IMAP server address (e.g. imap.mail.ru)")
     p.add_argument("--email-port", type=int, help="IMAP port (default: 993)")
     p.add_argument("--email-security",
-        help="Security: SSL/TLS (default), STARTTLS, или без шифрования")
+        help="Security: SSL/TLS (default), STARTTLS, or none")
     p.add_argument("--email-user", help="Mailbox username/email")
     p.add_argument("--email-password-secret-id",
         help="Secret Manager UUID holding mailbox password")

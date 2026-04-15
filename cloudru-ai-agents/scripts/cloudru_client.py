@@ -428,12 +428,6 @@ class CloudruAiAgentsClient:
             json=body, headers=self._headers(), timeout=60.0,
         )
 
-    def update_skill(self, project_id: str, skill_id: str, body: Dict[str, Any]) -> httpx.Response:
-        return _request_with_retry(
-            self._client, "PATCH", f"/u-api/ai-agents/v1/{project_id}/skills/{skill_id}",
-            json=body, headers=self._headers(), timeout=60.0,
-        )
-
     def delete_skill(self, project_id: str, skill_id: str) -> httpx.Response:
         return _request_with_retry(
             self._client, "DELETE", f"/u-api/ai-agents/v1/{project_id}/skills/{skill_id}",
