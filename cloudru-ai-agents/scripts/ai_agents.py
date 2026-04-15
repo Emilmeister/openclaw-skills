@@ -16,6 +16,8 @@ import os
 import sys
 
 from commands import COMMANDS
+from commands._shared import (add_common_scaling_flags, add_common_integration_flags,
+                               add_environment_flags)
 
 
 def _add_limit_offset(p):
@@ -136,8 +138,21 @@ def build_parser():
     p = msub.add_parser("get"); p.add_argument("mcp_id")
     p = msub.add_parser("create")
     p.add_argument("--name"); p.add_argument("--description"); p.add_argument("--instance-type-id")
-    p.add_argument("--from-marketplace"); _add_config_source(p)
-    p = msub.add_parser("update"); p.add_argument("mcp_id"); _add_config_source(p)
+    p.add_argument("--from-marketplace", help="Marketplace MCP card ID")
+    p.add_argument("--image-uri", help="Container image URI (Artifact Registry) — alternative to marketplace")
+    p.add_argument("--ports", help="Comma-separated exposed TCP ports (e.g. 8000,9000)")
+    add_environment_flags(p)
+    add_common_scaling_flags(p)
+    add_common_integration_flags(p)
+    _add_config_source(p)
+
+    p = msub.add_parser("update"); p.add_argument("mcp_id")
+    p.add_argument("--name"); p.add_argument("--description"); p.add_argument("--instance-type-id")
+    p.add_argument("--image-uri"); p.add_argument("--ports")
+    add_environment_flags(p)
+    add_common_scaling_flags(p)
+    add_common_integration_flags(p)
+    _add_config_source(p)
     p = msub.add_parser("delete"); p.add_argument("mcp_id"); p.add_argument("--yes", action="store_true")
     p = msub.add_parser("suspend"); p.add_argument("mcp_id")
     p = msub.add_parser("resume"); p.add_argument("mcp_id")

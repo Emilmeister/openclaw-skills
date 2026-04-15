@@ -4,6 +4,7 @@ import sys
 import time
 
 from helpers import build_client, check_response, print_json, load_config_from_args
+from commands._shared import dig, apply_scaling, apply_integration
 
 
 WAIT_FINAL_SUCCESS = {"AGENT_STATUS_RUNNING", "AGENT_STATUS_COOLED"}
@@ -35,61 +36,39 @@ def cmd_get(args):
     print_json(resp.json())
 
 
-def _dig(d: dict, *keys: str) -> dict:
-    """Walk/create nested dicts so `d[k0][k1]...` is returned (ready to mutate)."""
-    for k in keys:
-        d = d.setdefault(k, {})
-    return d
-
-
 def _apply_agent_option_flags(body: dict, args) -> None:
-    """Apply high-level flags that mirror what the UI create-form sends.
-
-    Covers options.prompt, options.llm (model/params/thinking), options.scaling
-    (min/max/keepAlive/rps), options.runtimeOptions (maxLlmCalls),
-    options.memoryOptions (memory/session), neighbors, integrationOptions.logging.
-    Each flag is optional; omit to leave server defaults.
-    """
+    """Apply high-level flags mirroring the UI create-form (options.prompt,
+    options.llm.{model,params,thinking}, options.scaling, options.runtimeOptions,
+    options.memoryOptions, neighbors, integrationOptions.logging/auth)."""
     if getattr(args, "system_prompt", None):
-        _dig(body, "options", "prompt")["systemPrompt"] = args.system_prompt
+        dig(body, "options", "prompt")["systemPrompt"] = args.system_prompt
     if getattr(args, "system_prompt_file", None):
         with open(args.system_prompt_file) as f:
-            _dig(body, "options", "prompt")["systemPrompt"] = f.read()
+            dig(body, "options", "prompt")["systemPrompt"] = f.read()
     if getattr(args, "model_name", None):
-        _dig(body, "options", "llm", "foundationModels")["modelName"] = args.model_name
+        dig(body, "options", "llm", "foundationModels")["modelName"] = args.model_name
     if getattr(args, "temperature", None) is not None:
-        _dig(body, "options", "llm", "modelParameters")["temperature"] = args.temperature
+        dig(body, "options", "llm", "modelParameters")["temperature"] = args.temperature
     if getattr(args, "max_tokens", None) is not None:
-        _dig(body, "options", "llm", "modelParameters")["maxTokens"] = args.max_tokens
+        dig(body, "options", "llm", "modelParameters")["maxTokens"] = args.max_tokens
     if getattr(args, "thinking", None):
-        thinking = _dig(body, "options", "llm", "modelParameters", "thinking")
+        thinking = dig(body, "options", "llm", "modelParameters", "thinking")
         if args.thinking == "off":
             thinking["enabled"] = False
         else:
             thinking["enabled"] = True
             thinking["level"] = f"THINKING_LEVEL_{args.thinking.upper()}"
     if getattr(args, "thinking_budget", None) is not None:
-        _dig(body, "options", "llm", "modelParameters", "thinking")["budget"] = args.thinking_budget
-    if getattr(args, "min_scale", None) is not None:
-        _dig(body, "options", "scaling")["minScale"] = args.min_scale
-    if getattr(args, "max_scale", None) is not None:
-        _dig(body, "options", "scaling")["maxScale"] = args.max_scale
-    if getattr(args, "keep_alive_min", None) is not None:
-        scaling = _dig(body, "options", "scaling")
-        scaling["isKeepAlive"] = args.keep_alive_min > 0
-        scaling["keepAliveDuration"] = {"hours": 0, "minutes": args.keep_alive_min, "seconds": 0}
-    if getattr(args, "rps", None) is not None:
-        _dig(body, "options", "scaling", "scalingRules", "rps")["value"] = args.rps
+        dig(body, "options", "llm", "modelParameters", "thinking")["budget"] = args.thinking_budget
+    # scaling lives under options for agents
+    apply_scaling(dig(body, "options", "scaling"), args)
     if getattr(args, "max_llm_calls", None) is not None:
-        _dig(body, "options", "runtimeOptions")["maxLlmCalls"] = args.max_llm_calls
+        dig(body, "options", "runtimeOptions")["maxLlmCalls"] = args.max_llm_calls
     if getattr(args, "memory_enabled", None) is not None:
-        _dig(body, "options", "memoryOptions", "memory")["isEnabled"] = args.memory_enabled
+        dig(body, "options", "memoryOptions", "memory")["isEnabled"] = args.memory_enabled
     if getattr(args, "session_enabled", None) is not None:
-        _dig(body, "options", "memoryOptions", "session")["isEnabled"] = args.session_enabled
-    if getattr(args, "log_group_id", None):
-        _dig(body, "integrationOptions", "logging").update({
-            "isEnabledLogging": True, "logGroupId": args.log_group_id,
-        })
+        dig(body, "options", "memoryOptions", "session")["isEnabled"] = args.session_enabled
+    apply_integration(body, args)
     if getattr(args, "neighbors", None):
         nbrs = body.get("neighbors") or []
         for nid in args.neighbors.split(","):
@@ -112,7 +91,7 @@ def _build_create_body(args, client, project_id) -> dict:
         body.setdefault("agentType", "AGENT_TYPE_FROM_HUB")
         model_id = card.get("modelId")
         if model_id:
-            _dig(body, "options", "llm", "foundationModels").setdefault("modelName", model_id)
+            dig(body, "options", "llm", "foundationModels").setdefault("modelName", model_id)
     else:
         body.setdefault("agentType", "AGENT_TYPE_CUSTOM")
     if args.name:

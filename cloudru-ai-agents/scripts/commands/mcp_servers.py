@@ -4,6 +4,8 @@ import sys
 import time
 
 from helpers import build_client, check_response, print_json, load_config_from_args
+from commands._shared import (apply_scaling, apply_integration, apply_environment,
+                               parse_ports)
 
 
 WAIT_FINAL_SUCCESS = {"MCP_SERVER_STATUS_RUNNING", "MCP_SERVER_STATUS_COOLED"}
@@ -33,6 +35,20 @@ def cmd_get(args):
     print_json(resp.json())
 
 
+def _apply_mcp_flags(body: dict, args) -> None:
+    """Apply env vars, scaling, integrationOptions, exposed ports."""
+    apply_environment(body, args)
+    if getattr(args, "ports", None):
+        ports = parse_ports(args.ports)
+        if ports:
+            body["exposedPorts"] = ports
+    # scaling is top-level for MCP (unlike agents where it's under options)
+    if any(getattr(args, k, None) is not None for k in
+           ("min_scale", "max_scale", "keep_alive_min", "rps")):
+        apply_scaling(body.setdefault("scaling", {}), args)
+    apply_integration(body, args)
+
+
 def _build_create_body(args, client, project_id) -> dict:
     body: dict = load_config_from_args(args)
     if args.from_marketplace:
@@ -42,12 +58,18 @@ def _build_create_body(args, client, project_id) -> dict:
         card = raw.get("predefinedMcpServer", raw)
         body.setdefault("imageSource", {})["marketplaceMcpServerId"] = card.get("id", args.from_marketplace)
         body.setdefault("description", card.get("description", ""))
+        # Pre-seed exposedPorts from marketplace card if user didn't supply
+        if not body.get("exposedPorts") and card.get("exposedPorts"):
+            body["exposedPorts"] = card["exposedPorts"]
+    if getattr(args, "image_uri", None):
+        body.setdefault("imageSource", {})["imageUri"] = args.image_uri
     if args.name:
         body["name"] = args.name
     if args.description:
         body["description"] = args.description
     if args.instance_type_id:
         body["instanceTypeId"] = args.instance_type_id
+    _apply_mcp_flags(body, args)
     return body
 
 
@@ -62,12 +84,19 @@ def cmd_create(args):
 def cmd_update(args):
     client, project_id = build_client()
     body = load_config_from_args(args)
+    if args.name:
+        body["name"] = args.name
+    if args.description is not None:
+        body["description"] = args.description
+    if args.instance_type_id:
+        body["instanceTypeId"] = args.instance_type_id
+    _apply_mcp_flags(body, args)
     if not body:
-        print("Error: --config-json or --config-file required for update", file=sys.stderr)
+        print("Error: nothing to update", file=sys.stderr)
         sys.exit(1)
     resp = client.update_mcp_server(project_id, args.mcp_id, body)
     check_response(resp, f"updating mcp-server {args.mcp_id}")
-    print_json(resp.json())
+    print_json(resp.json() if resp.text else {})
 
 
 def _confirm_destructive(action: str, target: str, auto_yes: bool) -> None:
