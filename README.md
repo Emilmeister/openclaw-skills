@@ -11,6 +11,7 @@
 | **cloudru-ml-inference** | Деплой и управление ML-моделями на Cloud.ru ML Inference (GPU) |
 | **cloudru-vm** | Создание и управление виртуальными машинами Cloud.ru |
 | **cloudru-managed-rag** | RAG-пайплайн: базы знаний, семантический поиск, Q&A с LLM |
+| **cloudru-ai-agents** | Evolution AI Agents: CRUD агентов/систем/MCP, триггеры, workflows, marketplace, A2A-чат, EvoClaw |
 
 ## Быстрый старт
 
@@ -67,6 +68,16 @@ python cloudru-managed-rag/scripts/managed_rag.py setup \
   --docs-path ./docs --kb-name "my-kb" --bucket-name "my-bucket"
 python cloudru-managed-rag/scripts/managed_rag.py search --query "ваш вопрос"
 python cloudru-managed-rag/scripts/managed_rag.py ask --query "ваш вопрос"
+```
+
+### 7. AI-агенты (Evolution AI Agents)
+
+```bash
+python cloudru-ai-agents/scripts/ai_agents.py marketplace list --kind agent
+python cloudru-ai-agents/scripts/ai_agents.py agents create \
+  --from-marketplace <card_id> --cascade-mcp --name my-agent
+python cloudru-ai-agents/scripts/ai_agents.py agents wait <agent_id>
+python cloudru-ai-agents/scripts/ai_agents.py chat send <agent_id> --message "Привет!"
 ```
 
 ## Кросс-скилловые сценарии
